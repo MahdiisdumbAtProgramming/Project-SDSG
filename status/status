@@ -1,0 +1,18 @@
+Status:Working
+Checks{
+    Unbanned=y
+    Offline=y
+    Codefunctioning=y
+    finishedwithupdatev40=y
+    hasbeenaMonth=y
+    hascodeWorkingasexpected=y
+    hashtmlnotbennbuggy=y
+    doesuiwork=y
+    working=y
+    spboeunbanned=y
+    ofline=y
+    workeywithonline=y
+    isfree=y
+    isonwindowslinuxunixmacosandchromeos=y
+    everythingingenworks=y
+}

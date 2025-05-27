@@ -1,0 +1,68 @@
+/* General Reset */
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Courier New', Courier, monospace; /* Programmer vibe */
+    background-color: #0d1117; /* Dark theme */
+    color: #c9d1d9; /* Soft white text */
+    display: flex; /* Flexbox for centering */
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    height: 100vh; /* Full viewport height */
+}
+
+/* Container */
+.container {
+    max-width: 800px; /* Limit width for better readability */
+    width: 100%;
+    padding: 20px;
+    text-align: center; /* Center text inside the container */
+    background-color: #161b22; /* Slightly darker background */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Subtle shadow for depth */
+}
+
+/* Neon Button */
+button {
+    background-color: #161b22; /* Dark background */
+    color: #58a6ff; /* Neon blue text */
+    border: 2px solid #58a6ff; /* Neon blue border */
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background-color: #58a6ff; /* Neon blue hover */
+    color: #161b22; /* Dark text on hover */
+    box-shadow: 0 0 10px #58a6ff, 0 0 40px #58a6ff; /* Neon glow */
+}
+
+/* Code Block Styling */
+pre, code {
+    background-color: #161b22; /* Dark background */
+    color: #79c0ff; /* Light blue text */
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    overflow-x: auto;
+}
+
+/* Gamer Header */
+h1, h2, h3 {
+    color: #f78166; /* Neon orange */
+    text-shadow: 0 0 5px #f78166, 0 0 10px #f78166; /* Glow effect */
+}
+
+/* Links */
+a {
+    color: #a5d6ff; /* Soft neon blue */
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #58a6ff; /* Bright neon blue */
+    text-shadow: 0 0 5px #58a6ff;
+}
