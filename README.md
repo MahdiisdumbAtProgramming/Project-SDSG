@@ -63,7 +63,8 @@ Project-SDSG/
 1. Clone or download the repository:  
    ```bash
    git clone https://github.com/Mahdiisdumb/Project-SDSG.git
-   ``` or download the ZIP from GitHub and extract it.  
+   ``` 
+or download the ZIP from GitHub and extract it.  
 even google drive works https://drive.google.com/file/d/19e4R1z6SzwXlGM_rBYfKCSesQn2TQjr2/view?usp=sharing google drive anyways give you more ease of access if github is blocked and if for example deltatraveler is to big to upload to github  while the google drive version has a infinite file size limit
 
 ✅ What works / what to expect
