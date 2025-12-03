@@ -1,0 +1,166 @@
+﻿/* ✦ Legacy Warning Scroll: SD-SG Relic ✦ */
+
+body {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #1e1e1e; /* Ancient terminal black */
+    color: #ffcc00; /* Sacred gold text */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+    background-image: radial-gradient(circle at center, #2c2c2c 0%, #0d0d0d 100%);
+    animation: flickerBg 6s infinite alternate;
+}
+
+/* ✦ Flickering Background ✦ */
+@keyframes flickerBg {
+    0% {
+        background-color: #1e1e1e;
+    }
+
+    50% {
+        background-color: #252525;
+    }
+
+    100% {
+        background-color: #1e1e1e;
+    }
+}
+
+h2 {
+    font-size: 2rem;
+    color: #ff4444; /* Blood red header */
+    margin-bottom: 20px;
+    text-shadow: 0 0 5px #ff4444, 0 0 15px #ff4444;
+    animation: glitchText 2s infinite;
+}
+
+/* ✦ Warning Container ✦ */
+.warning-container {
+    max-width: 700px;
+    padding: 30px;
+    border: 2px dashed #ffcc00;
+    border-radius: 12px;
+    background-color: #0d0d0d;
+    box-shadow: 0 0 40px rgba(255, 204, 0, 0.3);
+    position: relative;
+    z-index: 1;
+    animation: glitchBox 3s infinite;
+}
+
+/* ✦ Glitch Box Flicker ✦ */
+@keyframes glitchBox {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    20% {
+        transform: translate(-2px, 2px);
+    }
+
+    40% {
+        transform: translate(2px, -2px);
+    }
+
+    60% {
+        transform: translate(-1px, 1px);
+    }
+
+    80% {
+        transform: translate(1px, -1px);
+    }
+
+    100% {
+        transform: translate(0, 0);
+    }
+}
+
+.warning-container h1 {
+    font-size: 2rem;
+    color: #ffcc00;
+    margin-bottom: 10px;
+    text-shadow: 0 0 5px #ffcc00, 0 0 10px #ffcc00;
+    animation: glitchText 3s infinite;
+}
+
+.warning-container p {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: #f0e68c;
+    font-style: italic;
+    animation: flickerText 4s infinite;
+}
+
+/* ✦ Glitch Text ✦ */
+@keyframes glitchText {
+    0% {
+        text-shadow: 0 0 2px #ffcc00;
+    }
+
+    25% {
+        text-shadow: -2px 0 #ff4444;
+    }
+
+    50% {
+        text-shadow: 2px -1px #f0e68c;
+    }
+
+    75% {
+        text-shadow: -1px 1px #ffcc00;
+    }
+
+    100% {
+        text-shadow: 0 0 2px #ffcc00;
+    }
+}
+
+/* ✦ Flicker Text ✦ */
+@keyframes flickerText {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+/* ✦ Portal Button ✦ */
+.warning-container a {
+    display: inline-block;
+    padding: 12px 24px;
+    font-size: 1rem;
+    color: #0d0d0d;
+    background-color: #ff4444;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    animation: glitchText 2s infinite;
+}
+
+    .warning-container a:hover {
+        background-color: #ffcc00;
+        color: #0d0d0d;
+        transform: scale(1.05);
+        box-shadow: 0 0 10px #ffcc00, 0 0 30px #ffcc00;
+    }
+
+/* ✦ Footer Relic ✦ */
+body::after {
+    content: "LEGACY BUILD // SD-SG // UNBLOCKED // FORBIDDEN GAMES // BETA RELIC";
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 10px;
+    color: #333;
+    letter-spacing: 1px;
+    font-family: 'Courier New', Courier, monospace;
+    opacity: 0.7;
+    animation: flickerText 5s infinite;
+}

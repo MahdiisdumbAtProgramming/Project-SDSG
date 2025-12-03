@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Project SDSG Status</title>
+    <style>
+        :root{--bg:#0f1720;--card:#111827;--accent:#58a6ff;--ok:#16a34a;--muted:#94a3b8}
+        html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;background:var(--bg);color:#e6eef6;display:flex;align-items:center;justify-content:center}
+        .card{width:min(760px,94%);background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent),var(--card);padding:20px;border-radius:10px;box-shadow:0 8px 30px rgba(2,6,23,0.7);border:1px solid rgba(255,255,255,0.03)}
+        h1{margin:0 0 8px;font-size:20px;color:var(--accent);letter-spacing:0.6px}
+        p.lead{margin:0 0 14px;color:var(--muted)}
+        dl{display:grid;grid-template-columns: 1fr auto;gap:10px 18px;align-items:center}
+        dt{color:#cfe9ff;font-weight:600}
+        dd{margin:0;color:var(--muted)}
+        .badge{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;font-weight:700;font-size:13px}
+        .ok{background:#062f1b;color:var(--ok);border:1px solid rgba(22,163,74,0.12)}
+        .warn{background:#2b1b09;color:#f59e0b}
+        footer{margin-top:14px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;align-items:center}
+        .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,monospace;background:rgba(255,255,255,0.02);padding:6px;border-radius:6px}
+        button{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent);padding:8px 10px;border-radius:6px;cursor:pointer}
+    </style>
+</head>
+<body>
+    <article class="card" role="main" aria-labelledby="status-title">
+        <header>
+            <h1 id="status-title">Project SDSG Status</h1>
+            <p class="lead">Current health snapshot for the local build and core checks.</p>
+        </header>
+
+        <section aria-labelledby="summary">
+            <h2 id="summary" style="display:none">Summary</h2>
+
+            <dl aria-live="polite">
+                <dt>Overall status</dt>
+                <dd><span class="badge ok">Working</span></dd>
+
+                <dt>Unbanned</dt>
+                <dd><span class="badge ok">Yes</span></dd>
+
+                <dt>Offline support</dt>
+                <dd><span class="badge ok">Yes</span></dd>
+
+                <dt>Code functioning</dt>
+                <dd><span class="badge ok">Yes</span></dd>
+
+                <dt>Finished with update</dt>
+                <dd class="mono">yes</dd>
+
+                <dt>Has been a month</dt>
+                <dd class="mono">yes</dd>
+
+                <dt>Code working as expected</dt>
+                <dd><span class="badge ok">Yes</span></dd>
+
+                <dt>HTML not buggy</dt>
+                <dd><span class="badge ok">Yes</span></dd>
+
+                <dt>UI working</dt>
+                <dd><span class="badge ok">Yes</span></dd>
+
+                <dt>Working</dt>
+                <dd><span class="badge ok">Yes</span></dd>
+
+                <dt>Special unban flag</dt>
+                <dd><span class="badge ok">Yes</span></dd>
+
+                <dt>Offline (duplicate)</dt>
+                <dd class="mono">y</dd>
+
+                <dt>Works with online</dt>
+                <dd><span class="badge ok">Yes</span></dd>
+
+                <dt>Is free</dt>
+                <dd><span class="badge ok">Yes</span></dd>
+
+                <dt>Supported platforms</dt>
+                <dd class="mono">Windows, Linux, Unix-like, macOS, ChromeOS</dd>
+
+                <dt>Everything in general works</dt>
+                <dd><span class="badge ok">Yes</span></dd>
+            </dl>
+        </section>
+
+        <footer>
+            <span id="ts">Last checked: <time id="last-checked"></time></span>
+            <div>
+                <button id="refresh">Refresh timestamp</button>
+                <button id="raw" title="Open raw status file">Open raw</button>
+            </div>
+        </footer>
+    </article>
+
+    <script>
+        // Lightweight script to show a current timestamp and allow quick refresh.
+        const lastCheckedEl = document.getElementById('last-checked');
+        function updateTimestamp() {
+            const d = new Date();
+            lastCheckedEl.textContent = d.toLocaleString();
+        }
+        document.getElementById('refresh').addEventListener('click', () => updateTimestamp());
+        document.getElementById('raw').addEventListener('click', () => {
+            // Open the raw status file in a new tab if available relative to this file.
+            window.open('./status.txt', '_blank', 'noopener');
+        });
+
+        updateTimestamp();
+    </script>
+</body>
+</html>

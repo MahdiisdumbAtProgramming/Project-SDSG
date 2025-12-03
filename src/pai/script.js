@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
         location.href = "assets/legacy(WIFI)/run.html";
     };
     document.getElementById("status").onclick = function () {
-        location.href = "./status/status";
+        location.href = "./status/status.html";
     };
     document.getElementById("notice").onclick = function () {
         alert("These Games are made by a single guy Mahdi(Mahdiisdumb) even though mahdi studios exists I mahdi am making all of them please be kind when sumbitting ideas or bugs THANK YOU :P");

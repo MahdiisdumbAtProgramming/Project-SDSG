@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const repoInfoContainer = document.getElementById('repoInfo');
 
     const localFilename = './SDSG-local.zip';
-    const fallbackUrl = 'https://github.com/Mahdiisdumb/Project-SDSG/archive/refs/heads/master.zip';
+    const fallbackUrl = 'https://drive.google.com/file/d/19e4R1z6SzwXlGM_rBYfKCSesQn2TQjr2/view?usp=sharing';
     const readmeRawUrl = 'https://raw.githubusercontent.com/Mahdiisdumb/Project-SDSG/refs/heads/master/README.md';
 
     // Refresh configuration
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         status.textContent = 'Automatic download failed. Opening repository page in a new tab.';
-        window.open('https://github.com/Mahdiisdumb/Project-SDSG/archive/refs/heads/master.zip', '_blank', 'noopener');
+        window.open('https://drive.google.com/file/d/19e4R1z6SzwXlGM_rBYfKCSesQn2TQjr2/view?usp=sharing', '_blank', 'noopener');
     });
 
     // Init: ensure refresh control, initial fetch, and periodic refresh

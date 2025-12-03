@@ -190,6 +190,16 @@ a {
         color: var(--accent);
         text-shadow: 0 0 6px rgba(88,166,255,0.12);
     }
+#repoInfo {
+    text-align: left;
+    background: #f8f8f8;
+    border-radius: 6px;
+    padding: 12px;
+    margin: 16px 0;
+    color: #222;
+    max-height: 150px; /* adjust as needed */
+    overflow-y: auto; /* vertical scroll if content overflows */
+}
 
 /* ✦ Code Shrine — remove continuous animation and heavy shadows */
 pre, code {
@@ -260,3 +270,21 @@ body::before {
 }
 
 /* Reduce GPU thrash by minimizing animated properties and grouping will-change */
+    /* Optional: style the scrollbar for a sleek look */
+    #repoInfo::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #repoInfo::-webkit-scrollbar-track {
+        background: #161b22; /* dark panel track */
+        border-radius: 4px;
+    }
+
+    #repoInfo::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: 4px;
+    }
+
+        #repoInfo::-webkit-scrollbar-thumb:hover {
+            background: var(--soft);
+        }
