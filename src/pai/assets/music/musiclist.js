@@ -77,15 +77,51 @@
     "knight.ogg",
     'Glitchsong.wav',
     'Wither Storm.mp3',
+    '1cnew.mp3',
+    '2cnew.mp3',
+    '3cnew.mp3',
+    '4cnew.mp3',
+    '5cnew.mp3',
+    '6cnew.ogg',
+    '7cnew.mp3',
+    '8cnew.ogg',
+    '9cnew.ogg',
+    '10cnew.mp3'
 ];
 
+// Sort audio files alphabetically
 audioFiles.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
 const container = document.getElementById('audio-container');
+let currentAudio = null;
+let activeButton = null;
+
 audioFiles.forEach(file => {
-    const audio = document.createElement('audio');
-    audio.src = file;
-    audio.controls = true;
+    const button = document.createElement('button');
+    button.textContent = file;
+    button.classList.add('audio-button');
+
+    // Load audio from /mus/ folder
+    const audio = new Audio(`./mus/${file}`);
     audio.loop = true;
-    container.appendChild(audio);
+
+    button.addEventListener('click', () => {
+        // Stop any currently playing audio
+        if (currentAudio && currentAudio !== audio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+        }
+
+        // Play the clicked audio from start
+        audio.currentTime = 0;
+        audio.play();
+        currentAudio = audio;
+
+        // Highlight the active button
+        if (activeButton) activeButton.classList.remove('active');
+        button.classList.add('active');
+        activeButton = button;
+    });
+
+    container.appendChild(button);
 });

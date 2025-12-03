@@ -260,3 +260,14 @@ body::before {
 }
 
 /* Reduce GPU thrash by minimizing animated properties and grouping will-change */
+/* Make the buttons container scrollable */
+#buttonsContainer {
+    max-height: 60vh; /* Adjust the visible height */
+    overflow-y: auto; /* Show vertical scrollbar when needed */
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap; /* Wrap buttons to next line */
+    justify-content: center; /* Center the buttons */
+    gap: 10px; /* Space between buttons */
+    margin-top: 20px;
+}
