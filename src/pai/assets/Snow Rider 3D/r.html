@@ -1,0 +1,42 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>How to play — Snow Rider 3D</title>
+  <style>
+    :root{--bg:#0b1220;--card:#0f1724;--accent:#7dd3fc;--muted:#9aa6b2}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;min-height:100vh;background:linear-gradient(180deg,#071024 0%,#081029 60%);color:#e6f0f8;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:100%;max-width:820px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px;padding:28px;box-shadow:0 8px 30px rgba(2,6,23,0.6);border:1px solid rgba(125,211,252,0.06)}
+    h1{margin:0 0 8px;font-size:20px}
+    p.lead{margin:0 0 18px;color:var(--muted)}
+    pre{background:#071821;padding:14px;border-radius:8px;overflow:auto;border:1px solid rgba(255,255,255,0.03)}
+    ol{margin:12px 0 18px;padding-left:18px}
+    li{margin:8px 0}
+    .warn{background:#2b1010;color:#ffd6d6;padding:10px;border-radius:8px;margin-top:10px;border:1px solid rgba(255,0,0,0.08)}
+    .row{display:flex;gap:10px}
+    button{background:transparent;border:1px solid rgba(125,211,252,0.14);padding:8px 12px;border-radius:8px;color:var(--accent);cursor:pointer}
+    button.ghost{border-style:dashed;color:var(--muted)}
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>How to play — Snow Rider 3D</h1>
+    <p class="lead">Follow these exact steps. Don’t blame anyone if you break Chrome flags — that’s on you.</p>
+
+    <ol>
+      <li>Open a new Chrome tab and go to <strong><code>chrome://flags</code></strong>.</li>
+      <li>Find and enable <strong>JSPI</strong> (or the flag that matches “JSPI” in the flags list). If you don’t see it, your browser version might not expose that flag.</li>
+      <li>Restart Chrome when prompted.</li>
+      <li>With Wi‑Fi enabled, go to the Snow Rider 3D page (the site you usually use — called <em>cc3d</em> in your notes) and load the game once.</li>
+      <li>Close the game tab, then turn off Wi‑Fi (disconnect from the network).</li>
+      <li>Reopen the game (the cached version should run offline). Enjoy.</li>
+    </ol>
+
+    <pre>chrome://flags → enable JSPI → restart
+Load Snow Rider 3D (online) → close → turn off Wi‑Fi → reopen (offline)</pre>
+
+    <div class="warn">Warning: fiddling with chrome://flags can change browser behaviour or reduce security. Only enable flags you understand. I won't hold your hand through the fallout.</div>  </main>
+</body>
+</html>

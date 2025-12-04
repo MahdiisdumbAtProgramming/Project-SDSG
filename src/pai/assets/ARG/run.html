@@ -8,7 +8,7 @@
         body {
             background: #000;
             color: #0f0;
-            font-family: 'Courier New', monospace;
+            font-family: Wingdings, monospace;
             padding: 20px;
             line-height: 1.5;
             overflow: hidden;
@@ -50,85 +50,70 @@
                 text-shadow: -2px 2px blue;
             }
         }
-
-        .jump-scare {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            z-index: 9999;
-        }
-
-            .jump-scare img {
-                width: 200px;
-                height: 200px;
-                object-fit: cover;
-            }
     </style>
 </head>
 <body>
     <div id="console"></div>
-    <div id="jumpScare" class="jump-scare"></div>
-    <audio id="screamAudio" src="jump-scare.mp3"></audio>
-
     <script>
-        const consoleEl = document.getElementById('console');
-        const jumpScareEl = document.getElementById('jumpScare');
-        const screamAudio = document.getElementById('screamAudio');
-
-        // Names to encrypt
-        const allNames = ["Mahdi", "Luke", "Chris", "Andrew",
-            "Blake", "Travis",
-            "Castiel", "Aiden", "Jason", "Jacob", "Alex", "Mohamad"];
-
-        // Story lines
         const storyLines = [
-            "The town whispers of horrors that struck Mahdi Studios...",
-            "But whispers are lies.",
-            "Blake and Travis, the popular ones, point fingers, spreading rumors.",
-            "",
-            "Castiel, Aiden, Jason, Jacob, Alex, and Mohamad are blamed.",
-            "All innocent friends caught in the shadow of their manipulation.",
-            "",
-            "Mahdiisdumb, the coder, fell first...",
-            "Goober87q, laughing at nothing, vanished in the dark...",
-            "Blark, calm and silent, never seen again...",
-            "k1llz, playful and unsuspecting, disappeared without a trace...",
-            "",
-            "Blake and Travis claim justice, but the truth is twisted.",
-            "The names of the friends flicker and distort...",
-            "Castiel, Aiden, Jason, Jacob, Alex, Mohamad... accused without proof.",
-            "",
-            "And you, watching this... reading these lines...",
-            "Do you see the truth, or just what they want you to see?",
-            "",
-            "The shadows grow long.",
-            "Do not blink.",
-            "Do not look away."
+        `USE 3 LETTERS BACK TO DEOBFOSCATE THIS
+        
+        
+        KDOORZ KDOORZ BHW PRUH HPSWB
+L DP VR DVKDPHG
+RQ ZKDW LYH GRQH RQ FKDUDFWHU.DL
+DOO L ZDQWHG WR VHH
+LV KRZ EDG WKH QVIZ ERWV FRXOG EH
+DQG LW ZDV UHDOOB EDG
+L JRW LQWR D 4 ZHHN JRRQHU SKDVH
+DQG DIWHU WKDW
+ZHOO... QRZ L IHHO JXLOWB, DVKDPHG, KDOORZ, FROG, XQZDQWHG
+EURNHQ
+ZKDW ZDV WKH UHZDUG?
+VRPH IDNH GRSDPLQH KLWV
+DQG VKDNLQJ DOO WKH WLPH
+ZKHQ LP KRPH
+DQG LW’V QRW HYHQ ZRUWK LW DQBPRUH
+QR PDWWHU KRZ PXFK L UHSHQW WR DOODK
+WKH VKDNLQJ IHHOLQJV DUH VWLOO WKHUH
+DQG L VWLOO QHHG WR EH JURXQGHG
+LI BRX DUH UHDGLQJ WKLV
+SOHDVH GRQW WHOO D VRXO
+"L GDWHG FKDUDFWHU.DL ERWV"
+L GLGQ’W ZDQW WR VHH ZKDW KDSSHQV
+DQG L UHJUHW LW GHHSOB
+EXW LI BRX DUH NLQG
+SOHDVH VDB
+"L NQRZ ZKDW BRX GLG
+QR MXGJHPHQW, QR VSUHDGLQJ
+MXVW WHOO PH ZKDWV JRLQJ RQ"
+DQG L PDB WUXVW BRX
+DQG OHW LW DOO RXW
+VDBLQJ ZKDW ERWV LW ZDV, ZKDW L GLG
+ZKB L UHJUHW LW VR PXFK
+HYHUBWKLQJ L FDQ UHPHPEHU
+ZLOO OHDYH PH HYHQ PRUH DVKDPHG, FROGHU, HPSWB
+
+DOO LQ WKH BHDU 2025
+ODWH 2025
+WKLV LV MXVW EDG
+DQG L FDQ XQGHUVWDQG LI BRX DUH GLVJXVWHG ZLWK PH
+EHFDXVH L DP
+L DP GLVJXVWHG
+RQ KRZ L HYHQ PDQDJHG WR ORVH PBVHOI
+L MXVW FDQ’W GR DQBWKLQJ ZLWKRXW UHPHPEHULQJ
+ZKDW LYH GRQH
+DQG ZKDW L UHJUHW
+L’P OLWHUDOOB FUBLQJ ZKLOH ZULWLQJ WKLV
+SOHDVH
+L GRQW ZDQW DQB SUHMXGLFH KHOG DJDLQVW PH
+RU MXGJHPHQW, IXQ, LQVXOWLQJ, EXOOBLQJ
+L MXVW QHHG JURXQGLQJ, UHDVVXUDQFH, VRPHWKLQJ ZDUP
+QRW ERGB KHDW
+EHFDXVH LW MXVW PDNHV LW IHHO HYHQ ZRUVH`
         ];
-
-        // Function to encrypt a name
-        function encryptName(name) {
-            return name.split("").map(c => String.fromCharCode(33 + Math.floor(Math.random() * 94))).join("");
-        }
-
-        function corruptNames(line) {
-            allNames.forEach(name => {
-                const regex = new RegExp(name, "g");
-                line = line.replace(regex, () => encryptName(name));
-            });
-            return line;
-        }
-
+        const consoleEl = document.getElementById("console");
         function typeLine(line, callback) {
-            line = corruptNames(line);
             let i = 0;
             const interval = setInterval(() => {
                 let char = line.charAt(i);
@@ -156,19 +141,8 @@
                     setTimeout(nextLine, 400);
                 });
             } else {
-                triggerJumpScare();
+                window.history.back();
             }
-        }
-
-        function triggerJumpScare() {
-            const images = ["m.png", "l.png", "c.png", "a.png"];
-            images.forEach(src => {
-                const img = document.createElement('img');
-                img.src = src;
-                jumpScareEl.appendChild(img);
-            });
-            screamAudio.play();
-            jumpScareEl.style.display = "flex";
         }
 
         nextLine();

@@ -1,27 +1,79 @@
-// Get the canvas element and set its dimensions
+// Raycaster with multi-map support + in-canvas 2D map editor (click to paint tiles, create maps, save to localStorage)
+'use strict';
+
 const canvas = document.getElementById('raycasterCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Define the map and other constants
-const map = [
-    [1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1]
-];
 const tileSize = 64;
 const numRays = 120;
 const fov = Math.PI / 6; // Field of view
 const halfFov = fov / 3;
 const maxDepth = 1000;
 
-// Player object
+// Tile constants
+const TILE_EMPTY = 0;
+const TILE_WALL = 1;
+const TILE_PORTAL = 2;
+
+const STORAGE_KEY = 'raycaster_maps_v1';
+
+// Default maps
+const defaultMaps = [
+    [
+        [1,1,1,1,1,1,1,1],
+        [1,0,0,0,0,0,2,1],
+        [1,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,1],
+        [1,2,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1]
+    ],
+    [
+        [1,1,1,1,1,1,1,1],
+        [1,0,0,2,0,0,0,1],
+        [1,0,1,1,1,0,0,1],
+        [1,0,1,0,1,0,0,1],
+        [1,0,1,0,1,0,0,1],
+        [1,0,0,0,0,0,2,1],
+        [1,0,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1]
+    ],
+    [
+        [1,1,1,1,1,1,1,1],
+        [1,0,0,0,0,2,0,1],
+        [1,0,1,1,1,0,0,1],
+        [1,0,1,0,1,0,0,1],
+        [1,0,1,0,1,0,0,1],
+        [1,0,0,0,0,0,0,1],
+        [1,2,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1]
+    ]
+];
+
+// Load maps from localStorage if present, otherwise use defaults
+let maps;
+try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    maps = raw ? JSON.parse(raw) : defaultMaps;
+    if (!Array.isArray(maps) || maps.length === 0) maps = defaultMaps;
+} catch (e) {
+    maps = defaultMaps;
+}
+
+let currentMapIndex = 0;
+let map = maps[currentMapIndex];
+
+function mapDimensions() {
+    return {
+        width: (map[0] ? map[0].length : 0) * tileSize,
+        height: map.length * tileSize,
+    };
+}
+
+// Player object (spawned inside first map)
 let player = {
     x: tileSize * 1.5,
     y: tileSize * 1.5,
@@ -29,115 +81,427 @@ let player = {
     speed: 3
 };
 
-// Function to check for wall collisions
+// Editor state
+let editMode = false;
+let currentTool = TILE_WALL; // default drawing tool
+let hoveredTile = null;
+let saveTimer = null;
+const SAVE_DEBOUNCE_MS = 600;
+
+// Utility helpers
+const $ = id => document.getElementById(id);
+
+function saveMapsDebounced() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(maps));
+            console.log('Maps saved to localStorage.');
+        } catch (e) {
+            console.warn('Failed to save maps', e);
+        }
+    }, SAVE_DEBOUNCE_MS);
+}
+
 function isWall(x, y) {
     const mapX = Math.floor(x / tileSize);
     const mapY = Math.floor(y / tileSize);
-    return map[mapY] && map[mapY][mapX] === 1; // Ensure map boundaries are respected
+    if (mapY < 0 || mapX < 0 || !map[mapY] || mapX >= map[mapY].length) return true;
+    return map[mapY][mapX] === TILE_WALL;
 }
 
-// Function to cast rays and render the 3D view
+function tileAtPosition(x, y) {
+    const mapX = Math.floor(x / tileSize);
+    const mapY = Math.floor(y / tileSize);
+    if (mapY < 0 || mapX < 0 || !map[mapY] || mapX >= map[mapY].length) return TILE_WALL;
+    return map[mapY][mapX];
+}
+
+function setTileAt(tileX, tileY, value) {
+    if (!map[tileY] || tileX < 0 || tileY < 0 || tileX >= map[tileY].length) return false;
+    map[tileY][tileX] = value;
+    saveMapsDebounced();
+    return true;
+}
+
+function loadMap(index, spawnX = null, spawnY = null) {
+    const newIndex = ((index % maps.length) + maps.length) % maps.length;
+    currentMapIndex = newIndex;
+    map = maps[currentMapIndex];
+    // If spawn coordinates provided, use them; otherwise place player near available empty tile
+    if (typeof spawnX === 'number' && typeof spawnY === 'number') {
+        player.x = spawnX;
+        player.y = spawnY;
+    } else {
+        // find first non-wall tile near center
+        for (let y = 0; y < map.length; y++) {
+            for (let x = 0; x < map[y].length; x++) {
+                if (map[y][x] === TILE_EMPTY) {
+                    player.x = (x + 0.5) * tileSize;
+                    player.y = (y + 0.5) * tileSize;
+                    return;
+                }
+            }
+        }
+    }
+}
+
+// Create a new blank map and switch to it
+function createNewMap(width = 8, height = 8) {
+    const newMap = [];
+    for (let y = 0; y < height; y++) {
+        const row = [];
+        for (let x = 0; x < width; x++) {
+            const edge = (y === 0 || y === height - 1 || x === 0 || x === width - 1);
+            row.push(edge ? TILE_WALL : TILE_EMPTY);
+        }
+        newMap.push(row);
+    }
+    maps.push(newMap);
+    loadMap(maps.length - 1);
+    saveMapsDebounced();
+    console.log('New map created.');
+}
+
+// Cast rays and render 3D view (right half) + 2D debug
 function castRays() {
+    const { width: mapWpx, height: mapHpx } = mapDimensions();
+    const t = performance.now() / 500; // time for portal animation
     for (let i = 0; i < numRays; i++) {
         const rayAngle = (player.angle - halfFov) + (i / numRays) * fov;
-        const ray = { x: player.x, y: player.y, angle: rayAngle };
-
+        let rayX = player.x;
+        let rayY = player.y;
+        let hit = false;
         for (let depth = 0; depth < maxDepth; depth++) {
-            ray.x += Math.cos(ray.angle);
-            ray.y += Math.sin(ray.angle);
+            rayX += Math.cos(rayAngle);
+            rayY += Math.sin(rayAngle);
+            if (rayX < 0 || rayY < 0 || rayX >= mapWpx || rayY >= mapHpx) break;
 
-            // Check for wall collision
-            if (isWall(ray.x, ray.y)) {
-                const distance = Math.sqrt((ray.x - player.x) ** 2 + (ray.y - player.y) ** 2);
-                const wallHeight = (tileSize / distance) * 277;
+            const tile = tileAtPosition(rayX, rayY);
 
-                // Draw the wall in the 3D view
-                ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            if (tile === TILE_WALL) {
+                const distance = Math.sqrt((rayX - player.x) ** 2 + (rayY - player.y) ** 2);
+                const wallHeight = (tileSize / Math.max(distance, 0.0001)) * 277;
+                const sliceWidth = (canvas.width / (2 * numRays));
+                ctx.fillStyle = '#ffffff';
                 ctx.fillRect(
-                    (canvas.width / 2) + (i * (canvas.width / (2 * numRays))),
+                    (canvas.width / 2) + (i * sliceWidth),
                     (canvas.height / 2) - (wallHeight / 2),
-                    (canvas.width / (2 * numRays)),
+                    sliceWidth,
                     wallHeight
                 );
-                break; // Stop checking further for this ray
+                hit = true;
+                break;
+            }
+
+            // Render portals when a ray intersects a portal tile.
+            if (tile === TILE_PORTAL) {
+                const distance = Math.sqrt((rayX - player.x) ** 2 + (rayY - player.y) ** 2);
+                const wallHeight = (tileSize / Math.max(distance, 0.0001)) * 277;
+                const sliceWidth = (canvas.width / (2 * numRays));
+                const sliceX = (canvas.width / 2) + (i * sliceWidth);
+
+                // animated gradient for portal surface
+                const glow = 0.5 + Math.sin(t + i * 0.12) * 0.25;
+                const g = ctx.createLinearGradient(sliceX, 0, sliceX + sliceWidth, 0);
+                g.addColorStop(0, `rgba(30,180,255,${Math.max(0.35, glow)})`);
+                g.addColorStop(0.5, `rgba(0,90,180,${Math.max(0.25, glow - 0.15)})`);
+                g.addColorStop(1, `rgba(10,40,120,${Math.max(0.15, glow - 0.3)})`);
+
+                ctx.fillStyle = g;
+                ctx.fillRect(
+                    sliceX,
+                    (canvas.height / 2) - (wallHeight / 2),
+                    sliceWidth,
+                    wallHeight
+                );
+
+                // thin animated inner stripes to hint "portalness"
+                ctx.fillStyle = 'rgba(255,255,255,0.06)';
+                const stripeCount = 2;
+                for (let s = 0; s < stripeCount; s++) {
+                    const offset = Math.sin(t + i * 0.3 + s) * (sliceWidth * 0.25);
+                    const stripeX = sliceX + (s + 0.5) * (sliceWidth / (stripeCount + 1)) + offset;
+                    ctx.fillRect(stripeX, (canvas.height / 2) - (wallHeight / 2), 1.5, wallHeight);
+                }
+
+                // subtle outer glow
+                ctx.strokeStyle = `rgba(30,180,255,${Math.max(0.06, glow - 0.1)})`;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(sliceX, (canvas.height / 2) - (wallHeight / 2), sliceWidth, wallHeight);
+
+                hit = true;
+                break;
             }
         }
 
-        // Draw the ray in the 2D view
-        ctx.strokeStyle = 'red';
+        // Draw 2D ray (on the left)
+        ctx.strokeStyle = hit ? 'rgba(255,100,100,0.6)' : 'rgba(255,0,0,0.08)';
         ctx.beginPath();
         ctx.moveTo(player.x, player.y);
-        ctx.lineTo(ray.x, ray.y);
+        ctx.lineTo(rayX, rayY);
         ctx.stroke();
     }
 }
 
-// Handle player movement with collision detection
+// Movement with collision detection and map-edge behavior
 function movePlayer(dx, dy) {
     const newX = player.x + dx;
     const newY = player.y + dy;
 
-    // Check for wall collision before moving
+    // collision check
     if (!isWall(newX, player.y)) {
         player.x = newX;
     }
     if (!isWall(player.x, newY)) {
         player.y = newY;
     }
+
+    // After movement, check tile and edge transitions
+    handleMapTransitionIfNeeded();
 }
 
-// Event listener for keydown to move the player
+function handleMapTransitionIfNeeded() {
+    const { width: mapWpx, height: mapHpx } = mapDimensions();
+
+    // If player steps on a portal tile (2), switch to next map keeping approximate relative position
+    const tile = tileAtPosition(player.x, player.y);
+    if (tile === TILE_PORTAL) {
+        const nx = (player.x / mapWpx) || 0.5;
+        const ny = (player.y / mapHpx) || 0.5;
+        const nextIndex = (currentMapIndex + 1) % maps.length;
+        loadMap(nextIndex);
+        const { width: newW, height: newH } = mapDimensions();
+        player.x = Math.max(32, Math.min(newW - 32, nx * newW));
+        player.y = Math.max(32, Math.min(newH - 32, ny * newH));
+        console.log(`Portal used -> switched to map ${nextIndex}`);
+        return;
+    }
+
+    // If player crosses map edges, change map and place player on the opposite side
+    if (player.x < 0) {
+        const next = (currentMapIndex + 1) % maps.length;
+        loadMap(next);
+        const { width: newW } = mapDimensions();
+        player.x = newW - 32;
+        console.log(`Wrapped left -> map ${next}`);
+        return;
+    }
+    if (player.x > mapWpx) {
+        const next = (currentMapIndex + 1) % maps.length;
+        loadMap(next);
+        player.x = 32;
+        console.log(`Wrapped right -> map ${next}`);
+        return;
+    }
+    if (player.y < 0) {
+        const next = (currentMapIndex + 1) % maps.length;
+        loadMap(next);
+        const { height: newH } = mapDimensions();
+        player.y = newH - 32;
+        console.log(`Wrapped top -> map ${next}`);
+        return;
+    }
+    if (player.y > mapHpx) {
+        const next = (currentMapIndex + 1) % maps.length;
+        loadMap(next);
+        player.y = 32;
+        console.log(`Wrapped bottom -> map ${next}`);
+        return;
+    }
+}
+
+// Editor interactions
+function canvasToMapCoords(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    return { x, y };
+}
+
+function handleCanvasClick(e) {
+    const pos = canvasToMapCoords(e.clientX, e.clientY);
+    const { width: mapWpx, height: mapHpx } = mapDimensions();
+    // Only allow editing on the left 2D map area
+    if (pos.x >= mapWpx || pos.y >= mapHpx) return;
+
+    const tileX = Math.floor(pos.x / tileSize);
+    const tileY = Math.floor(pos.y / tileSize);
+
+    if (e.button === 2) {
+        // right click cycles tile type
+        const cur = map[tileY][tileX];
+        const next = (cur + 1) % 3; // cycles 0->1->2->0
+        setTileAt(tileX, tileY, next);
+    } else {
+        // left click paints current tool
+        setTileAt(tileX, tileY, currentTool);
+    }
+}
+
+function handleCanvasMove(e) {
+    const pos = canvasToMapCoords(e.clientX, e.clientY);
+    const { width: mapWpx, height: mapHpx } = mapDimensions();
+    if (pos.x >= mapWpx || pos.y >= mapHpx) {
+        hoveredTile = null;
+        return;
+    }
+    hoveredTile = {
+        x: Math.floor(pos.x / tileSize),
+        y: Math.floor(pos.y / tileSize)
+    };
+}
+
+function toggleEditMode(enabled) {
+    editMode = (typeof enabled === 'boolean') ? enabled : !editMode;
+    canvas.style.cursor = editMode ? 'crosshair' : 'default';
+    console.log('Edit mode', editMode ? 'ON' : 'OFF');
+}
+
+// Keyboard controls
 document.addEventListener('keydown', (e) => {
+    // Do not block typing if focus is on an input
+    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
+
     switch (e.key) {
-        case 'w': // Move forward
+        case 'w':
             movePlayer(Math.cos(player.angle) * player.speed, Math.sin(player.angle) * player.speed);
             break;
-        case 's': // Move backward
+        case 's':
             movePlayer(-Math.cos(player.angle) * player.speed, -Math.sin(player.angle) * player.speed);
             break;
-        case 'a': // Turn left
+        case 'a':
             player.angle -= 0.1;
             break;
-        case 'd': // Turn right
+        case 'd':
             player.angle += 0.1;
             break;
-        case 'ArrowLeft': // Strafe left
+        case 'ArrowLeft':
             movePlayer(-Math.sin(player.angle) * player.speed, Math.cos(player.angle) * player.speed);
             break;
-        case 'ArrowRight': // Strafe right
+        case 'ArrowRight':
             movePlayer(Math.sin(player.angle) * player.speed, -Math.cos(player.angle) * player.speed);
+            break;
+        case 'm':
+        case 'M':
+            // manual map cycle
+            loadMap((currentMapIndex + 1) % maps.length);
+            console.log(`Manual map switch -> ${currentMapIndex}`);
+            break;
+        case 'e':
+        case 'E':
+            toggleEditMode();
+            break;
+        case '1':
+            currentTool = TILE_WALL;
+            break;
+        case '0':
+            currentTool = TILE_EMPTY;
+            break;
+        case '2':
+            currentTool = TILE_PORTAL;
+            break;
+        case 'n':
+        case 'N':
+            createNewMap();
+            break;
+        case 'Delete':
+            // clear current map interior (leave walls)
+            for (let y = 1; y < map.length - 1; y++) {
+                for (let x = 1; x < map[y].length - 1; x++) {
+                    map[y][x] = TILE_EMPTY;
+                }
+            }
+            saveMapsDebounced();
             break;
     }
 });
 
-// Clear the screen function
+// Mouse handlers (only active when editMode)
+canvas.addEventListener('mousedown', (e) => {
+    if (!editMode) return;
+    // prevent context menu for right click
+    e.preventDefault();
+    handleCanvasClick(e);
+});
+canvas.addEventListener('mousemove', (e) => {
+    if (!editMode) return;
+    handleCanvasMove(e);
+});
+canvas.addEventListener('contextmenu', (e) => {
+    if (editMode) e.preventDefault();
+});
+
+// Clear screen
 function clearScreen() {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-// Main game loop function
-function gameLoop() {
-    clearScreen();
-
-    // Draw 2D map and player on the left side
-    ctx.fillStyle = 'gray';
+// Draw the 2D overhead map (left side)
+function draw2DMap() {
     for (let y = 0; y < map.length; y++) {
         for (let x = 0; x < map[y].length; x++) {
-            if (map[y][x] === 1) {
-                ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
-            }
+            const tile = map[y][x];
+            if (tile === TILE_WALL) ctx.fillStyle = '#888'; // wall
+            else if (tile === TILE_PORTAL) ctx.fillStyle = '#ffcc00'; // portal
+            else ctx.fillStyle = '#222'; // empty
+            ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+            // optional grid stroke
+            ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+            ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
         }
     }
 
-    // Draw player
+    // draw player
     ctx.fillStyle = 'blue';
-    ctx.fillRect(player.x - 5, player.y - 5, 10, 10); // Player representation
+    ctx.fillRect(player.x - 5, player.y - 5, 10, 10);
 
-    // Cast rays for 3D view on the right side
+    // editor hover highlight
+    if (editMode && hoveredTile) {
+        ctx.strokeStyle = 'rgba(0,255,128,0.9)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(hoveredTile.x * tileSize + 1, hoveredTile.y * tileSize + 1, tileSize - 2, tileSize - 2);
+        ctx.lineWidth = 1;
+    }
+}
+
+// HUD / map info & editor overlay
+function drawMapInfo() {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(12, 12, 320, 92);
+    ctx.fillStyle = '#fff';
+    ctx.font = '14px monospace';
+    ctx.fillText(`Map: ${currentMapIndex + 1} / ${maps.length}`, 20, 33);
+    ctx.fillText(`Player: ${Math.round(player.x)}, ${Math.round(player.y)}`, 20, 52);
+    ctx.fillText(`Mode: ${editMode ? 'EDIT' : 'PLAY'}`, 20, 72);
+    ctx.fillText(`Tool: ${currentTool === TILE_WALL ? 'WALL (1)' : currentTool === TILE_PORTAL ? 'PORTAL (2)' : 'EMPTY (0)'} | Toggle edit: E | New map: N`, 20, 90);
+
+    // small legend
+    const legendX = 12;
+    const legendY = canvas.height - 70;
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(legendX, legendY, 260, 56);
+    ctx.fillStyle = '#fff';
+    ctx.fillText('Left click: paint | Right click: cycle tile | Delete: clear interior', legendX + 8, legendY + 20);
+    ctx.fillText('Save/load stored in localStorage (auto)', legendX + 8, legendY + 40);
+}
+
+// Main loop
+function gameLoop() {
+    clearScreen();
+    draw2DMap();
+    drawMapInfo();
     castRays();
     requestAnimationFrame(gameLoop);
 }
 
-// Start the game loop
+// Initialize and start
+loadMap(currentMapIndex);
 gameLoop();
+
+// Handle resize
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});

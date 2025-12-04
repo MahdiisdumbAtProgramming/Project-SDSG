@@ -1,5 +1,5 @@
 document.getElementById("h").onclick = function () {
-    location.href = "./r"; // Redirects to the parent directory and then to load.html
+    location.href = "./r.html"; // Redirects to the parent directory and then to load.html
 };
 document.getElementById("UT").onclick = function () {
     location.href = "./UNDERTALE/run.html"; // Redirects to the parent directory and then to load.html

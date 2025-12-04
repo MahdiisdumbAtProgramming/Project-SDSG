@@ -86,11 +86,62 @@
     '7cnew.mp3',
     '8cnew.ogg',
     '9cnew.ogg',
-    '10cnew.mp3'
+    '10cnew.mp3',
+    'tuff.mp3',
+    'Perpetuity.mp3',
+    'Sea Shanty2.mp3',
+    'Spider Dnace(cover).mp3',
+    'scampton.wav',
+    'scampton tuff.wav',
+    'Kromer Inhaler.ogg',
+    'Kromer Krusher.ogg',
+    'inmyway.mp3',
+    'Homestuck Vol. 6 - MeGaLoVania.mp3',
+    'VS Friend.mp3',
+    'EBHH MEGALOVANIA (Arrangement).mp3',
+    '1700 sea shanties at 2 am.mp3',
+    '53 One Hell Of A Time.mp3',
+    '48 The Kings Court.mp3',
+    '46 All Bets Are Off.mp3',
+    '40 Junkyard Jive.mp3',
+    '28 Hurry Up.mp3',
+    '22 Fiery Frolic.mp3',
+    '19 Aviary Action.mp3',
+    '13 Floral Fury.mp3'
 ];
+function parseLeadingNumber(name) {
+    const m = name.trim().match(/^(\d+)/);
+    return m ? parseInt(m[1], 10) : null;
+}
 
-// Sort audio files alphabetically
-audioFiles.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+audioFiles.sort((a, b) => {
+    const aLower = a.toLowerCase();
+    const bLower = b.toLowerCase();
+
+    const aNum = parseLeadingNumber(aLower);
+    const bNum = parseLeadingNumber(bLower);
+
+    if (aNum !== null && bNum !== null) {
+        // Both have leading numbers: compare numerically first
+        if (aNum !== bNum) return aNum - bNum;
+        // If numbers equal, compare the remainder of the filename
+        const aRest = aLower.replace(/^\d+/, '').trim();
+        const bRest = bLower.replace(/^\d+/, '').trim();
+        return aRest.localeCompare(bRest);
+    }
+
+    if (aNum !== null && bNum === null) {
+        // Numbered filenames come before non-numbered
+        return -1;
+    }
+
+    if (aNum === null && bNum !== null) {
+        return 1;
+    }
+
+    // Neither has leading number: regular case-insensitive locale compare
+    return aLower.localeCompare(bLower);
+});
 
 const container = document.getElementById('audio-container');
 let currentAudio = null;
