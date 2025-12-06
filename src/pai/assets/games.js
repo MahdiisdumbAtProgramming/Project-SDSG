@@ -61,5 +61,3 @@ const games = [
     "ZombieRaid",
     "ZombyecareVsMahdiStudios"
 ];
-
-export default games;
