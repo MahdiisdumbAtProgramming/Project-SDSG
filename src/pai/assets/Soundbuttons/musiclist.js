@@ -1,12 +1,11 @@
 // This file is auto-generated
 const audioFiles = [
     "Atkwrn.wav",
-    "Floop1.ogg",
-    "Floop2.ogg",
     "Floweyarm.wav",
     "Floweywarn.ogg",
     "Heal.wav",
-    "Inmyway.mp3",
+    "Heartbeat.wav",
+    "Hurt.wav",
     "K.mp3",
     "L.mp3",
     "Laugh.wav",
@@ -21,7 +20,6 @@ const audioFiles = [
     "Spawn.wav",
     "Static.wav",
     "Ted.wav",
-    "Toomuch.mp3",
     "Tuff.mp3",
     "W.ogg"
 ];
