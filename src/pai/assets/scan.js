@@ -23,7 +23,7 @@ directories.forEach(dir => {
     }
 });
 
-const output = `// Auto-generated list of games\nconst games = ${JSON.stringify(games, null, 4)};\n\nexport default games;\n`;
+const output = `// Auto-generated list of games\nconst games = ${JSON.stringify(games, null, 4)};`;
 
 fs.writeFileSync(path.join(currentDir, 'games.js'), output, 'utf8');
 
