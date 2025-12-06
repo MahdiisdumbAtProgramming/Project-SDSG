@@ -1,0 +1,50 @@
+const fs = require("fs");
+const path = require("path");
+
+const FAVICON_TAG = `<link rel="icon" type="image/x-icon" href="./favicon.ico">`;
+
+function processHTML(filePath) {
+    let content = fs.readFileSync(filePath, "utf8");
+
+    // If favicon already exists, skip
+    if (content.includes(FAVICON_TAG)) {
+        console.log(`Skipping (already has favicon): ${filePath}`);
+        return;
+    }
+
+    // Find <head>
+    const headIndex = content.indexOf("<head>");
+    if (headIndex === -1) {
+        console.log(`Skipping (no <head> tag): ${filePath}`);
+        return;
+    }
+
+    // Insert favicon right after <head>
+    const updated =
+        content.slice(0, headIndex + 6) +
+        "\n    " + FAVICON_TAG +
+        content.slice(headIndex + 6);
+
+    fs.writeFileSync(filePath, updated, "utf8");
+    console.log(`Favicon added: ${filePath}`);
+}
+
+function scanDir(directory) {
+    const files = fs.readdirSync(directory);
+
+    for (const file of files) {
+        const fullPath = path.join(directory, file);
+        const stat = fs.statSync(fullPath);
+
+        if (stat.isDirectory()) {
+            scanDir(fullPath);
+        } else if (file.toLowerCase().endsWith(".html")) {
+            processHTML(fullPath);
+        }
+    }
+}
+
+// Start from current directory
+scanDir(process.cwd());
+
+console.log("Done.");
