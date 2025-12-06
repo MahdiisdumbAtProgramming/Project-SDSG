@@ -1,0 +1,64 @@
+@font-face {
+    font-family: 'comic-sans';
+}
+
+body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: 'comic-sans', sans-serif;
+    overflow: hidden;
+}
+
+#text-box {
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 800px;
+    font-size: 1.5em;
+    white-space: pre-wrap;
+    line-height: 1.6;
+    text-align: center;
+}
+
+#image-box {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 600px;
+    max-height: 300px;
+}
+
+    #image-box img {
+        width: 100%;
+        height: auto;
+        display: none;
+    }
+
+.skip-button {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    background: transparent;
+    border: 2px solid white;
+    color: white;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.3s;
+    z-index: 10;
+}
+
+
+    .skip-button:hover {
+        background: white;
+        color: black;
+    }
+
+audio {
+    display: none;
+}

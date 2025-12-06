@@ -45,7 +45,7 @@
             case 'Syntax Highlighting':
             case 'Custom Color Text':
             case 'Spamton':
-            case 'Pride Month Mode':
+            case 'GAY Mode':
                 this.editor.style.color = '#c9d1d9';
                 this.editor.style.background = '#0d1117';
                 break;
@@ -83,8 +83,8 @@ pluginManager.registerPlugin('Custom Color Text', 'Change text color manually', 
 
 // === Pride Month Mode (fixed) ===
 pluginManager.registerPlugin(
-    'Pride Month Mode',
-    'Turns your text into a rainbow!',
+    'GAY Mode',
+    'TURN GAY!',
     (editor, preview, effects) => {
         effects.originalColor = editor.style.color;
         effects.originalBackground = editor.style.background;
@@ -203,56 +203,6 @@ pluginManager.registerPlugin(
         }
     }
 );
-
-// === Embed ===
-pluginManager.registerPlugin('Embed', 'Embed external content in preview', (editor, preview) => {
-    const url = prompt('Enter URL to embed:');
-    if (url) preview.src = url;
-});
-// ==== SDSG Plugin Madness Pack ====
-
-/* 
-  Plugin functions always use (editor, preview, effects) signature.
-  Cleanup functions also use (editor, preview, effects).
-*/
-
-// ==== IDE Plugins ====
-pluginManager.registerPlugin(
-    'Auto Indenter',
-    'Automatically trims start of each line',
-    (editor, preview, effects) => {
-        effects.handler = () => {
-            const lines = editor.value.split('\n');
-            editor.value = lines.map(l => l.trimStart()).join('\n');
-            sdk.updateLineNumbers();
-            sdk.updatePreview();
-        };
-        editor.addEventListener('input', effects.handler);
-    },
-    (editor, preview, effects) => {
-        editor.removeEventListener('input', effects.handler);
-    }
-);
-
-pluginManager.registerPlugin(
-    'Code Mirror Madness',
-    'Pseudo CodeMirror visual theme',
-    (editor, preview, effects) => {
-        editor.style.fontFamily = 'monospace';
-        editor.style.background = '#111';
-        editor.style.color = '#0f0';
-        editor.style.caretColor = '#f0f';
-        editor.style.transition = 'all 0.2s';
-    },
-    (editor, preview, effects) => {
-        editor.style.fontFamily = '';
-        editor.style.background = '';
-        editor.style.color = '';
-        editor.style.caretColor = '';
-        editor.style.transition = '';
-    }
-);
-
 // ==== Tools Plugins ====
 pluginManager.registerPlugin(
     'Live Asset Previewer v2',
@@ -320,22 +270,6 @@ pluginManager.registerPlugin(
     }
 );
 
-
-
-pluginManager.registerPlugin(
-    'Template Spinner',
-    'Rotates through templates every 10 seconds',
-    (editor, preview, effects) => {
-        const names = Object.keys(sdk.templates);
-        let idx = 0;
-        effects.interval = setInterval(() => {
-            sdk.loadTemplate(names[idx]);
-            idx = (idx + 1) % names.length;
-        }, 10000);
-    },
-    (editor, preview, effects) => clearInterval(effects.interval)
-);
-
 // ==== Feedback Plugins ====
 pluginManager.registerPlugin(
     'Smart Complainer',
@@ -367,21 +301,6 @@ pluginManager.registerPlugin(
 );
 
 // ==== Extreme Madness Plugins ====
-pluginManager.registerPlugin(
-    'Keyboard Storm',
-    'Randomly simulates keypresses in editor',
-    (editor, preview, effects) => {
-        effects.interval = setInterval(() => {
-            const chars = 'abcdefghijklmnopqrstuvwxyz!@#$%^&*()_+[]{}';
-            const char = chars[Math.floor(Math.random() * chars.length)];
-            editor.value += char;
-            sdk.updateLineNumbers();
-            sdk.updatePreview();
-        }, 200);
-    },
-    (editor, preview, effects) => clearInterval(effects.interval)
-);
-
 pluginManager.registerPlugin(
     'Template Switcher',
     'Switches preview between SDK templates with a button',
@@ -423,44 +342,6 @@ pluginManager.registerPlugin(
     }
 );
 
-
-
-pluginManager.registerPlugin(
-    'Cat Mode',
-    'Random cat GIF in preview on every keypress',
-    (editor, preview, effects) => {
-        const gifs = [
-            './plugin pics/cat1.webp',
-            './plugin pics/cat2.webp',
-            './plugin pics/cat3.webp',
-        ];
-        effects.handler = () => {
-            preview.src = gifs[Math.floor(Math.random() * gifs.length)];
-        };
-        editor.addEventListener('input', effects.handler);
-    },
-    (editor, preview, effects) => {
-        editor.removeEventListener('input', effects.handler);
-        preview.src = '';
-    }
-);
-
-pluginManager.registerPlugin(
-    'Rainbow Type',
-    'Each typed character turns a random color in preview',
-    (editor, preview, effects) => {
-        effects.handler = () => {
-            const letters = editor.value.split('');
-            preview.srcdoc = `<pre>${letters.map(l => `<span style="color:hsl(${Math.random() * 360},100%,50%)">${l}</span>`).join('')}</pre>`;
-        };
-        editor.addEventListener('input', effects.handler);
-    },
-    (editor, preview, effects) => {
-        editor.removeEventListener('input', effects.handler);
-        preview.srcdoc = '';
-    }
-);
-
 pluginManager.registerPlugin(
     'Confetti Storm',
     'Non-stop confetti',
@@ -478,24 +359,6 @@ pluginManager.registerPlugin(
     },
     (editor, preview, effects) => clearInterval(effects.interval)
 );
-
-pluginManager.registerPlugin(
-    'Apocalypse Mode',
-    'Keyboard Storm + Glitch Rain + Confetti + Rainbow Type',
-    () => {
-        pluginManager.enablePlugin('Keyboard Storm');
-        pluginManager.enablePlugin('Glitch Rain');
-        pluginManager.enablePlugin('Confetti Storm');
-        pluginManager.enablePlugin('Rainbow Type');
-    },
-    () => {
-        pluginManager.disablePlugin('Keyboard Storm');
-        pluginManager.disablePlugin('Glitch Rain');
-        pluginManager.disablePlugin('Confetti Storm');
-        pluginManager.disablePlugin('Rainbow Type');
-    }
-);
-// === Fireworks on Save ===
 // === Fireworks on Export ===
 pluginManager.registerPlugin(
     'Fireworks on Export',
@@ -526,22 +389,6 @@ pluginManager.registerPlugin(
     }
 );
 
-// === Ghost Typing ===
-pluginManager.registerPlugin(
-    'Ghost Typing',
-    'Random letters appear in your editor like a ghost is typing',
-    (editor, preview, effects) => {
-        effects.interval = setInterval(() => {
-            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+[]{};';
-            const char = chars[Math.floor(Math.random() * chars.length)];
-            const pos = editor.selectionStart;
-            editor.value = editor.value.slice(0, pos) + char + editor.value.slice(pos);
-            editor.selectionStart = editor.selectionEnd = pos + 1;
-        }, 500);
-    },
-    (editor, preview, effects) => clearInterval(effects.interval)
-);
-
 // === Floating Emojis ===
 pluginManager.registerPlugin(
     'Floating Emojis',
@@ -564,31 +411,6 @@ pluginManager.registerPlugin(
     (editor, preview, effects) => clearInterval(effects.interval)
 );
 
-// === Drunk Editor ===
-pluginManager.registerPlugin(
-    'Drunk Editor',
-    'Randomly shifts your editor content left/right like it’s drunk',
-    (editor, preview, effects) => {
-        effects.interval = setInterval(() => {
-            editor.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px) rotate(${Math.random() * 2 - 1}deg)`;
-        }, 200);
-    },
-    (editor, preview, effects) => editor.style.transform = ''
-);
-
-// === Rainbow Background ===
-pluginManager.registerPlugin(
-    'Rainbow Background',
-    'Makes the editor background cycle through rainbow colors',
-    (editor, preview, effects) => {
-        let hue = 0;
-        effects.interval = setInterval(() => {
-            hue = (hue + 2) % 360;
-            editor.style.background = `hsl(${hue}, 100%, 20%)`;
-        }, 100);
-    },
-    (editor, preview, effects) => editor.style.background = '#0d1117'
-);
 
 // === Infinite Console Logs ===
 pluginManager.registerPlugin(
@@ -604,16 +426,6 @@ pluginManager.registerPlugin(
 );
 
 // === Preview Shaker ===
-pluginManager.registerPlugin(
-    'Preview Shaker',
-    'Shakes the preview iframe randomly',
-    (editor, preview, effects) => {
-        effects.interval = setInterval(() => {
-            preview.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
-        }, 50);
-    },
-    (editor, preview, effects) => preview.style.transform = ''
-);
 
 // === Typing Confetti ===
 pluginManager.registerPlugin(
@@ -621,7 +433,7 @@ pluginManager.registerPlugin(
     'Confetti explodes on every keypress',
     (editor, preview, effects) => {
         const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js';
+        script.src = 'plugin lib/confetti.browser.min.js';
         document.body.appendChild(script);
         script.onload = () => {
             effects.handler = () => confetti({ particleCount: 15, spread: 100, origin: { y: 0.6 } });

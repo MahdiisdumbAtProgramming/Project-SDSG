@@ -24,61 +24,80 @@ class SDSG {
         for (let i = 0; i < lines; i++) this.lineNumbers.appendChild(document.createElement('div'));
     }
 
-    updatePreview() {
-        // Revoke old object URLs
-        Object.values(this.assetURLs).forEach(url => URL.revokeObjectURL(url));
-        this.assetURLs = {};
+  updatePreview() {
+    // Revoke old URLs
+    Object.values(this.assetURLs).forEach(url => URL.revokeObjectURL(url));
+    this.assetURLs = {};
 
-        // Generate new object URLs for assets
-        for (const [fname, file] of Object.entries(this.assets)) {
-            this.assetURLs[fname] = URL.createObjectURL(file);
-        }
+    // Build object URLs
+    for (const [fname, file] of Object.entries(this.assets)) {
+        this.assetURLs[fname] = URL.createObjectURL(file);
+    }
 
-        // Build asset elements automatically
-        let assetHTML = '';
-        for (const [fname, file] of Object.entries(this.assets)) {
-            const url = this.assetURLs[fname];
-            if (file.type.startsWith('image/')) {
-                assetHTML += `<img src="${url}" alt="${fname}" style="max-width:100%; margin:10px 0;">\n`;
-            } else if (file.type.startsWith('audio/')) {
-                assetHTML += `<audio controls src="${url}" style="display:block; margin:10px 0;"></audio>\n`;
-            } else if (file.type === 'text/plain') {
-                assetHTML += `<pre id="text_${fname}" style="background:#f9f9f9; padding:5px; border:1px solid #eee; overflow-x:auto; margin:10px 0;"></pre>\n`;
-            }
-        }
+    // Build asset preview elements
+    let assetHTML = "";
+    for (const [fname, file] of Object.entries(this.assets)) {
+        const url = this.assetURLs[fname];
 
-        // Build ASSETS object for scripts
-        let assetScript = '<script>const ASSETS = {};\n';
-        for (const [fname, url] of Object.entries(this.assetURLs)) {
-            assetScript += `ASSETS["${fname}"] = "${url}";\n`;
-        }
-        assetScript += '</script>\n';
-
-        // Combine user HTML + assets
-        let fullHTML = this.editor.value + '\n' + assetHTML + '\n' + assetScript;
-
-        // Handle text files asynchronously
-        const textFiles = Object.entries(this.assets).filter(([_, f]) => f.type === 'text/plain');
-        if (textFiles.length > 0) {
-            let readers = textFiles.map(([fname, file]) => {
-                return new Promise(resolve => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve({ fname, content: reader.result });
-                    reader.readAsText(file);
-                });
-            });
-            Promise.all(readers).then(results => {
-                results.forEach(({ fname, content }) => {
-                    fullHTML += `<script>
-                        document.getElementById("text_${fname}").textContent = ${JSON.stringify(content)};
-                    </script>\n`;
-                });
-                this._setPreviewBlob(fullHTML);
-            });
-        } else {
-            this._setPreviewBlob(fullHTML);
+        if (file.type.startsWith("image/")) {
+            assetHTML += `<img src="${url}" alt="${fname}" style="max-width:100%; margin:10px 0;">\n`;
+        } else if (file.type.startsWith("audio/")) {
+            assetHTML += `<audio controls src="${url}" style="display:block; margin:10px 0;"></audio>\n`;
+        } else if (file.type === "text/plain") {
+            assetHTML += `<pre id="text_${fname}" style="background:#f9f9f9; padding:5px; border:1px solid #eee; overflow-x:auto; margin:10px 0;"></pre>\n`;
         }
     }
+
+    // Define ASSETS
+    let assetScript = "<script>const ASSETS = {};\n";
+    for (const [fname, url] of Object.entries(this.assetURLs)) {
+        assetScript += `ASSETS["${fname}"] = "${url}";\n`;
+    }
+    assetScript += "</script>\n";
+
+    // Wrap user HTML properly
+    let fullHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            ${assetScript}
+        </head>
+        <body>
+            ${this.editor.value}
+            ${assetHTML}
+        </body>
+        </html>
+    `;
+
+    // Handle text assets after document loads
+    const textFiles = Object.entries(this.assets).filter(([_, f]) => f.type === "text/plain");
+
+    if (textFiles.length > 0) {
+        Promise.all(
+            textFiles.map(([fname, file]) => {
+                return new Promise(resolve => {
+                    const r = new FileReader();
+                    r.onload = () => resolve({ fname, content: r.result });
+                    r.readAsText(file);
+                });
+            })
+        ).then(results => {
+            results.forEach(({ fname, content }) => {
+                fullHTML += `
+                    <script>
+                        document.addEventListener("DOMContentLoaded", () => {
+                            const t = document.getElementById("text_${fname}");
+                            if (t) t.textContent = ${JSON.stringify(content)};
+                        });
+                    </script>`;
+            });
+
+            this._setPreviewBlob(fullHTML);
+        });
+    } else {
+        this._setPreviewBlob(fullHTML);
+    }
+}
 
     _setPreviewBlob(htmlContent) {
         const blob = new Blob([htmlContent], { type: 'text/html' });

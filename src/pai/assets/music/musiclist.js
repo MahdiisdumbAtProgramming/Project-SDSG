@@ -107,7 +107,8 @@
     '28 Hurry Up.mp3',
     '22 Fiery Frolic.mp3',
     '19 Aviary Action.mp3',
-    '13 Floral Fury.mp3'
+    '13 Floral Fury.mp3',
+    'Scampton2.0.mp3'
 ];
 function parseLeadingNumber(name) {
     const m = name.trim().match(/^(\d+)/);

@@ -7,58 +7,10 @@
     <script src="libs/jszip.min.js"></script>
     <script src="libs/FileSaver.min.js"></script>
 </head>
-<!-- In-Page Console -->
-<div id="sdsgConsole" style="
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 200px; /* fixed height to make it visible */
-    overflow-y: auto;
-    background: rgba(13,17,23,0.95); /* slight transparency */
-    color: #c9d1d9;
-    font-family: monospace;
-    font-size: 12px;
-    border-top: 2px solid #58a6ff;
-    padding: 5px;
-    z-index: 10000;
-"></div>
-
-<script>
-    (function () {
-        const consoleEl = document.getElementById('sdsdConsole');
-
-        function addMessage(type, msg) {
-            const div = document.createElement('div');
-            div.textContent = `[${type.toUpperCase()}] ${msg}`;
-            div.style.color = type === 'error' ? 'red' : type === 'warn' ? 'orange' : '#c9d1d9';
-            consoleEl.appendChild(div);
-            consoleEl.scrollTop = consoleEl.scrollHeight; // auto-scroll
-        }
-
-        // Override default console methods
-        ['log', 'warn', 'error', 'info'].forEach(fn => {
-            const original = console[fn];
-            console[fn] = function (...args) {
-                original.apply(console, args);
-                addMessage(fn, args.join(' '));
-            };
-        });
-
-        // Optional: allow toggling visibility with ~ key
-        document.addEventListener('keydown', e => {
-            if (e.key === '`') { // ~ key
-                consoleEl.style.display = consoleEl.style.display === 'none' ? 'block' : 'none';
-            }
-        });
-
-        console.log("SDSG Console initialized! use ` to toggle this");
-    })();
-</script>
-
 <body>
     <div class="container">
         <h1>Project SDSG SDK</h1>
+        <div id="sdsgConsole" style="position: fixed;bottom: 0;left: 0; width: 100%; height: 200px; /* fixed height to make it visible */overflow-y: auto;background: rgba(13,17,23,0.95); /* slight transparency */color: #c9d1d9;font-family: monospace;font-size: 12px;border-top: 2px solid #58a6ff;padding: 5px;z-index: 10000;"></div>
         <header>
             <input id="gameName" placeholder="Enter Game Name">
             <select id="templateSelect"></select>
@@ -74,7 +26,57 @@
         <iframe id="preview"></iframe>
         <footer>SD‑SG // REAL GAME SDK // CHAOS ENGINE // CODE IS FREEDOM</footer>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+        const consoleEl = document.getElementById('sdsgConsole');
+        if (!consoleEl) {
+        alert("sdsgConsole not found — you messed up the HTML layout.");
+        return;
+        }
 
+        function addMessage(type, msg) {
+        const div = document.createElement('div');
+        div.textContent = `[${type.toUpperCase()}] ${msg}`;
+        div.style.color =
+        type === 'error' ? 'red' :
+        type === 'warn' ? 'orange' :
+        '#c9d1d9';
+        consoleEl.appendChild(div);
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        ['log', 'warn', 'error', 'info'].forEach(fn => {
+        const original = console[fn];
+        console[fn] = function (...args) {
+        original.apply(console, args);
+        addMessage(fn, args.join(' '));
+        };
+        });
+
+        window.onerror = function (msg, src, line, col, err) {
+        addMessage(
+        'error',
+        `${msg} @ ${src}:${line}:${col} ${err ? '(' + err.stack + ')' : ''}`
+        );
+        };
+
+        window.addEventListener('unhandledrejection', event => {
+        addMessage(
+        'error',
+        `Unhandled Promise Rejection: ${event.reason}`
+        );
+        });
+
+        document.addEventListener('keydown', e => {
+        if (e.key === '`') {
+        consoleEl.style.display =
+        consoleEl.style.display === 'none' ? 'block' : 'none';
+        }
+        });
+
+        console.log("SDSG Console initialized! use ` to toggle this");
+        });
+    </script>
     <!-- Core SDK -->
     <script src="js/sdk.js"></script>
 
