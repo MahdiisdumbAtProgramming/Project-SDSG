@@ -63,7 +63,7 @@ body {
     position: absolute;
     width: 80px; /* slightly bigger to see more of the character */
     height: 120px; /* keep aspect ratio closer to original portrait */
-    background-image: url('pdiddy.jpg');
+    background-image: url('pdiddy.png');
     background-size: contain; /* scales the image without distortion */
     background-repeat: no-repeat;
     background-position: center bottom; /* show bottom of character (like standing on floor) */
