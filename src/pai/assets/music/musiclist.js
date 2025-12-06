@@ -1,180 +1,114 @@
-﻿const audioFiles = [
-    "Ivestigations.mp3",
-    "WAN1.mp3",
-    "Lingangulli Chill.mp3",
-    "Lingangulli N64.mp3",
-    "Wet Hands.mp3",
-    "Fishy On Me.mp3",
-    "Elevator Music.mp3",
-    "cc3d.mp3",
-    "gman.mp3",
-    "sinner.mp3",
-    "Mr mcbeth.mp3",
-    "hl.mp3",
-    "echol.mp3",
-    "echoa.mp3",
-    "echoc.mp3",
-    "eggman sonicexe.mp3",
-    "sampton.ogg",
-    "spiderdance.mp3",
-    "Undyne beta.mp3",
-    "vauge.mp3",
-    "metal crusher.ogg",
-    "CP.mp3",
-    "AH.mp3",
-    "EFFOC.mp3",
-    "forskin.mp3",
-    "CRINGE.mp3",
+// This file is auto-generated
+const audioFiles = [
+    "10c.mp3",
+    "13_Floral_Fury.mp3",
+    "1700_Sea_Shanties_At_2_Am.mp3",
+    "19_Aviary_Action.mp3",
     "1fs.ogg",
+    "22_Fiery_Frolic.mp3",
+    "28_Hurry_Up.mp3",
     "2fs.ogg",
     "3fs.ogg",
+    "40_Junkyard_Jive.mp3",
+    "46_All_Bets_Are_Off.mp3",
+    "48_The_Kings_Court.mp3",
+    "4c.mp3",
     "4fs.ogg",
+    "53_One_Hell_Of_A_Time.mp3",
     "5fs.ogg",
     "6fs.ogg",
-    "floop1.ogg",
-    "floop2.ogg",
-    "flowey1.ogg",
-    "flowey2.ogg",
-    "floweywarn.ogg",
-    "OH.wav",
-    "TED.wav",
-    "snicker.wav",
-    "static.wav",
-    "pf.ogg",
-    "finale.ogg",
-    "spawn.wav",
-    "atkwrn.wav",
-    "floweyarm.wav",
-    "λ finale.mp3",
-    "1c.mp3",
-    "2c.mp3",
-    "3c.mp3",
-    "4c.mp3",
-    "5c.mp3",
-    "6c.ogg",
     "7c.ogg",
-    "8c.ogg",
     "9c.ogg",
-    "10c.mp3",
-    "dan.mp3",
-    "heal.wav",
-    "heartbeat.wav",
-    "hurt.wav",
-    "k.mp3",
-    "l.mp3",
-    "mv.wav",
-    "sel.wav",
-    "OL.ogg",
-    "oheal.wav",
-    "s.wav",
-    "peace.mp3",
-    "slash.wav",
-    "nuetural.ogg",
-    "toomuch.mp3",
-    "sad boss.mp3",
-    "w.ogg",
-    "intro.mp3",
-    "knight.ogg",
-    'Glitchsong.wav',
-    'Wither Storm.mp3',
-    '1cnew.mp3',
-    '2cnew.mp3',
-    '3cnew.mp3',
-    '4cnew.mp3',
-    '5cnew.mp3',
-    '6cnew.ogg',
-    '7cnew.mp3',
-    '8cnew.ogg',
-    '9cnew.ogg',
-    '10cnew.mp3',
-    'tuff.mp3',
-    'Perpetuity.mp3',
-    'Sea Shanty2.mp3',
-    'Spider Dnace(cover).mp3',
-    'scampton.wav',
-    'scampton tuff.wav',
-    'Kromer Inhaler.ogg',
-    'Kromer Krusher.ogg',
-    'inmyway.mp3',
-    'Homestuck Vol. 6 - MeGaLoVania.mp3',
-    'VS Friend.mp3',
-    'EBHH MEGALOVANIA (Arrangement).mp3',
-    '1700 sea shanties at 2 am.mp3',
-    '53 One Hell Of A Time.mp3',
-    '48 The Kings Court.mp3',
-    '46 All Bets Are Off.mp3',
-    '40 Junkyard Jive.mp3',
-    '28 Hurry Up.mp3',
-    '22 Fiery Frolic.mp3',
-    '19 Aviary Action.mp3',
-    '13 Floral Fury.mp3',
-    'Scampton2.0.mp3',
-    'diddyblud.mp3',
+    "Ah.mp3",
+    "Anticaption.mp3",
+    "Atkwrn.wav",
+    "British_Music.mp3",
+    "Capuchin_Theme.mp3",
+    "Cc3d.mp3",
+    "Chase.mp3",
+    "Cp.mp3",
+    "Cringe.mp3",
+    "Dan.mp3",
+    "Diddyblud.mp3",
+    "Doom_Music.mp3",
+    "Ebhh_Megalovania_(arrangement).mp3",
+    "Echoa.mp3",
+    "Echoc.mp3",
+    "Echol.mp3",
+    "Effoc.mp3",
+    "Eggman_Sonicexe.mp3",
+    "Elevator_Music.mp3",
+    "Finale.ogg",
+    "Fishy_On_Me.mp3",
+    "Flashback.mp3",
+    "Floop1.ogg",
+    "Floop2.ogg",
+    "Flowey_Deltatraveler.mp3",
+    "Flowey_But_Jevil.mp3",
+    "Flowey1.ogg",
+    "Flowey2.ogg",
+    "Floweyarm.wav",
+    "Floweywarn.ogg",
+    "Flufing_A_Duck.mp3",
+    "Forskin.mp3",
+    "Freedom_In_Sin.mp3",
+    "Funky_Town.mp3",
+    "Glitchsong.wav",
+    "Gman_Radio.mp3",
+    "Heal.wav",
+    "Heartbeat.wav",
+    "Hl.mp3",
+    "Homestuck_Megolovania.mp3",
+    "Hurt.wav",
+    "Inmyway.mp3",
+    "Intro.mp3",
+    "Ivestigations.mp3",
+    "K.mp3",
+    "Knight.ogg",
+    "Kromer_Inhaler.ogg",
+    "Kromer_Krusher.ogg",
+    "L.mp3",
+    "Laugh.wav",
+    "Lingangulli_Chill.mp3",
+    "Lingangulli_N64.mp3",
+    "Metal_Crusher_8b.ogg",
+    "Metal_Crusher.ogg",
+    "Mr_Mcbeth.mp3",
+    "Mv.wav",
+    "Nhgaaaaaa.mp3",
+    "Nhgaaaaaa.ogg",
+    "Nuetural.ogg",
+    "Oh.wav",
+    "Oheal.wav",
+    "Ol.ogg",
+    "Peace.mp3",
+    "Perpetuity.mp3",
+    "Pf.ogg",
+    "S.wav",
+    "Sad_Boss.mp3",
+    "Scampton_Tuff.wav",
+    "Scampton.wav",
+    "Scampton2.0.mp3",
+    "Sea_Shanty2.mp3",
+    "Sel.wav",
+    "Sinner.mp3",
+    "Slash.wav",
+    "Sneaky_Snitch.mp3",
+    "Snicker.wav",
+    "Sojb.mp3",
+    "Spamton.ogg",
+    "Spawn.wav",
+    "Spider_Dnace(cover).mp3",
+    "Spiderdance.mp3",
+    "Static.wav",
+    "Ted.wav",
+    "Tuff.mp3",
+    "Undyne_Beta.mp3",
+    "Vauge.mp3",
+    "Vs_Friend.mp3",
+    "W.ogg",
+    "Wan1.mp3",
+    "Wet_Hands.mp3",
+    "Wither_Storm.mp3",
+    "Λ_Finale.mp3"
 ];
-function parseLeadingNumber(name) {
-    const m = name.trim().match(/^(\d+)/);
-    return m ? parseInt(m[1], 10) : null;
-}
-
-audioFiles.sort((a, b) => {
-    const aLower = a.toLowerCase();
-    const bLower = b.toLowerCase();
-
-    const aNum = parseLeadingNumber(aLower);
-    const bNum = parseLeadingNumber(bLower);
-
-    if (aNum !== null && bNum !== null) {
-        // Both have leading numbers: compare numerically first
-        if (aNum !== bNum) return aNum - bNum;
-        // If numbers equal, compare the remainder of the filename
-        const aRest = aLower.replace(/^\d+/, '').trim();
-        const bRest = bLower.replace(/^\d+/, '').trim();
-        return aRest.localeCompare(bRest);
-    }
-
-    if (aNum !== null && bNum === null) {
-        // Numbered filenames come before non-numbered
-        return -1;
-    }
-
-    if (aNum === null && bNum !== null) {
-        return 1;
-    }
-
-    // Neither has leading number: regular case-insensitive locale compare
-    return aLower.localeCompare(bLower);
-});
-
-const container = document.getElementById('audio-container');
-let currentAudio = null;
-let activeButton = null;
-
-audioFiles.forEach(file => {
-    const button = document.createElement('button');
-    button.textContent = file;
-    button.classList.add('audio-button');
-
-    // Load audio from /mus/ folder
-    const audio = new Audio(`./mus/${file}`);
-    audio.loop = true;
-
-    button.addEventListener('click', () => {
-        // Stop any currently playing audio
-        if (currentAudio && currentAudio !== audio) {
-            currentAudio.pause();
-            currentAudio.currentTime = 0;
-        }
-
-        // Play the clicked audio from start
-        audio.currentTime = 0;
-        audio.play();
-        currentAudio = audio;
-
-        // Highlight the active button
-        if (activeButton) activeButton.classList.remove('active');
-        button.classList.add('active');
-        activeButton = button;
-    });
-
-    container.appendChild(button);
-});
