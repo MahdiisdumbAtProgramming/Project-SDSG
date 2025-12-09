@@ -14,5 +14,5 @@ const premiumGames = [
     "Sonic.EXE",
     "UCN",
     "UltraKill",
-    "UNDERTALEANDDELTARUNE"
+    "UNDERTALEDELTARUNE"
 ];
