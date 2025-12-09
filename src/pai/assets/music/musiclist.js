@@ -1,6 +1,7 @@
 // This file is auto-generated
 const audioFiles = [
     "Ah.mp3",
+    "Anitcipation+inmyway.ogg",
     "Anticaption.mp3",
     "Asgore_Yellow+main.mp3",
     "British_Music.mp3",
@@ -44,7 +45,6 @@ const audioFiles = [
     "Hl.mp3",
     "Hs_Megolavania.mp3",
     "Hurry_Up.mp3",
-    "Inmyway.mp3",
     "Intro.mp3",
     "Investigations.mp3",
     "King_Dice.mp3",

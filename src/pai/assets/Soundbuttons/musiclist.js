@@ -6,6 +6,7 @@ const audioFiles = [
     "Heal.wav",
     "Heartbeat.wav",
     "Hurt.wav",
+    "Inmyway.mp3",
     "K.mp3",
     "L.mp3",
     "Laugh.wav",
