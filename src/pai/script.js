@@ -35,7 +35,9 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("web").onclick = function () {
         location.href = "./ifweb/run.html";
     };
-
+    document.getElementById("P").onclick = function () {
+    location.href = "./PREMIUM/run.html";
+    }
     const today = new Date();
     const month = today.getMonth(); // 0-indexed: October = 9, November = 10
     const day = today.getDate();

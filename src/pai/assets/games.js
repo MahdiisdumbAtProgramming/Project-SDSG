@@ -38,7 +38,6 @@ const games = [
     "Perlin-Noise",
     "Pics",
     "Platformer",
-    "PREMIUM",
     "Ransomware",
     "Raycaster-Engine",
     "Redirect-Test",
