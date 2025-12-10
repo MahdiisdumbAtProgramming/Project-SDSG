@@ -1,6 +1,6 @@
-src/pai/assets/DANK-FLOWEY/cringeflowey.sb3 filter=lfs diff=lfs merge=lfs -text
 src/pai/assets/DANK-FLOWEY/run.html filter=lfs diff=lfs merge=lfs -text
 src/pai/assets/Ransomware/run.html filter=lfs diff=lfs merge=lfs -text
-src/pai/assets/Ransomware/Ransomware.sb3 filter=lfs diff=lfs merge=lfs -text
 src/pai/PREMIUM/assets/Deltarune/chapter3_windows/data.win filter=lfs diff=lfs merge=lfs -text
 src/pai/PREMIUM/assets/Deltarune/chapter4_windows/data.win filter=lfs diff=lfs merge=lfs -text
+"src/pai/PREMIUM/assets/huh/stealer leave/there is nothing pay then you get/what are you doing/STOP/i cant understand/security left/Deltatraveler/run.html" filter=lfs diff=lfs merge=lfs -text
+

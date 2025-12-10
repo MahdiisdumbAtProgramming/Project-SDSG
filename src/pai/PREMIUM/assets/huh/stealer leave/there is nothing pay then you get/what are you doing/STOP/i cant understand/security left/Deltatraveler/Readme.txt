@@ -1,1 +1,1 @@
-this is for GitHub i cant really upload it https://cake-logic.itch.io/deltatraveler-web-port use that link to download the offline version
+this is for GitHub i cant really upload it deltatraveler-webport.netlify.app/
