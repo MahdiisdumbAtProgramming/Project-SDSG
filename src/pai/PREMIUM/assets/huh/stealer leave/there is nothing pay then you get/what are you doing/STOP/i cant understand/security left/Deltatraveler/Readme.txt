@@ -1,1 +1,0 @@
-this is for GitHub i cant really upload it deltatraveler-webport.netlify.app/
