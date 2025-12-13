@@ -36,7 +36,6 @@ const games = [
     "Pac-Man",
     "Parry-Sim",
     "Perlin-Noise",
-    "Pics",
     "Platformer",
     "Ransomware",
     "Raycaster-Engine",
