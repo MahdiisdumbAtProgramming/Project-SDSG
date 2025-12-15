@@ -18,17 +18,8 @@ Initializing CRT interface...
 Loading forbidden software...
 `;
 
-
-        let bootIndex = 0;
-
         function typeBoot() {
-        if (bootIndex < bootText.length) {
-        output.textContent += bootText[bootIndex++];
-        setTimeout(typeBoot, 30);
-        } else {
-        inputLine.hidden = false;
-        input.focus();
-        }
+        print(bootText);
         }
 
         /* ---------- COMMAND HANDLING ---------- */
@@ -89,23 +80,143 @@ case "tree":
         /* START SEQUENCE */
     case "start":
     const premiumActive = localStorage.getItem("SDSG") === "active";
+    const games = [
+    "AoOni",
+    "Appel",
+    "Arena",
+    "BELTAGOON",
+    "Bomb-Tag",
+    "calc",
+    "Cave-Communications",
+    "CeaserCipher",
+    "ChinesePVZ",
+    "ClickCounter",
+    "CookieClicker",
+    "CPS",
+    "CrazyCattle3D",
+    "DANK-FLOWEY",
+    "Diddy",
+    "echovr2d",
+    "Fish",
+    "FlappyBird",
+    "FlipAMeanGuy",
+    "freemoney",
+    "Geometry-Dash-(ASS)",
+    "Goofy-Goober",
+    "Half-Price",
+    "ITU(WIFI)",
+    "Kabby-Lame-Ahh",
+    "legacy(WIFI)",
+    "Level-Gen",
+    "Lore",
+    "Marcord(Wifi)",
+    "Mario",
+    "MinecraftOffline",
+    "music",
+    "Omega-Flowey",
+    "Pac-Man",
+    "Parry-Sim",
+    "Perlin-Noise",
+    "Platformer",
+    "Ransomware",
+    "Raycaster-Engine",
+    "Redirect-Test",
+    "Relegioustext",
+    "RenderEngine",
+    "RisingShepTone",
+    "Scampton",
+    "SDKTEST",
+    "Sitetest",
+    "Slope",
+    "Snake",
+    "SnowRider3D",
+    "Soundbuttons",
+    "SpaceInvaders",
+    "Tag",
+    "VoxelTest",
+    "WEARE1",
+    "WebsiteTest",
+    "ZombieRaid",
+    "ZombyecareVsMahdiStudios"
+];
+const premiumGames = [
+    "BaldisBaisics",
+    "BaldisPlus",
+    "bergentruck",
+    "Deltatraveler",
+    "karlson",
+    "Minesweeperplus",
+    "OGFNF",
+    "PeoplePlayground",
+    "PizzaTower",
+    "raft",
+    "slender",
+    "Sonic.EXE",
+    "UCN",
+    "UltraKill",
+    "UNDERTALE-and-DELTARUNE"
+];
+const steps = [
+    "Launching SDSG...",
+    "Loading assets...",
+    "Scanning directories...",
+    "Detecting games...",
+    `Found BASIC GAMES: ${games.join(", ")}`,
+    "Configuring settings...",
+    "Applying user preferences...",
+    "Setting up environment...",
+    premiumActive
+        ? `PREMIUM license: YES\nDetecting PREMIUM games...\nFound PREMIUM GAMES: ${premiumGames.join(", ")}`
+        : "PREMIUM license: NO",
+    "Optimizing performance...",
+    "Compiling WebAssembly...",
+    "Linking HTML5 modules...",
+    "Verifying integrity...",
+    "Verification passed (somehow)",
+    "Initializing games...",
+    "Preparing user interface...",
+    "Starting services...",
+    "Establishing connections...",
+    "Final checks...",
+    "All systems go.",
+    "Starting SDSG core...",
+    "Getting Token From Mahdi Studios",
+    "Token acquired.",
+    "Connecting to Mahdi Studios servers...",
+    "Connection established.",
+    "Authenticating...",
+    "Authentication successful.",
+    "Mahdiisdumb Authenticating...",
+    "Authentication complete.",
+    "Mahdiisdumb Says Hi!",
+    "Loading user data...",
+    "High score data loaded.",
+    "Mahdi Studios says Hi but its just the employes",
+    "Woops Forgot to close that server connection",
+    "Closing unused connections...",
+    "Woops forgot music",
+        "Loading background music...",
+    "Background music loaded.",
+    "Loading Fonts...",
+  "Fonts loaded.",
+  "Applying Themes...",
+  "Themes applied.",
+  "Changelogs verified to your version.",
+  "status checks complete.",
+  "Contact links updated.",
+  "Verification of src complete.",
+  "Mahdiisdumb says if any problem occurs contact us.",
+  "All set!",
+    "Preparing launch sequence...",
+    "Launching in 3...",
+    "Launching in 2...",
+    "Launching in 1...",
+    "Finalizing launch...",
+    "SDSG Launched! Enjoy.",
+    "Redirecting...",
+    "while Redirecting, remember to check out Mahdiisdumbs github github.com/Mahdiisdumb",
+];
 
-    const steps = [
-        "Launching SDSG...",
-        "Loading assets...",
-        "Scanning directories...",
-        "Checking PREMIUM licenses...",
-        premiumActive
-            ? "PREMIUM license: YES"
-            : "PREMIUM license: NO",
-        "Compiling WebAssembly...",
-        "Linking HTML5 modules...",
-        "Verifying integrity...",
-        "Verification passed (somehow)",
-        "Initializing games...",
-        "Finalizing launch...",
-        "SDSG Launched! Enjoy."
-    ];
 
     steps.forEach((msg, i) => {
         setTimeout(() => print(msg), i * 800);
