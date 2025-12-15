@@ -1,25 +1,19 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/x-icon" href="./favicon.ico">
-    
-    
-    
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Project sdsg — Intro</title>
-    <link href="style.css" rel="stylesheet" />
+    <meta charset="UTF-8">
+    <title>SDSG CLI</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div id="image-box">
-        <img id="scene-img" src="" alt="Scene Image" />
-    </div>
-    <div id="text-box"></div>
-    <button class="skip-button" onclick="redirect()">Skip Intro</button>
-    <audio id="intro-audio" autoplay>
-        <source src="./introresources/intro.mp3" type="audio/ogg">
-    </audio>
 
+<body>
+    <div id="crt">
+        <div id="output"></div>
+        <div id="input-line" hidden>
+            <span class="prompt">SDSG&gt;</span>
+            <input id="command" autofocus />
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>

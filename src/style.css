@@ -1,64 +1,58 @@
-@font-face {
-    font-family: 'comic-sans';
-}
-
 body {
     margin: 0;
     background: black;
-    color: white;
-    font-family: 'comic-sans', sans-serif;
+    color: #00ff66;
+    font-family: monospace;
     overflow: hidden;
 }
 
-#text-box {
-    position: absolute;
-    top: 60%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 80%;
-    max-width: 800px;
-    font-size: 1.5em;
+#crt {
+    height: 100vh;
+    padding: 20px;
+    animation: flicker 0.12s infinite;
+}
+
+/* CRT flicker */
+@keyframes flicker {
+    0% {
+        opacity: 0.98;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.97;
+    }
+}
+
+/* Scanlines */
+#crt::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient( to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.2) 1px, transparent 1px, transparent 3px );
+    pointer-events: none;
+}
+
+#output {
     white-space: pre-wrap;
-    line-height: 1.6;
-    text-align: center;
 }
 
-#image-box {
-    position: absolute;
-    top: 10%;
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: 600px;
-    max-height: 300px;
+#input-line {
+    display: flex;
 }
 
-    #image-box img {
-        width: 100%;
-        height: auto;
-        display: none;
-    }
-
-.skip-button {
-    position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 10px 20px;
-    background: transparent;
-    border: 2px solid white;
-    color: white;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background 0.3s;
-    z-index: 10;
+.prompt {
+    margin-right: 5px;
 }
 
-
-    .skip-button:hover {
-        background: white;
-        color: black;
-    }
-
-audio {
-    display: none;
+#command {
+    background: black;
+    color: #00ff66;
+    border: none;
+    outline: none;
+    font-family: monospace;
+    width: 80%;
 }
