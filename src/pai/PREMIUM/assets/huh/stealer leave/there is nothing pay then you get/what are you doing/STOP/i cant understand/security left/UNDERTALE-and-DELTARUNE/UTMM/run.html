@@ -1,98 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <link rel="icon" type="image/x-icon" href="./favicon.ico">
     
     
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>.shortpie.'s UNDERTALE web port!</title>
-    <meta name="theme-color" content="#000000" />
-    <link rel="stylesheet" href="style.css" />
-    
-  </head>
-  <body>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <title>UTMM</title>
     <div class="container">
-      <h2>welcome to</h2>
-      <h1 class="shortpie">&nbsp;.shortpie.'s</h1>
-      <h3>MAHDIISDUMBS MUSIC MODS</h3>
-      <br>
-      <img style="margin: 0;" src="undertale_logo.jpg" alt="UNDERTALE" class="logo" />
-      <h1 style="display: block; margin: 0;">web port!</h1>
-      <img id="dog" class="toby" src="10thdog.png" alt="toby">
-      <img class="toby10th" src="10thanniv.png" alt="toby">
-      <audio id="audio-player" preload="auto"></audio>
-      <script>
-        const dogElement = document.getElementById('dog');
-        const audioPlayer = document.getElementById('audio-player');
-        dogElement.addEventListener('mouseenter', () => {
-          dogElement.src = '10thdogmouth.png';
-        });
-        dogElement.addEventListener('mouseleave', () => {
-          dogElement.src = '10thdog.png';
-        });
-        dogElement.addEventListener('click', () => {
-          audioPlayer.src = '6.mp3';
-          audioPlayer.play();
-        });
-      </script>
-      <div class="button-group">
-          <div id="chapterButtons" class="chapter-buttons">
-            <button id="play" class="chapter-button-1">
-              <span class="button-label">START</span>
-            </button>
-          </div>
-          </div>
-      </div>
-      <script>
-          async function loadthingy(url) {
-            try {
-                const res = await fetch(`${url}?t=${Date.now()}`);
-                const html = await res.text();
-                const newTab = window.open('about:blank');
-                newTab.document.open();
-                newTab.document.write(html);
-                newTab.document.close();
-                newTab.focus();
-                window.close();
-            } catch (error) {
-              console.error('Error loading page:', error);
-            }
-          }
-          
-          async function loadplay(url) {
-              try {
-                  const res = await fetch(`${url}?t=${Date.now()}`);
-                  const html = await res.text();
-                  const newTab = window.open('about:blank');
-                  if (!newTab) {
-                      console.error("Popup blocked — user gesture not recognized");
-                      return;
-                  }
-                  newTab.document.open();
-                  newTab.document.write(html);
-                  newTab.document.close();
-                  newTab.focus();
-                  window.close();
-              } catch (error) {
-                  console.error('Error loading page:', error);
-              }
-          }
-
-          document.getElementById('play').addEventListener('click', async () => {
-              const requiredKey = "underverifmm";
-              const requiredValue = "fea2fb654f17156a8393d060f5b8a2d3833fdf96325b698da7596c76a2d041e9";
-
-              const storedValue = localStorage.getItem(requiredKey);
-
-              if (storedValue !== requiredValue) {
-                  await loadplay("https://cdn.jsdelivr.net/gh/Mahdiisdumb/SDSG-UT-Mahdiidumbs-music-mods@main/utweb/verif.html");
-              } else {
-                  await loadplay("https://cdn.jsdelivr.net/gh/Mahdiisdumb/SDSG-UT-Mahdiidumbs-music-mods@main/utweb/play/index.html");
-              }
-          });
-          
-          const base = document.querySelector('base')?.href || window.location.origin;
-          </script>
-  </body>
+        <h1>UNDERTALE MAHDIISDUMBS MUSIC MODS</h1>
+        <button id="h">Load</button>
+        <script src="script.js"></script>
+        <audio src="music.ogg" autoplay controls loop></audio>
+    </div>
+</body>
 </html>
