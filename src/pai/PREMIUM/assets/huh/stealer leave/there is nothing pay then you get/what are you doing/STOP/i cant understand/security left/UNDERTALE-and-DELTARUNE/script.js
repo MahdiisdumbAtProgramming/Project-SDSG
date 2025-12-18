@@ -16,3 +16,6 @@ document.getElementById("UT10").onclick = function () {
 document.getElementById("BR").onclick = function () {
     location.href = "./DBR/run.html"; // Redirects to the parent directory and then to load.html
 };
+document.getElementById("UTMM").onclick = function () {
+    location.href = "./UTMM/run.html"; // Redirects to the parent directory and then to load.html
+};
