@@ -3,6 +3,7 @@ const games = [
     "AoOni",
     "Appel",
     "Arena",
+    "BeanPlats3D",
     "BELTAGOON",
     "Bomb-Tag",
     "calc",
