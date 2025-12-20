@@ -13,6 +13,9 @@ const skipList = new Set([
   'package.json',
   'package-lock.json',
   '.vs',
+  '.gitattributes',
+  '.gitignore',
+  'README.md',
   zipName // so it doesn't include the zip itself
 ]);
 

@@ -32,6 +32,7 @@ const games = [
     "Marcord(Wifi)",
     "Mario",
     "MinecraftOffline",
+    "Minesweeper",
     "music",
     "Omega-Flowey",
     "Pac-Man",

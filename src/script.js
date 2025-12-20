@@ -113,6 +113,7 @@ case "tree":
     "Marcord(Wifi)",
     "Mario",
     "MinecraftOffline",
+    "Minesweeper",
     "music",
     "Omega-Flowey",
     "Pac-Man",

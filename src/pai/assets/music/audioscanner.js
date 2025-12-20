@@ -3,11 +3,11 @@ const path = require('path');
 const crypto = require('crypto');
 const readline = require('readline');
 
-const picDir = path.join(__dirname, 'pics');
-const outputFile = path.join(__dirname, 'piclist.js');
+const musicDir = path.join(__dirname, 'mus'); // music folder
+const outputFile = path.join(__dirname, 'musiclist.js');
 
-const IMAGE_EXTS = new Set([
-    '.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg'
+const MUSIC_EXTS = new Set([
+    '.mp3', '.wav', '.flac', '.aac', '.ogg', '.m4a', '.wma'
 ]);
 
 function getAllFiles(dir, fileList = []) {
@@ -16,7 +16,7 @@ function getAllFiles(dir, fileList = []) {
         const stat = fs.statSync(fullPath);
         if (stat.isDirectory()) {
             getAllFiles(fullPath, fileList);
-        } else if (IMAGE_EXTS.has(path.extname(file).toLowerCase())) {
+        } else if (MUSIC_EXTS.has(path.extname(file).toLowerCase())) {
             fileList.push(fullPath);
         }
     }
@@ -43,6 +43,7 @@ function askQuestion(query) {
     );
 }
 
+// Optional smart rename function for music
 function smartShorten(name) {
     const ext = path.extname(name);
     let base = path.basename(name, ext);
@@ -50,7 +51,7 @@ function smartShorten(name) {
     base = base
         .replace(/\([^)]*\)/g, '')     // remove (stuff)
         .replace(/\[[^\]]*\]/g, '')    // remove [stuff]
-        .replace(/\b(image|img|photo|picture|wallpaper)\b/gi, '')
+        .replace(/\b(track|song|audio|music)\b/gi, '')
         .replace(/[-\s]+/g, '_')
         .replace(/_+/g, '_')
         .replace(/^_+|_+$/g, '');
@@ -64,10 +65,10 @@ function smartShorten(name) {
 }
 
 (async () => {
-    let allFiles = getAllFiles(picDir);
+    let allFiles = getAllFiles(musicDir);
 
-    console.log('Scanned images:');
-    allFiles.forEach(f => console.log(' - ' + path.relative(picDir, f)));
+    console.log('Scanned music files:');
+    allFiles.forEach(f => console.log(' - ' + path.relative(musicDir, f)));
 
     const hashMap = {};
     const duplicates = {};
@@ -83,9 +84,9 @@ function smartShorten(name) {
 
     for (const hash in duplicates) {
         const files = duplicates[hash];
-        console.log('\nDuplicate images detected:');
+        console.log('\nDuplicate music detected:');
         files.forEach((f, i) =>
-            console.log(`${i + 1}: ${path.relative(picDir, f)}`)
+            console.log(`${i + 1}: ${path.relative(musicDir, f)}`)
         );
 
         const keep = parseInt(await askQuestion('Enter number to KEEP: '), 10);
@@ -93,12 +94,12 @@ function smartShorten(name) {
         files.forEach((f, i) => {
             if (i + 1 !== keep) {
                 fs.unlinkSync(f);
-                console.log('Deleted ' + path.relative(picDir, f));
+                console.log('Deleted ' + path.relative(musicDir, f));
             }
         });
     }
 
-    allFiles = getAllFiles(picDir);
+    allFiles = getAllFiles(musicDir);
     const renamedFiles = [];
 
     for (const f of allFiles) {
@@ -116,15 +117,15 @@ function smartShorten(name) {
         }
 
         renamedFiles.push(
-            path.relative(picDir, newPath).replace(/\\/g, '/')
+            path.relative(musicDir, newPath).replace(/\\/g, '/')
         );
     }
 
     fs.writeFileSync(
         outputFile,
-        `// Auto-generated\nconst imageFiles = ${JSON.stringify(renamedFiles, null, 4)};\n`,
+        `// Auto-generated\nconst audioFiles = ${JSON.stringify(renamedFiles, null, 4)};\n`,
         'utf8'
     );
 
-    console.log(`\nBrowser-ready piclist.js created (${renamedFiles.length} images).`);
+    console.log(`\nBrowser-ready musiclist.js created (${renamedFiles.length} tracks).`);
 })();

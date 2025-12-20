@@ -1,6 +1,7 @@
-// This file is auto-generated
+// Auto-generated
 const audioFiles = [
     "Ah.mp3",
+    "Ai_Ahh.wav",
     "Anitcipation+inmyway.ogg",
     "Anticaption.mp3",
     "Asgore_Yellow+main.mp3",
@@ -26,6 +27,7 @@ const audioFiles = [
     "Eggman_Sonicexe.mp3",
     "Elevator_Music.mp3",
     "Finale.ogg",
+    "Final_Boss_Theme_Minesweeper.mp3",
     "Fishy_On_Me.mp3",
     "Flashback.mp3",
     "Floop1.ogg",
