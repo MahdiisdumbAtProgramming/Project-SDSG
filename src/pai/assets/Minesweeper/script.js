@@ -119,7 +119,6 @@ window.addEventListener("keydown",e=>{
 
 function triggerBoss(){
   reset();
-
   // During the intro we keep interactions locked; after intro we allow clicks.
   locked = true;
   overlay.style.display="flex";
