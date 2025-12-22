@@ -4,6 +4,7 @@ const premiumGames = [
     "BaldisPlus",
     "bergentruck",
     "Deltatraveler",
+    "Earthbound",
     "karlson",
     "Minesweeperplus",
     "OGFNF",
