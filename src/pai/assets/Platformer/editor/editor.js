@@ -1,0 +1,408 @@
+const canvas = document.getElementById('editorCanvas');
+const ctx = canvas.getContext('2d');
+
+// Load levels from level.js
+let allLevels = JSON.parse(JSON.stringify(levels));
+let currentLevelIndex = 0;
+let currentLevel = allLevels[currentLevelIndex];
+
+// Toolbar
+let currentTool = 'platform';
+document.getElementById('toolPlatform').onclick = () => setTool('platform');
+document.getElementById('toolSpike').onclick = () => setTool('spike');
+document.getElementById('toolResize').onclick = () => setTool('resize');
+document.getElementById('toolDelete').onclick = () => setTool('delete');
+
+function setTool(tool) {
+    currentTool = tool;
+    document.querySelectorAll('.toolbar button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tool' + tool.charAt(0).toUpperCase() + tool.slice(1)).classList.add('active');
+}
+
+// Dragging / Resizing
+let selected = null, offsetX = 0, offsetY = 0;
+let action = null; // 'move' | 'resize' | null
+const handleSize = 6; // pixels for resize handle hit area
+let resizeHandle = null; // 'se','e','s', etc.
+let resizeOrig = null; // original values at start of resize
+
+// Level switching
+document.getElementById('prevLevel').onclick = () => {
+    if (currentLevelIndex > 0) currentLevelIndex--;
+    currentLevel = allLevels[currentLevelIndex];
+    document.getElementById('levelLabel').innerText = `Level ${currentLevelIndex + 1}`;
+    draw();
+};
+document.getElementById('nextLevel').onclick = () => {
+    if (currentLevelIndex < allLevels.length - 1) currentLevelIndex++;
+    currentLevel = allLevels[currentLevelIndex];
+    document.getElementById('levelLabel').innerText = `Level ${currentLevelIndex + 1}`;
+    draw();
+};
+document.getElementById('addLevel').onclick = () => {
+    allLevels.push([{ x: 0, y: 590, width: 800, height: 10 }]); // default floor
+    currentLevelIndex = allLevels.length - 1;
+    currentLevel = allLevels[currentLevelIndex];
+    document.getElementById('levelLabel').innerText = `Level ${currentLevelIndex + 1}`;
+    draw();
+};
+
+// Canvas interactions
+let snapToGrid = false;
+let gridSize = 10;
+
+const hud = document.getElementById('hud');
+
+function snap(v) {
+    if (!snapToGrid) return v;
+    return Math.round(v / gridSize) * gridSize;
+}
+
+function drawGrid() {
+    if (!snapToGrid) return;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= canvas.width; x += gridSize) {
+        ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y <= canvas.height; y += gridSize) {
+        ctx.beginPath(); ctx.moveTo(0, y + 0.5); ctx.lineTo(canvas.width, y + 0.5); ctx.stroke();
+    }
+    ctx.restore();
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawGrid();
+
+    // draw platforms
+    ctx.fillStyle = 'white';
+    currentLevel.filter(p => !p.type).forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+
+    // draw spikes
+    ctx.fillStyle = 'red';
+    currentLevel.filter(p => p.type === 'spike').forEach(p => ctx.fillRect(p.x, p.y, p.width, p.height));
+
+    // draw selection outline and handles
+    if (selected) {
+        ctx.save();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(selected.x - 1, selected.y - 1, selected.width + 2, selected.height + 2);
+
+        // draw 8 handles (nw, n, ne, e, se, s, sw, w)
+        const handles = getHandlePositions(selected);
+        ctx.fillStyle = 'yellow';
+        ctx.strokeStyle = '#333';
+        Object.values(handles).forEach(h => {
+            ctx.fillRect(h.x - handleSize, h.y - handleSize, handleSize * 2, handleSize * 2);
+            ctx.strokeRect(h.x - handleSize, h.y - handleSize, handleSize * 2, handleSize * 2);
+        });
+        ctx.restore();
+
+        updateHUD();
+    } else {
+        hideHUD();
+    }
+}
+
+function getHandlePositions(o) {
+    const right = o.x + o.width;
+    const bottom = o.y + o.height;
+    return {
+        nw: { x: o.x, y: o.y },
+        n:  { x: o.x + o.width / 2, y: o.y },
+        ne: { x: right, y: o.y },
+        e:  { x: right, y: o.y + o.height / 2 },
+        se: { x: right, y: bottom },
+        s:  { x: o.x + o.width / 2, y: bottom },
+        sw: { x: o.x, y: bottom },
+        w:  { x: o.x, y: o.y + o.height / 2 }
+    };
+}
+
+function getHandleAt(o, x, y) {
+    if (!o) return null;
+    const handles = getHandlePositions(o);
+    for (const k in handles) {
+        const h = handles[k];
+        if (Math.abs(x - h.x) <= handleSize && Math.abs(y - h.y) <= handleSize) return k;
+    }
+    return null;
+}
+
+function getObjectUnder(x, y) {
+    for (let i = currentLevel.length - 1; i >= 0; i--) {
+        const o = currentLevel[i];
+        if (x >= o.x && x <= o.x + o.width && y >= o.y && y <= o.y + o.height) return o;
+    }
+    return null;
+}
+
+canvas.addEventListener('mousedown', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    const clickedObj = getObjectUnder(mx, my);
+    const clickedHandle = getHandleAt(clickedObj, mx, my);
+
+    // Start resize if in Resize tool and clicking a handle
+    if (clickedObj && currentTool === 'resize' && clickedHandle) {
+        selected = clickedObj;
+        action = 'resize';
+        resizeHandle = clickedHandle;
+        resizeOrig = { x: selected.x, y: selected.y, width: selected.width, height: selected.height, mx, my };
+        selected._aspect = selected.width / selected.height;
+        return;
+    }
+
+    // Start move if clicked an object (and not deleting)
+    if (clickedObj && currentTool !== 'delete') {
+        selected = clickedObj;
+        action = 'move';
+        offsetX = mx - selected.x;
+        offsetY = my - selected.y;
+        draw();
+        return;
+    }
+
+    // clicking empty area: add object or possibly deselect
+    if (!clickedObj) {
+        if (currentTool === 'platform') {
+            const nx = snap(mx);
+            const ny = snap(my);
+            const newObj = { x: nx, y: ny, width: 60, height: 10 };
+            currentLevel.push(newObj);
+            selected = newObj;
+            draw();
+            return;
+        }
+        if (currentTool === 'spike') {
+            const nx = snap(mx);
+            const ny = snap(my);
+            const newObj = { type: 'spike', x: nx, y: ny, width: 20, height: 20 };
+            currentLevel.push(newObj);
+            selected = newObj;
+            draw();
+            return;
+        }
+        // otherwise clicking empty area deselects
+        selected = null;
+        draw();
+        return;
+    }
+
+    // delete when clicking an object while on delete tool
+    if (clickedObj && currentTool === 'delete') {
+        currentLevel = currentLevel.filter(p => p !== clickedObj);
+        selected = null;
+        draw();
+        return;
+    }
+});
+
+canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    const hoverObj = getObjectUnder(mx, my);
+    const hoverHandle = getHandleAt(hoverObj, mx, my);
+
+    // update cursor based on hover and current tool
+    if (hoverObj && currentTool === 'resize' && hoverHandle) {
+        if (hoverHandle === 'nw' || hoverHandle === 'se') canvas.style.cursor = 'nwse-resize';
+        else if (hoverHandle === 'ne' || hoverHandle === 'sw') canvas.style.cursor = 'nesw-resize';
+        else if (hoverHandle === 'n' || hoverHandle === 's') canvas.style.cursor = 'ns-resize';
+        else canvas.style.cursor = 'ew-resize';
+    } else if (hoverObj) {
+        canvas.style.cursor = 'move';
+    } else {
+        canvas.style.cursor = 'crosshair';
+    }
+
+    if (action === 'move' && selected) {
+        selected.x = snap(mx - offsetX);
+        selected.y = snap(my - offsetY);
+        draw();
+        return;
+    }
+
+    if (action === 'resize' && selected) {
+        const shift = e.shiftKey;
+        const orig = resizeOrig;
+        let nx = selected.x, ny = selected.y, nw = selected.width, nh = selected.height;
+
+        const minSize = 10;
+
+        switch (resizeHandle) {
+            case 'se':
+                nw = Math.max(minSize, orig.width + (mx - orig.mx));
+                nh = Math.max(minSize, orig.height + (my - orig.my));
+                if (shift) {
+                    const ratio = orig.width / orig.height || 1;
+                    if (Math.abs(mx - orig.mx) > Math.abs(my - orig.my)) nh = Math.round(nw / ratio);
+                    else nw = Math.round(nh * ratio);
+                }
+                break;
+            case 'e':
+                nw = Math.max(minSize, orig.width + (mx - orig.mx));
+                if (shift) nw = Math.max(minSize, Math.round(nw));
+                break;
+            case 's':
+                nh = Math.max(minSize, orig.height + (my - orig.my));
+                if (shift) nh = Math.max(minSize, Math.round(nh));
+                break;
+            case 'nw':
+                nw = Math.max(minSize, orig.width - (mx - orig.mx));
+                nh = Math.max(minSize, orig.height - (my - orig.my));
+                nx = orig.x + (orig.width - nw);
+                ny = orig.y + (orig.height - nh);
+                if (shift) {
+                    const ratio = orig.width / orig.height || 1;
+                    if (Math.abs(mx - orig.mx) > Math.abs(my - orig.my)) nh = Math.round(nw / ratio);
+                    else nw = Math.round(nh * ratio);
+                    nx = orig.x + (orig.width - nw);
+                    ny = orig.y + (orig.height - nh);
+                }
+                break;
+            case 'ne':
+                nw = Math.max(minSize, orig.width + (mx - orig.mx));
+                nh = Math.max(minSize, orig.height - (my - orig.my));
+                ny = orig.y + (orig.height - nh);
+                if (shift) {
+                    const ratio = orig.width / orig.height || 1;
+                    if (Math.abs(mx - orig.mx) > Math.abs(my - orig.my)) nh = Math.round(nw / ratio);
+                    else nw = Math.round(nh * ratio);
+                    ny = orig.y + (orig.height - nh);
+                }
+                break;
+            case 'sw':
+                nw = Math.max(minSize, orig.width - (mx - orig.mx));
+                nh = Math.max(minSize, orig.height + (my - orig.my));
+                nx = orig.x + (orig.width - nw);
+                if (shift) {
+                    const ratio = orig.width / orig.height || 1;
+                    if (Math.abs(mx - orig.mx) > Math.abs(my - orig.my)) nh = Math.round(nw / ratio);
+                    else nw = Math.round(nh * ratio);
+                    nx = orig.x + (orig.width - nw);
+                }
+                break;
+            case 'n':
+                nh = Math.max(minSize, orig.height - (my - orig.my));
+                ny = orig.y + (orig.height - nh);
+                break;
+            case 'w':
+                nw = Math.max(minSize, orig.width - (mx - orig.mx));
+                nx = orig.x + (orig.width - nw);
+                break;
+        }
+
+        // apply snapping
+        nx = snap(nx);
+        ny = snap(ny);
+        nw = snap(nw);
+        nh = snap(nh);
+
+        selected.x = nx;
+        selected.y = ny;
+        selected.width = nw;
+        selected.height = nh;
+
+        draw();
+        return;
+    }
+});
+
+canvas.addEventListener('mouseup', () => {
+    // persist selection (do not clear); only finish current action
+    action = null;
+    resizeHandle = null;
+    draw();
+});
+
+// keyboard: arrow nudging and delete
+document.addEventListener('keydown', e => {
+    if (!selected) return;
+
+    const step = e.shiftKey ? (gridSize || 10) : 1;
+
+    switch (e.key) {
+        case 'ArrowLeft': selected.x = snap(selected.x - step); draw(); updateHUD(); e.preventDefault(); break;
+        case 'ArrowRight': selected.x = snap(selected.x + step); draw(); updateHUD(); e.preventDefault(); break;
+        case 'ArrowUp': selected.y = snap(selected.y - step); draw(); updateHUD(); e.preventDefault(); break;
+        case 'ArrowDown': selected.y = snap(selected.y + step); draw(); updateHUD(); e.preventDefault(); break;
+        case 'Delete':
+        case 'Backspace':
+            currentLevel = currentLevel.filter(p => p !== selected);
+            selected = null;
+            draw();
+            e.preventDefault();
+            break;
+    }
+});
+
+// UI bindings for snap/grid
+const snapToggle = document.getElementById('snapToggle');
+const gridInput = document.getElementById('gridSize');
+if (snapToggle) snapToggle.addEventListener('change', e => { snapToGrid = e.target.checked; draw(); });
+if (gridInput) gridInput.addEventListener('change', e => { const v = parseInt(e.target.value, 10); if (!isNaN(v) && v > 1) gridSize = v; draw(); });
+
+function updateHUD() {
+    if (!selected) return;
+    const rect = canvas.getBoundingClientRect();
+    hud.style.display = 'block';
+    hud.style.left = (rect.left + selected.x) + 'px';
+    hud.style.top = (rect.top + Math.max(0, selected.y - 34)) + 'px';
+    hud.innerHTML = `
+        <label>X:<input id="hud-x" type="number" value="${selected.x}"></label>
+        <label>Y:<input id="hud-y" type="number" value="${selected.y}"></label>
+        <label>W:<input id="hud-w" type="number" value="${selected.width}"></label>
+        <label>H:<input id="hud-h" type="number" value="${selected.height}"></label>
+        <span style="margin-left:6px;color:#ccc">(Enter to apply)</span>
+    `;
+
+    // wire small handlers
+    const inX = document.getElementById('hud-x');
+    const inY = document.getElementById('hud-y');
+    const inW = document.getElementById('hud-w');
+    const inH = document.getElementById('hud-h');
+
+    const applyFromInputs = () => {
+        const nx = parseInt(inX.value, 10) || selected.x;
+        const ny = parseInt(inY.value, 10) || selected.y;
+        const nw = Math.max(1, parseInt(inW.value, 10) || selected.width);
+        const nh = Math.max(1, parseInt(inH.value, 10) || selected.height);
+        selected.x = snap(nx);
+        selected.y = snap(ny);
+        selected.width = snap(nw);
+        selected.height = snap(nh);
+        draw();
+    };
+
+    [inX, inY, inW, inH].forEach(inp => {
+        inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') applyFromInputs(); });
+        inp.addEventListener('blur', () => applyFromInputs());
+    });
+}
+
+function hideHUD() {
+    hud.style.display = 'none';
+}
+
+// ensure initial UI state
+if (snapToggle) { snapToGrid = snapToggle.checked; }
+if (gridInput) { gridSize = parseInt(gridInput.value, 10) || gridSize; }
+
+// Download button
+// Replace the download button click with this:
+document.getElementById('downloadLevel').onclick = () => {
+    console.log("Copy this output and save it as level.js:");
+    console.log(`const levels = ${JSON.stringify(allLevels, null, 2)};`);
+    alert("Level data printed to console! Open DevTools to copy.");
+};
+
+draw();
