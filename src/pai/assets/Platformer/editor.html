@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Platformer Level Editor</title>
+<link rel="stylesheet" href="editor.css">
+</head>
+<body>
+<h1>Platformer Level Editor</h1>
+
+<div class="toolbar">
+    <button id="toolPlatform" class="active">Platform</button>
+    <button id="toolSpike">Spike</button>
+    <button id="toolDelete">Delete</button>
+</div>
+
+<div class="level-buttons">
+    <button id="prevLevel">Prev Level</button>
+    <span id="levelLabel">Level 1</span>
+    <button id="nextLevel">Next Level</button>
+    <button id="addLevel">Add Level</button>
+</div>
+
+<div class="download-btn">
+    <button id="downloadLevel">Download level.js</button>
+</div>
+
+<canvas id="editorCanvas" width="800" height="600"></canvas>
+<p>Click canvas to place objects. Drag to move. Delete objects.</p>
+
+<script src="level.js"></script> <!-- existing level.js with const levels = [...] -->
+
+<script src="editor.js"></script>
+</body>
+</html>

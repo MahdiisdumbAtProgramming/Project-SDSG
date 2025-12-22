@@ -1,6 +1,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// Player setup
 const player = {
     x: 50,
     y: 300,
@@ -14,126 +15,187 @@ const player = {
     onGround: false
 };
 
-const keys = {
-    right: false,
-    left: false,
-    up: false
-};
-
+// Keyboard input
+const keys = { right: false, left: false, up: false };
 let level = 0;
-const levels = [];
 
-function generateRandomLevel() {
-    const numPlatforms = Math.floor(Math.random() * 6) + 8; // 3 to 7 platforms
-    const platforms = [];
-
-    for (let i = 0; i < numPlatforms; i++) {
-        const width = Math.floor(Math.random() * 100) + 50;
-        const height = 10;
-        const x = Math.floor(Math.random() * (canvas.width - width));
-        const y = Math.floor(Math.random() * (canvas.height - -50)) + -50; // Prevent platforms from being too low
-
-        platforms.push({x, y, width, height});
-    }
-
-    // Add a spike randomly
-    if (Math.random() > .5) {
-        const spikeWidth = 10;
-        const spikeHeight = 5;
-        const spikeX = Math.floor(Math.random() * (canvas.width - spikeWidth));
-        const spikeY = Math.floor(Math.random() * (canvas.height - spikeHeight - 50)) + 50;
-
-        platforms.push({type: 'spike', x: spikeX, y: spikeY, width: spikeWidth, height: spikeHeight});
-    }
-
-    levels.push(platforms);
-}
-
-// Generate 3 random levels
-for (let i = 0; i < 58349; i++) {
-    generateRandomLevel();
-}
-
+// Draw player
 function drawPlayer() {
-    ctx.fillStyle = 'White';
+    ctx.fillStyle = 'white';
     ctx.fillRect(player.x, player.y, player.width, player.height);
 }
 
+// Draw platforms and spikes
 function drawPlatforms() {
-    levels[level].forEach(platform => {
-        if (platform.type === 'spike') {
+    levels[level].forEach(p => {
+        if (p.type === 'spike') {
             ctx.fillStyle = 'red';
-            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
         } else {
-            ctx.fillStyle = 'Black';
-            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+            ctx.fillStyle = 'black';
         }
+        ctx.fillRect(p.x, p.y, p.width, p.height);
     });
 }
 
+// Update player position
 function updatePlayer() {
+    // Horizontal movement
+    player.dx = 0;
     if (keys.right) player.dx = player.speed;
-    else if (keys.left) player.dx = -player.speed;
-    else player.dx = 0;
+    if (keys.left) player.dx = -player.speed;
+    player.x += player.dx;
 
+    // Jump
     if (keys.up && player.onGround) {
         player.dy = player.jumpPower;
-        player.onGround = false;
+        player.onGround = false; // now the player leaves the ground
     }
 
+    // Apply gravity
     player.dy += player.gravity;
-    player.x += player.dx;
-    player.y += player.dy;
 
-    player.onGround = false;
+    // Predict next vertical position
+    const nextY = player.y + player.dy;
 
-    checkCollisions();
+    let landed = false;
 
-    if (player.y + player.height > canvas.height) {
-        player.dy = 0;
-        player.onGround = true;
-        player.y = canvas.height - player.height;
-    }
+    levels[level].forEach(p => {
+        if (!p.type) {
+            const playerLeft = player.x;
+            const playerRight = player.x + player.width;
+            const playerBottomNext = nextY + player.height;
 
-    if (player.x > canvas.width) {
-        player.x = 0;
-        level = (level + 1) % levels.length; // Move to the next level
-    }
-}
+            const platformLeft = p.x;
+            const platformRight = p.x + p.width;
+            const platformTop = p.y;
 
-function checkCollisions() {
-    levels[level].forEach(platform => {
-        if (platform.type !== 'spike' &&
-            player.dy >= 0 &&
-            player.y + player.height <= platform.y + player.dy &&
-            player.y + player.height + player.dy >= platform.y &&
-            player.x + player.width > platform.x &&
-            player.x < platform.x + platform.width) {
-            player.dy = 0;
-            player.onGround = true;
-            player.y = platform.y - player.height;
+            // Horizontal overlap
+            if (playerRight > platformLeft && playerLeft < platformRight) {
+                // Check if player would land on this platform
+                if (player.y + player.height <= platformTop && playerBottomNext >= platformTop) {
+                    player.dy = platformTop - player.y - player.height;
+                    landed = true;
+                }
+            }
         }
 
-        if (platform.type === 'spike' &&
-            player.x + player.width > platform.x &&
-            player.x < platform.x + platform.width &&
-            player.y + player.height > platform.y &&
-            player.y < platform.y + platform.height) {
-            // Restart game if player touches a spike
-            alert('You touched a spike! Restarting...');
-            player.x = 50;
-            player.y = 300;
-            player.dx = 0;
-            player.dy = 0;
-            level = 0;
+        // Spike collision
+        if (p.type) {
+            const playerLeft = player.x;
+            const playerRight = player.x + player.width;
+            const playerTop = player.y;
+            const playerBottom = player.y + player.height;
+
+            const spikeLeft = p.x;
+            const spikeRight = p.x + p.width;
+            const spikeTop = p.y;
+            const spikeBottom = p.y + p.height;
+
+            if (playerRight > spikeLeft && playerLeft < spikeRight &&
+                playerBottom > spikeTop && playerTop < spikeBottom) {
+                resetPlayer();
+            }
         }
     });
+
+    // Move player
+    player.y += player.dy;
+
+    // Check if landed
+    player.onGround = landed;
+
+    // Floor clamp
+    if (player.y + player.height > canvas.height) {
+        player.y = canvas.height - player.height;
+        player.dy = 0;
+        player.onGround = true;
+    }
+
+    // Level transition
+    if (player.x > canvas.width) {
+        player.x = 0;
+        level = (level + 1) % levels.length;
+    } else if (player.x < 0) {
+        player.x = canvas.width - player.width;
+        level = (level - 1 + levels.length) % levels.length;
+    }
 }
 
+
+// Collision detection
+function checkCollisions() {
+    player.onGround = false; // reset
+
+    levels[level].forEach(p => {
+        if (!p.type) {
+            // Compute next position
+            const nextY = player.y + player.dy;
+            const nextBottom = nextY + player.height;
+
+            const platformTop = p.y;
+            const platformBottom = p.y + p.height;
+
+            const playerLeft = player.x;
+            const playerRight = player.x + player.width;
+            const platformLeft = p.x;
+            const platformRight = p.x + p.width;
+
+            // Check horizontal overlap
+            const horizontalOverlap = playerRight > platformLeft && playerLeft < platformRight;
+
+            // Check vertical collision from above
+            if (horizontalOverlap && player.y + player.height <= platformTop && nextBottom >= platformTop) {
+                player.dy = 0;
+                player.y = platformTop - player.height;
+                player.onGround = true;
+            }
+        }
+
+        // Spike collision
+        if (p.type === 'spike') {
+            const playerLeft = player.x;
+            const playerRight = player.x + player.width;
+            const playerTop = player.y;
+            const playerBottom = player.y + player.height;
+
+            const spikeLeft = p.x;
+            const spikeRight = p.x + p.width;
+            const spikeTop = p.y;
+            const spikeBottom = p.y + p.height;
+
+            if (playerRight > spikeLeft && playerLeft < spikeRight &&
+                playerBottom > spikeTop && playerTop < spikeBottom) {
+                resetPlayer();
+            }
+        }
+    });
+
+    // Floor clamp
+    if (player.y + player.height > canvas.height) {
+        player.y = canvas.height - player.height;
+        player.dy = 0;
+        player.onGround = true;
+    }
+}
+
+
+
+
+// Reset player on spike
+function resetPlayer() {
+    player.x = 50;
+    player.y = 300;
+    player.dx = 0;
+    player.dy = 0;
+    level = 0;
+}
+
+// Clear canvas
 function clearCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
+// Game loop
 function update() {
     clearCanvas();
     drawPlatforms();
@@ -142,16 +204,17 @@ function update() {
     requestAnimationFrame(update);
 }
 
-document.addEventListener('keydown', (e) => {
+// Keyboard listeners
+document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight') keys.right = true;
     if (e.key === 'ArrowLeft') keys.left = true;
     if (e.key === 'ArrowUp') keys.up = true;
 });
-
-document.addEventListener('keyup', (e) => {
+document.addEventListener('keyup', e => {
     if (e.key === 'ArrowRight') keys.right = false;
     if (e.key === 'ArrowLeft') keys.left = false;
     if (e.key === 'ArrowUp') keys.up = false;
 });
 
+// Start game
 update();
