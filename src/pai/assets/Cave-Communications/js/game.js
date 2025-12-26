@@ -1,5 +1,5 @@
 ﻿(() => {
-    'use strict'; const $ = id => document.getElementById(id); const logEl = $('log'); const playerHpEl = $('player-hp'); const enemyHpEl = $('enemy-hp'); const itemCountEl = $('item-count'); const resetBtn = $('reset'); const attackCanvas = $('battle-canvas'); const ctx = attackCanvas ? attackCanvas.getContext && attackCanvas.getContext('2d') : null; function safeSetText(el, txt) { if (el) el.textContent = txt }
+    'use strict'; const $ = id => document.getElementById(id); const logEl = $('log'); const playerHpEl = $('player-hp'); const enemyHpEl = $('enemy-hp'); const itemCountEl = $('item-count'); const psiCountEl = $('pp-count'); const psiFillEl = $('psi-fill'); if (psiFillEl) psiFillEl.style.transition = 'width 300ms ease'; const resetBtn = $('reset'); const attackCanvas = $('battle-canvas'); const ctx = attackCanvas ? attackCanvas.getContext && attackCanvas.getContext('2d') : null; function safeSetText(el, txt) { if (el) el.textContent = txt }
     function safePlay(audio) { try { audio.currentTime = 0; audio.play() } catch (e) { } }
     function safePause(audio) { try { if (audio) audio.pause(); } catch (e) { } }
     function log(msg) {
@@ -32,8 +32,52 @@
             isLowHPMusicPlaying = !0
         }
     }
-    const mercyPatterns = [["compliment", "compliment", "flirt", "compliment", "insult"], ["insult", "flirt", "compliment", "insult", "compliment"], ["compliment", "flirt", "compliment", "insult", "flirt"], ["flirt", "compliment", "insult", "flirt", "compliment"], ["insult", "compliment", "flirt", "compliment", "insult"]]; const opponentNames = ["Paper", "Sand", "Flowerpot", "Boreiel", "Undone", "Alfice", "Asbore", "Metta-gone", "Napstablank", "Tempy", "BurgerShorts", "Muffin", "Creature Kid", "Jerrican", "Doggo", "Greater Cat", "Lesser Cat", "Glad Smarty", "Shywrong", "Gersad", "Kindy", "Doggy", "Grassrake", "Baron", "Washout", "Moldbig", "weakaircraft", "Volcano", "Not like", "waterrake", "pi", "Dipin", "Character", "Dreamer", "Mettaboy", "Flowbee", "Tormentor", "Unfine", "Ascore", "Napstapunk", "Temptation", "Burgerking", "Muffintop", "Unusual Pal", "Jerrycan", "Kitty", "Greater Wolf", "Lesser Wolf", "Happy Smarty", "Shyright", "Germson", "Bratcat", "Kitbrat", "Snowman", "Aarun", "Washya", "Moldtiny", "Tsunderecar", "Vulkan", "Not Sorry"]; let playerHP = 100; let playerItems = 1; let playerName = "Your"; let playerSoulColor = "#ff0000"; let playerSoulPng = "r.png"; let turnActive = !0; let menuState = "main"; let selectedIndex = 0; let selectedOpponentIndex = 0; let insults = ["ugh", "meh", "shh", "loser", "bleh", "stfu", "nope", "dust", "pfft", "sigh"]; let compliments = ["nice", "brave", "kind", "good", "wow", "yay", "cool", "smile", "ace", "gr8"]; let flirts = ["wink", "smile", "heart", "hug", "flirt"]; let totalInsults = 0; let totalCompliments = 0; let totalSpared = 0; let totalKilled = 0; let encounterCount = 0; let encounterResults = []; let currentEncounterOriginalCount = 0; let currentEncounterKills = 0; let currentEncounterSpared = 0; let inFinalBoss = !1; let opponents = []; function determineRoute() { if (totalKilled > totalSpared) return "genocide"; if (totalSpared > totalKilled) return "pacifist"; return "neutral" }
-    function updateHP() { safeSetText(playerHpEl, playerHP); safeSetText(itemCountEl, playerItems); if (opponents.length > 0) safeSetText(enemyHpEl, opponents.map(o => `${o.name}: ${o.hp}`).join(", ")); else safeSetText(enemyHpEl, "None") }
+    const mercyPatterns = [["compliment", "compliment", "flirt", "compliment", "insult"], ["insult", "flirt", "compliment", "insult", "compliment"], ["compliment", "flirt", "compliment", "insult", "flirt"], ["flirt", "compliment", "insult", "flirt", "compliment"], ["insult", "compliment", "flirt", "compliment", "insult"]]; const opponentNames = ["Paper", "Sand", "Flowerpot", "Boreiel", "Undone", "Alfice", "Asbore", "Metta-gone", "Napstablank", "Tempy", "BurgerShorts", "Muffin", "Creature Kid", "Jerrican", "Doggo", "Greater Cat", "Lesser Cat", "Glad Smarty", "Shywrong", "Gersad", "Kindy", "Doggy", "Grassrake", "Baron", "Washout", "Moldbig", "weakaircraft", "Volcano", "Not like", "waterrake", "pi", "Dipin", "Character", "Dreamer", "Mettaboy", "Flowbee", "Tormentor", "Unfine", "Ascore", "Napstapunk", "Temptation", "Burgerking", "Muffintop", "Unusual Pal", "Jerrycan", "Kitty", "Greater Wolf", "Lesser Wolf", "Happy Smarty", "Shyright", "Germson", "Bratcat", "Kitbrat", "Snowman", "Aarun", "Washya", "Moldtiny", "Tsunderecar", "Vulkan", "Not Sorry"]; let playerHP = 100; let playerPP = 0; // PP (psi points) and configuration
+    const MAX_PP = 100; // maximum PP
+    const GRAZE_RADIUS = 28; // pixels beyond soul bounding box considered a "graze"
+    const GRAZE_GAIN = 5; // PP gained per graze
+    const PK_COSTS = {cuss:100, therapy:25, stun:15, reduce:0}; // PP costs for PK acts
+    const STUN_DURATION = 6000; // milliseconds enemies stay stunned
+    let playerItems = 1; let playerName = "Your"; let playerSoulColor = "#ff0000"; let playerSoulPng = "r.png"; let enemyStunned = false; let submenuActive = false; let turnActive = !0; let menuState = "main"; let selectedIndex = 0; let selectedOpponentIndex = 0; let insults = ["ugh", "meh", "shh", "loser", "bleh", "stfu", "nope", "dust", "pfft", "sigh"]; let compliments = ["nice", "brave", "kind", "good", "wow", "yay", "cool", "smile", "ace", "gr8"]; let flirts = ["wink", "smile", "heart", "hug", "flirt"]; let totalInsults = 0; let totalCompliments = 0; let totalSpared = 0; let totalKilled = 0; let encounterCount = 0; let encounterResults = []; let currentEncounterOriginalCount = 0; let currentEncounterKills = 0; let currentEncounterSpared = 0; let inFinalBoss = !1; let opponents = []; function determineRoute() { if (totalKilled > totalSpared) return "genocide"; if (totalSpared > totalKilled) return "pacifist"; return "neutral" }
+    function updateHP() { safeSetText(playerHpEl, playerHP); safeSetText(itemCountEl, playerItems); if (opponents.length > 0) safeSetText(enemyHpEl, opponents.map(o => `${o.name}: ${o.hp}`).join(", ")); else safeSetText(enemyHpEl, "None"); updatePPUI() }
+
+    function updatePPUI() { try { if (psiCountEl) psiCountEl.textContent = `${playerPP}/${MAX_PP} PP`; if (psiFillEl) psiFillEl.style.width = `${Math.round((playerPP / MAX_PP) * 100)}%`; // refresh PSI menu buttons when PP changes
+            updatePSIMenuButtons(); } catch (e) { } }
+
+    function updatePSIMenuButtons() {
+        try {
+            const psiMenu = $('psi-menu'); if (!psiMenu) return; const psiBtns = psiMenu.querySelectorAll('button'); const costVals = [PK_COSTS.cuss, PK_COSTS.therapy, PK_COSTS.stun, PK_COSTS.reduce]; psiBtns.forEach((b, i) => {
+                if (i < costVals.length) { const disabled = playerPP < costVals[i]; b.disabled = disabled; b.style.opacity = disabled ? '0.5' : ''; } else { b.disabled = false; b.style.opacity = '' }
+            })
+        } catch (e) { }
+    }
+
+    // floating +PP feedback helper
+    function showFloatingPP(x, y, gain) {
+        try {
+            const container = $('fight-container') || document.body;
+            const el = document.createElement('div'); el.className = 'floating-pp'; el.textContent = `+${gain} PP`;
+            Object.assign(el.style, { position: 'absolute', left: (x)+'px', top: (y)+'px', color: '#ffdd55', fontWeight: 'bold', fontFamily: 'monospace', pointerEvents: 'none', textShadow: '0 0 6px #000', transition: 'transform 800ms ease-out, opacity 800ms ease-out' });
+            container.appendChild(el);
+            // pulse PSI fill
+            try { pulsePSI(); } catch(e){}
+            requestAnimationFrame(()=>{ el.style.transform = 'translateY(-36px)'; el.style.opacity = '0'; });
+            setTimeout(()=>{ try { el.remove() } catch(e){} }, 900);
+        } catch(e){}
+    }
+
+    // play a short beep for PP gain (no external file)
+    function playPPBeep() {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext; if (!AudioCtx) return; const ctx = new AudioCtx(); const o = ctx.createOscillator(); const g = ctx.createGain(); o.type = 'sine'; o.frequency.value = 880; o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18); o.start(); o.stop(ctx.currentTime + 0.2);
+        } catch(e){}
+    }
+
+    function pulsePSI() {
+        try {
+            if (!psiFillEl) return; psiFillEl.style.boxShadow = '0 0 12px rgba(255,220,60,0.9)'; setTimeout(()=>{ try { psiFillEl.style.boxShadow = '' } catch(e){} }, 350)
+        } catch(e){}
+    }
     function checkLowHP() { const lowOpponent = opponents.find(op => op.hp > 0 && op.hp <= 20); if (lowOpponent && !isLowHPMusicPlaying) { audio.pause(); olAudio.currentTime = 0; olAudio.play(); isLowHPMusicPlaying = !0 } else if (!lowOpponent && isLowHPMusicPlaying) { olAudio.pause(); audio.play(); isLowHPMusicPlaying = !1 } }
     function generateOpponents(options = {}) {
         const isFinal = !!options.finalBoss; const list = []; if (isFinal) { list.push({ name: "Mahdiisdumb", hp: 400, state: "angry", mercyPattern: [], mercyProgress: 0, isFinal: !0 }) } else { const count = Math.floor(Math.random() * 3) + 1; const used = new Set(); for (let i = 0; i < count; i++) { let name; do { name = opponentNames[Math.floor(Math.random() * opponentNames.length)] } while (used.has(name)); used.add(name); list.push({ name, hp: 100, state: "angry", mercyPattern: mercyPatterns[Math.floor(Math.random() * mercyPatterns.length)], mercyProgress: 0, isFinal: !1 }) } }
@@ -70,9 +114,12 @@
         let result = "mixed"; if (currentEncounterOriginalCount > 0) { if (currentEncounterKills === currentEncounterOriginalCount) result = "killed"; else if (currentEncounterSpared === currentEncounterOriginalCount) result = "spared"; else result = "mixed" }
         encounterResults.push(result); encounterCount++; log(`Encounter ${encounterCount} cleared — ${result.toUpperCase()} Progress: ${encounterCount}/10.`); if (encounterCount >= 10) { setTimeout(() => { generateOpponents({ finalBoss: !0 }); const boss = opponents[0]; log(`The final boss appears: ${boss.name}!`); const checkBossEnd = setInterval(() => { if (!boss) return; if (boss.hp <= 0) { clearInterval(checkBossEnd); totalKilled += 1; endGame("You defeated the final boss!") } else if (boss.mercyPattern && boss.mercyProgress >= boss.mercyPattern.length) { clearInterval(checkBossEnd); totalSpared += 1; endGame("You spared the final boss!") } }, 500); enableMenu() }, 1200) } else { setTimeout(() => { log("A new encounter approaches..."); generateOpponents(); enableMenu() }, 1200) }
     }
-    let globalKeyHandlerBound = !1; function globalKeyHandler(e) { if (!turnActive) return; if (menuState === "attack" || menuState === "opponent") return; if (e.code === "ArrowLeft") handleArrow("left"); else if (e.code === "ArrowRight") handleArrow("right"); else if (e.code === "KeyZ" || e.code === "Enter") handleMenuConfirm(); else if (e.code === "KeyX" || e.code === "ShiftLeft" || e.code === "ShiftRight") handleMenuBack(); }
-    function handleArrow(dir) { let maxIndex = 0; if (menuState === "main") maxIndex = 3; else if (menuState === "act" || menuState === "mercy") maxIndex = 2; if (dir === "left") selectedIndex = (selectedIndex - 1 + (maxIndex + 1)) % (maxIndex + 1); else if (dir === "right") selectedIndex = (selectedIndex + 1) % (maxIndex + 1); safePlay(moveAudio); highlightSelected() }
-    function handleMenuConfirm() { if (!turnActive) return; safePlay(selectAudio); if (menuState === "main") { if (selectedIndex === 0) { const opponent = opponents[selectedOpponentIndex]; if (opponent) { disableMenu(); SlurMenu(opponent) } } else if (selectedIndex === 1) showOpponentMenu("act"); else if (selectedIndex === 2) useItem(); else if (selectedIndex === 3) showMercy(); } else if (menuState === "act") { const currentOpponent = opponents[selectedOpponentIndex]; if (!currentOpponent) return; if (selectedIndex === 0) act(currentOpponent, "insult"); else if (selectedIndex === 1) act(currentOpponent, "compliment"); else if (selectedIndex === 2) act(currentOpponent, "flirt"); else if (selectedIndex === 3) backToMenu(); } else if (menuState === "mercy") { const currentOpponent = opponents[selectedOpponentIndex]; if (!currentOpponent) return; if (selectedIndex === 0) spare(currentOpponent); else if (selectedIndex === 1) flee(); else if (selectedIndex === 2) backToMenu(); } }
+    let globalKeyHandlerBound = !1; function globalKeyHandler(e) { if (submenuActive) { console.log('globalKeyHandler ignored: submenuActive', e.code); return } if (!turnActive) { console.log('globalKeyHandler ignored: !turnActive', e.code); return } if (menuState === "attack" || menuState === "opponent") { console.log('globalKeyHandler ignored: menuState', menuState, e.code); return } if (e.code === "ArrowLeft") handleArrow("left"); else if (e.code === "ArrowRight") handleArrow("right"); else if (e.code === "KeyZ" || e.code === "Enter") handleMenuConfirm(); else if (e.code === "KeyX" || e.code === "ShiftLeft" || e.code === "ShiftRight") handleMenuBack(); }
+    function handleArrow(dir) { let maxIndex = 0; if (menuState === "main") maxIndex = 3; else if (menuState === "act") maxIndex = 4; else if (menuState === "psi") maxIndex = 4; else if (menuState === "mercy") maxIndex = 2; if (dir === "left") selectedIndex = (selectedIndex - 1 + (maxIndex + 1)) % (maxIndex + 1); else if (dir === "right") selectedIndex = (selectedIndex + 1) % (maxIndex + 1); safePlay(moveAudio); highlightSelected() }
+    function handleMenuConfirm() { if (!turnActive) return; safePlay(selectAudio); // hide visible menus immediately so UI resets while action resolves
+        hideAllMenus();
+        submenuActive = false;
+        if (menuState === "main") { if (selectedIndex === 0) { const opponent = opponents[selectedOpponentIndex]; if (opponent) { disableMenu(); SlurMenu(opponent) } } else if (selectedIndex === 1) showOpponentMenu("act"); else if (selectedIndex === 2) useItem(); else if (selectedIndex === 3) showMercy(); } else if (menuState === "act") { const currentOpponent = opponents[selectedOpponentIndex]; if (!currentOpponent) return; if (selectedIndex === 0) act(currentOpponent, "insult"); else if (selectedIndex === 1) act(currentOpponent, "compliment"); else if (selectedIndex === 2) act(currentOpponent, "flirt"); else if (selectedIndex === 3) { menuState = "psi"; selectedIndex = 0; showPSIMenu(currentOpponent); } else if (selectedIndex === 4) backToMenu(); } else if (menuState === "psi") { const currentOpponent = opponents[selectedOpponentIndex]; if (!currentOpponent) return; if (selectedIndex === 0) act(currentOpponent, "pk cuss"); else if (selectedIndex === 1) act(currentOpponent, "pk therapy"); else if (selectedIndex === 2) act(currentOpponent, "pk stun"); else if (selectedIndex === 3) act(currentOpponent, "pk reduce"); else if (selectedIndex === 4) { menuState = "act"; selectedIndex = 0; showAct(currentOpponent); } } else if (menuState === "mercy") { const currentOpponent = opponents[selectedOpponentIndex]; if (!currentOpponent) return; if (selectedIndex === 0) spare(currentOpponent); else if (selectedIndex === 1) flee(); else if (selectedIndex === 2) backToMenu(); } }
     function handleMenuBack() { if (!turnActive) return; if (menuState === "act" || menuState === "mercy") backToMenu(); }
     function darkenHexColor(hex, amount = 30) {
         // Remove # if present
@@ -121,16 +168,63 @@
         const mainBtns = ["slur", "act", "item", "mercy"].map(id => $(id));
         mainBtns.forEach((btn, i) => setBtnHighlight(btn, menuState === "main" && i === selectedIndex));
 
-        const actBtns = ["act-insult", "act-compliment", "act-flirt", "act-back"].map(id => $(id));
+        const actBtns = ["act-insult", "act-compliment", "act-flirt", "act-psi", "act-back"].map(id => $(id));
         actBtns.forEach((btn, i) => setBtnHighlight(btn, menuState === "act" && i === selectedIndex));
+
+        const psiBtns = ["psi-cuss", "psi-therapy", "psi-stun", "psi-reduce", "psi-back"].map(id => $(id));
+        psiBtns.forEach((btn, i) => setBtnHighlight(btn, menuState === "psi" && i === selectedIndex));
 
         const mercyBtns = ["mercy-spare", "mercy-flee", "mercy-back"].map(id => $(id));
         mercyBtns.forEach((btn, i) => setBtnHighlight(btn, menuState === "mercy" && i === selectedIndex));
     }
 
-    function backToMenu() { menuState = "main"; selectedIndex = 0; enableMenu(); highlightSelected() }
-    function disableMenu() { turnActive = !1 }
-    function enableMenu() { turnActive = !0; menuState = "main"; selectedIndex = 0; highlightSelected() }
+    // Show/hide menus and reflect the current selection visually (legacy-style behavior)
+    function clampSelectedForMenu() {
+        try {
+            let max = 0;
+            if (menuState === 'main') max = 3;
+            else if (menuState === 'act') max = (document.querySelectorAll('#act-menu button').length || 5) - 1;
+            else if (menuState === 'psi') max = (document.querySelectorAll('#psi-menu button').length || 5) - 1;
+            else if (menuState === 'mercy') max = (document.querySelectorAll('#mercy-menu button').length || 3) - 1;
+            selectedIndex = Math.max(0, Math.min(selectedIndex, Math.max(0, max)));
+        } catch (e) { }
+    }
+
+    function hideAllMenus() {
+        try {
+            ['main-menu','act-menu','psi-menu','mercy-menu','opponent-menu'].forEach(id => { const el = $(id); if (el) el.style.display = 'none' })
+            submenuActive = false;
+        } catch (e) {}
+    }
+
+    function showMenu() {
+        clampSelectedForMenu();
+        const mainMenu = $('main-menu');
+        if (menuState === "main") {
+            if (mainMenu) mainMenu.style.display = 'flex';
+            const btns = mainMenu ? mainMenu.querySelectorAll('button') : [];
+            btns.forEach((btn, i) => {
+                btn.classList.toggle('selected', i === selectedIndex);
+                btn.innerHTML = btn.textContent.replace(/^\s*(<img.*?>)?/, "");
+                if (i === selectedIndex) btn.innerHTML = `<img src="${playerSoulPng}" alt="Select" style="vertical-align:middle;width:20px;height:20px;margin-right:6px;">${btn.textContent}`;
+            })
+        } else if (mainMenu) mainMenu.style.display = 'none';
+
+        ["act-menu","psi-menu","mercy-menu"].forEach(menuId => {
+            const menu = $(menuId); if (!menu) return;
+            menu.style.display = (menuState === menuId.replace('-menu','')) ? 'flex' : 'none';
+            const btns = menu.querySelectorAll('button');
+            btns.forEach((btn, i) => {
+                btn.classList.toggle('selected', i === selectedIndex);
+                btn.innerHTML = btn.textContent.replace(/^\s*(<img.*?>)?/, "");
+                if (i === selectedIndex) btn.innerHTML = `<img src="${playerSoulPng}" alt="Select" style="vertical-align:middle;width:20px;height:20px;margin-right:6px;">${btn.textContent}`;
+            })
+        })
+    }
+
+    function backToMenu() { menuState = "main"; selectedIndex = 0; submenuActive = false; enableMenu(); highlightSelected() }
+    function disableMenu() { turnActive = !1; hideAllMenus(); }
+    function enableMenu() { turnActive = !0; menuState = "main"; selectedIndex = 0; submenuActive = false; highlightSelected(); showMenu(); }
     function showOpponentMenu(actionType) {
         disableMenu(); menuState = "opponent"; if (typeof selectedOpponentIndex === "undefined") selectedOpponentIndex = 0; if (!document.getElementById("opponent-menu")) { const menuDiv = document.createElement("div"); menuDiv.id = "opponent-menu"; menuDiv.style.marginTop = "8px"; menuDiv.style.fontFamily = "monospace"; menuDiv.style.whiteSpace = "pre"; if (logEl) logEl.appendChild(menuDiv); }
         const menuDiv = $('opponent-menu'); if (!menuDiv) { enableMenu(); return }
@@ -144,27 +238,96 @@
         document.addEventListener('keydown', onKey)
     }
     function flashConfirm(el) { if (!el) return; el.style.transition = "transform 0.1s, background 0.1s"; el.style.transform = "scale(1.2)"; setTimeout(() => { el.style.transform = "scale(1)" }, 100) }
+    // Generic submenu helper: shows a submenu, manages keyboard + mouse navigation, and calls
+    // `callback(index)` when selection is confirmed. It respects button.disabled and will
+    // prevent selection of disabled options (with visual feedback).
     function showSubMenu(menuId, options = [], extraInfo = [], callback) {
         const menuDiv = $(menuId); if (!menuDiv) { callback(0); return }
-        menuDiv.style.display = "flex"; const buttons = menuDiv.querySelectorAll("button"); let sel = 0; function updateHighlight() { buttons.forEach((btn, i) => { btn.style.outline = (i === sel) ? "3px solid yellow" : ""; btn.innerHTML = extraInfo[i] ? `${options[i]} (${extraInfo[i]})` : options[i] }) }
-        updateHighlight(); function onKey(e) { if (!menuDiv.style.display || menuDiv.style.display === "none") return; switch (e.code) { case "ArrowLeft": sel = (sel - 1 + buttons.length) % buttons.length; safePlay(moveAudio); updateHighlight(); break; case "ArrowRight": sel = (sel + 1) % buttons.length; safePlay(moveAudio); updateHighlight(); break; case "KeyZ": case "Enter": safePlay(selectAudio); document.removeEventListener('keydown', onKey); menuDiv.style.display = "none"; callback(sel); break; case "KeyX": case "ShiftLeft": case "ShiftRight": safePlay(selectAudio); document.removeEventListener('keydown', onKey); menuDiv.style.display = "none"; break } }
-        document.addEventListener('keydown', onKey)
+        console.log('showSubMenu open', menuId, options);
+        submenuActive = true;
+        menuDiv.style.display = "flex"; const buttons = menuDiv.querySelectorAll("button"); let sel = selectedIndex || 0; // sync with outer selection
+        function updateHighlight() { buttons.forEach((btn, i) => { btn.style.outline = (i === sel) ? "3px solid yellow" : ""; btn.innerHTML = extraInfo[i] ? `${options[i]} (${extraInfo[i]})` : options[i] }); selectedIndex = sel; highlightSelected(); }
+        updateHighlight();
+        function onKey(e) { if (!menuDiv.style.display || menuDiv.style.display === "none") return; switch (e.code) { case "ArrowLeft": e.preventDefault(); e.stopPropagation(); { let tries = buttons.length; do { sel = (sel - 1 + buttons.length) % buttons.length; tries--; } while (tries > 0 && buttons[sel] && buttons[sel].disabled); safePlay(moveAudio); updateHighlight(); } break; case "ArrowRight": e.preventDefault(); e.stopPropagation(); { let tries = buttons.length; do { sel = (sel + 1) % buttons.length; tries--; } while (tries > 0 && buttons[sel] && buttons[sel].disabled); safePlay(moveAudio); updateHighlight(); } break; case "KeyZ": case "Enter": e.preventDefault(); e.stopPropagation(); // check disabled for selected button
+                    if (buttons[sel] && buttons[sel].disabled) { try { const b = buttons[sel]; b.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(0)' }], { duration: 220 }); } catch (e) {} safePlay(selectAudio); log('Not available right now.'); return } safePlay(selectAudio); document.removeEventListener('keydown', onKey); buttons.forEach(b => b.onclick = null); menuDiv.style.display = "none"; submenuActive = false; console.log('showSubMenu confirm', menuId, sel); callback(sel); break; case "KeyX": case "ShiftLeft": case "ShiftRight": e.preventDefault(); e.stopPropagation(); safePlay(selectAudio); document.removeEventListener('keydown', onKey); buttons.forEach(b => b.onclick = null); menuDiv.style.display = "none"; submenuActive = false; console.log('showSubMenu cancel', menuId); break } }
+        document.addEventListener('keydown', onKey);
+        // mouse support: click buttons directly
+        buttons.forEach((btn, i) => { const cb = () => { if (btn.disabled) { safePlay(selectAudio); log('Not available right now.'); return } safePlay(selectAudio); document.removeEventListener('keydown', onKey); buttons.forEach(b => b.onclick = null); menuDiv.style.display = "none"; submenuActive = false; callback(i); }; btn.onclick = cb })
     }
     function showAct(opponent) {
-        opponent = opponent || opponents[selectedOpponentIndex]; if (!opponent) { turnActive = !0; return }
-        const acts = ["Insult", "Compliment", "Flirt"]; const mercyInfo = acts.map(act => { if (!opponent.mercyPattern || opponent.mercyPattern.length === 0) return ""; const nextRequired = opponent.mercyPattern[opponent.mercyProgress] || ""; return act.toLowerCase() === nextRequired.toLowerCase() ? "Next for Mercy" : "" }); showSubMenu("act-menu", acts, mercyInfo, index => {
-            const chosenAct = acts[index].toLowerCase(); console.log("Chosen act:", chosenAct); if (!acts.map(a => a.toLowerCase()).includes(chosenAct)) { console.warn("Invalid act chosen:", chosenAct); return }
-            turnActive = !1; act(opponent, chosenAct)
-        })
+        console.log('showAct called', opponent && opponent.name);
+        opponent = opponent || opponents[selectedOpponentIndex];
+        if (!opponent) { turnActive = !0; return }
+        menuState = 'act'; selectedIndex = 0; highlightSelected(); showMenu();
+        // Ensure mouse clicks on act buttons route through keyboard confirm path for consistent behavior
+        try {
+            const actMenuEl = $('act-menu'); if (actMenuEl) {
+                actMenuEl.querySelectorAll('button').forEach((btn, i) => {
+                    btn.onclick = () => { if (btn.disabled) { log('Not available right now.'); return } selectedIndex = i; handleMenuConfirm(); }
+                })
+            }
+        } catch (e) { console.warn('act click binding failed', e) }
     }
     function showMercy(opponent) {
+        opponent = opponent || opponents[selectedOpponentIndex];
+        if (!opponent) { turnActive = !0; return }
+        menuState = 'mercy';
+        selectedIndex = 0;
+        highlightSelected();
+        const mercyOptions = ["Spare", "Flee", "Back"];
+        showSubMenu("mercy-menu", mercyOptions, ["", "", ""], index => {
+            const choice = mercyOptions[index];
+            if (choice.toLowerCase() === "spare") spare(opponent);
+            else if (choice.toLowerCase() === "flee") flee();
+            else if (choice.toLowerCase() === "back") backToMenu();
+        })
+    }
+    function showPSIMenu(opponent) {
+        console.log('showPSIMenu called', opponent && opponent.name);
         opponent = opponent || opponents[selectedOpponentIndex]; if (!opponent) { turnActive = !0; return }
-        const mercyOptions = ["Spare", "Flee", "Back"]; showSubMenu("mercy-menu", mercyOptions, ["", "", ""], index => { const choice = mercyOptions[index]; if (choice.toLowerCase() === "spare") spare(opponent); else if (choice.toLowerCase() === "flee") flee(); else if (choice.toLowerCase() === "back") backToMenu(); })
+        menuState = 'psi'; selectedIndex = 0; highlightSelected(); updatePSIMenuButtons(); showMenu();
+        try {
+            const psiMenuEl = $('psi-menu'); if (psiMenuEl) {
+                psiMenuEl.querySelectorAll('button').forEach((btn, i) => {
+                    btn.onclick = () => { if (btn.disabled) { log('Not available right now.'); return } selectedIndex = i; handleMenuConfirm(); }
+                })
+            }
+        } catch (e) { console.warn('psi click binding failed', e) }
     }
     function act(opponent, type) {
         opponent = opponent || opponents[selectedOpponentIndex]; if (!turnActive || !opponent) return; turnActive = !1; type = type.toLowerCase().trim(); if (opponent.mercyPattern && opponent.mercyProgress < opponent.mercyPattern.length) { let nextAction = opponent.mercyPattern[opponent.mercyProgress].toLowerCase().trim(); if (type === nextAction) { opponent.mercyProgress++; log(`Mercy progress: ${opponent.mercyProgress}/${opponent.mercyPattern.length}`) } }
-        let effect = Math.floor(Math.random() * 8) + 5; if (type === "insult") { opponent.hp -= effect; safePlay(slashAudio); log(`You insult ${opponent.name} — loses ${effect} mental health!`) } else if (type === "flirt") { opponent.hp += effect; safePlay(ohealAudio); log(`You flirt with ${opponent.name} — gains ${effect} mental health!`) } else { opponent.hp += effect; safePlay(ohealAudio); log(`You compliment ${opponent.name} — gains ${effect} mental health!`) }
-        updateHP(); setTimeout(enemyTurn, 1200)
+        // PK acts handling (PSI abilities)
+        // PK CUSS: costs PK_COSTS.cuss, deals significant damage (-100) to all enemies
+        if (type === 'pk cuss') {
+            if (playerPP < PK_COSTS.cuss) { log('Not enough PP for PK CUSS!'); setTimeout(() => { enableMenu() }, 600); return }
+            playerPP = Math.max(0, playerPP - 100); for (let i = opponents.length - 1; i >= 0; i--) { opponents[i].hp = Math.max(0, opponents[i].hp - 100); if (opponents[i].hp <= 0) handleEnemyDeath(i) }
+            log('PK CUSS used! All enemies took -100 mental health!'); safePlay(slashAudio); updateHP(); setTimeout(() => { if (opponents.length > 0) enemyTurn(); else handleEncounterClear() }, 800); updatePPUI(); return
+        } else if (type === 'pk therapy') {
+            if (playerPP < PK_COSTS.therapy) { log('Not enough PP for PK THERAPY!'); setTimeout(() => { enableMenu() }, 600); return }
+            playerPP = Math.max(0, playerPP - PK_COSTS.therapy); const sparedCount = opponents.length; for (let i = 0; i < sparedCount; i++) { totalSpared++; currentEncounterSpared++ } opponents = []; updateHP(); safePlay(spareAudio); log('PK THERAPY used! All enemies spared despite mercy requirements.'); updatePPUI(); setTimeout(() => { handleEncounterClear() }, 800); return
+        } else if (type === 'pk stun') {
+            if (playerPP < PK_COSTS.stun) { log('Not enough PP for PK STUN!'); setTimeout(() => { enableMenu() }, 600); return }
+            playerPP = Math.max(0, playerPP - PK_COSTS.stun); enemyStunned = true; log('PK STUN used! Enemies are stunned for a short while.'); updatePPUI(); setTimeout(() => { enemyStunned = false; log('Enemies recovered from stun.'); }, STUN_DURATION); setTimeout(() => { enableMenu() }, 800); return
+        } else if (type === 'pk reduce') {
+            // free action that grants PP
+            const gain = 25; playerPP = Math.min(MAX_PP, playerPP + gain); log(`PK REDUCE used! You gain +${gain} PP.`); updatePPUI(); setTimeout(() => { enableMenu() }, 600); return
+        }
+        // Default acts: insult/flirt/compliment
+        let effect = Math.floor(Math.random() * 8) + 5;
+        if (type === "insult") {
+            opponent.hp -= effect; totalInsults++; safePlay(slashAudio); log(`You insult ${opponent.name} — loses ${effect} mental health!`)
+        } else if (type === "flirt") {
+            opponent.hp += effect; safePlay(ohealAudio); log(`You flirt with ${opponent.name} — gains ${effect} mental health!`)
+        } else {
+            opponent.hp += effect; totalCompliments++; safePlay(ohealAudio); log(`You compliment ${opponent.name} — gains ${effect} mental health!`)
+        }
+        updateHP();
+        // If the act killed the opponent, handle death (which will continue the encounter flow)
+        if (opponent.hp <= 0) {
+            handleEnemyDeath(selectedOpponentIndex);
+            return;
+        }
+        setTimeout(enemyTurn, 1200) 
     }
     const BOX_W = attackCanvas ? (attackCanvas.width || 400) : 400; const BOX_H = attackCanvas ? (attackCanvas.height || 200) : 200; const SOUL_SIZE = 18; let soul = { x: BOX_W / 2 - SOUL_SIZE / 2, y: BOX_H / 2 - SOUL_SIZE / 2, w: SOUL_SIZE, h: SOUL_SIZE, speed: 4 }; let keys = {}; let projectiles = []; let battleAnimId = null; let projectileSpawner = null; let battlePhaseActive = !1; const insultWords = ["Idiot", "Dumbass", "Donkey", "Numbnuts", "Prick", "Dork", "[Insert Slur]", "Tch", "ugh", "UNC", "Sybau", "SYFM", "🥀"]; const complimentWords = ["Einstine", "Goofy", "Funny", "Good Freind", "Great", "🌹", "Keep Talking", "Massive", "Kind", "👍", "Uncle", "Freind"]; function startBattlePhase(opponent, duration = 7000, intensity = { spawnInterval: 600, speed: 1.5, insultChance: 0.5 }) {
         if (!attackCanvas || !ctx) { setTimeout(() => { if (typeof onBattlePhaseEnd === 'function') onBattlePhaseEnd(); }, duration); return { stopBattle: () => { }, setOnEnd(cb) { onBattlePhaseEnd = cb } } }
@@ -178,6 +341,15 @@
         function step() {
             if (!battlePhaseActive) return; if (keys.left) soul.x -= soul.speed; if (keys.right) soul.x += soul.speed; if (keys.up) soul.y -= soul.speed; if (keys.down) soul.y += soul.speed; soul.x = Math.max(0, Math.min(soul.x, BOX_W - soul.w)); soul.y = Math.max(0, Math.min(soul.y, BOX_H - soul.h)); for (let i = projectiles.length - 1; i >= 0; i--) {
                 const p = projectiles[i]; p.x += p.vx; p.y += p.vy; if (p.x < -80 || p.x > BOX_W + 80 || p.y < -80 || p.y > BOX_H + 80) { projectiles.splice(i, 1); continue }
+                // grazing detection: near an attack but not colliding
+                try {
+                    const soulCX = soul.x + soul.w/2, soulCY = soul.y + soul.h/2;
+                    const projCX = p.x + (p.w || 10)/2, projCY = p.y + (p.h || 10)/2;
+                    const dx = projCX - soulCX, dy = projCY - soulCY; const dist = Math.sqrt(dx*dx + dy*dy);
+                    const isColliding = !(p.x + p.w < soul.x || p.x > soul.x + soul.w || p.y + p.h < soul.y || p.y > soul.y + soul.h);
+                    if (!p.grazed && !isColliding && dist < Math.max(soul.w, soul.h) + GRAZE_RADIUS) { p.grazed = true; const gain = GRAZE_GAIN; playerPP = Math.min(MAX_PP, playerPP + gain); log(`Grazed an attack! +${gain} PP`); updatePPUI(); // visual + sound feedback
+                        try { const projCX = p.x + (p.w||10)/2, projCY = p.y + (p.h||10)/2; showFloatingPP(projCX, projCY, gain); playPPBeep(); } catch(e){} }
+                } catch (e) { }
                 if (!(p.x + p.w < soul.x || p.x > soul.x + soul.w || p.y + p.h < soul.y || p.y > soul.y + soul.h)) { if (p.type === "insult") playerHP -= 10, safePlay(hurtAudio); else if (p.type === "flirt") playerHP += 15, safePlay(healAudio); else if (p.type === "compliment") playerHP += 10, safePlay(healAudio); projectiles.splice(i, 1); updateHP() }
             }
             ctx.clearRect(0, 0, BOX_W, BOX_H); ctx.fillStyle = "#000"; ctx.fillRect(0, 0, BOX_W, BOX_H); projectiles.forEach(p => { ctx.font = "30px DTM"; ctx.fillStyle = p.type === "insult" ? "#ff4444" : p.type === "flirt" ? "#ff69b4" : "#00ff00"; ctx.fillText(p.text, p.x, p.y) }); ctx.drawImage(Soul, soul.x, soul.y, soul.w, soul.h); battleAnimId = requestAnimationFrame(step)
@@ -195,6 +367,7 @@ function handleEnemyDeath(opponentIndex) {
 
     if (opponent.hp <= 0) {
         totalKilled++;
+        currentEncounterKills++;
         log(`${opponent.name} has been defeated!`);
         killAudio.currentTime = 0;
         killAudio.play();
@@ -208,12 +381,14 @@ function handleEnemyDeath(opponentIndex) {
         // Update UI
         updateHP();
 
-        // If all enemies cleared, handle encounter clear
+        // If all enemies cleared, handle encounter clear; otherwise schedule enemy turn
         if (opponents.length === 0) {
             handleEncounterClear(); // This increments encounterCount and triggers final boss if needed
+        } else {
+            setTimeout(enemyTurn, 1200);
         }
     }
-}    // At game start (after selecting name & soul)
+}     // At game start (after selecting name & soul)
     const eye = document.getElementById("player-eye");
     eye.style.display = "none"; // hide it initially
 
@@ -301,12 +476,13 @@ function handleEnemyDeath(opponentIndex) {
             const healcompliment = compliments[Math.floor(Math.random() * compliments.length)]; playerHP += heal; safePlay(healAudio); log(`You Rememberd a Complement your freind Gave you '${healcompliment}.' You gain ${heal} mentalhealth`); updateHP(); disableMenu(); menuState = "main"; selectedIndex = 0; setTimeout(() => { enemyTurn() }, 900)
         } else { log("No items left!") }
     }
-    function spare() { if (!turnActive) return; disableMenu(); const opponent = opponents[selectedOpponentIndex]; if (!opponent) return; const canSpare = isLowHPMusicPlaying || (opponent.mercyPattern.length > 0 && opponent.mercyProgress >= opponent.mercyPattern.length) || opponent.canBeSpared; if (canSpare) { totalSpared++; log(`You spared ${opponent.name}! Peace is restored for them.`); spareAudio.currentTime = 0; spareAudio.play(); opponents.splice(selectedOpponentIndex, 1); updateHP(); if (opponents.length === 0) { endGame("You spared all opponents! Peace is restored.") } else { selectedOpponentIndex = 0; setTimeout(enableMenu, 1200) } } else { log("You can't spare yet! Complete the mercy requirement first."); setTimeout(() => { menuState = "main"; selectedIndex = 0; enableMenu() }, 1200) } }
+    function spare() { if (!turnActive) return; disableMenu(); const opponent = opponents[selectedOpponentIndex]; if (!opponent) return; const canSpare = isLowHPMusicPlaying || (opponent.mercyPattern.length > 0 && opponent.mercyProgress >= opponent.mercyPattern.length) || opponent.canBeSpared; if (canSpare) { totalSpared++; currentEncounterSpared++; log(`You spared ${opponent.name}! Peace is restored for them.`); spareAudio.currentTime = 0; spareAudio.play(); opponents.splice(selectedOpponentIndex, 1); updateHP(); if (opponents.length === 0) { endGame("You spared all opponents! Peace is restored.") } else { selectedOpponentIndex = 0; setTimeout(enableMenu, 1200) } } else { log("You can't spare yet! Complete the mercy requirement first."); setTimeout(() => { menuState = "main"; selectedIndex = 0; enableMenu() }, 1200) } }
     setInterval(checkLowHP, 1000); function flee() {
         if (!turnActive) return; disableMenu(); if (inFinalBoss) { log("Mahdiisdumb: Thats Delightful, you can't flee!"); setTimeout(() => { enableMenu(); menuState = "main"; selectedIndex = 0 }, 1200); return } else if (playerHP > 20) { log("You can only flee when your HP is 20 or less! What are you, a wuss?"); setTimeout(() => { enableMenu(); menuState = "main"; selectedIndex = 0 }, 900); return }
         log("You fled the battle! You escaped safely..."); safePlay(spareAudio); setTimeout(() => { currentEncounterOriginalCount = 0; currentEncounterKills = 0; currentEncounterSpared = 0; generateOpponents(); enableMenu() }, 1500)
     }
     function enemyTurn() {
+        if (enemyStunned) { log('Enemies are stunned and can\'t attack!'); setTimeout(() => { enableMenu(); }, 800); return }
         if (!opponents || opponents.length === 0) { handleEncounterClear(); return }
         if (playerHP <= 0) { endGame("You lost! Your mental health is depleted."); return }
         disableMenu(); const actingOpponent = opponents[Math.floor(Math.random() * opponents.length)]; if (actingOpponent.isFinal) {
@@ -328,15 +504,15 @@ function handleEnemyDeath(opponentIndex) {
         log(endingMsg); disableMenu(); if (resetBtn) resetBtn.style.display = 'inline-block'; try { audio.pause(); olAudio.pause(); isLowHPMusicPlaying = !1 } catch (e) { }
     }
     function resetGame() {
-        playerHP = 100; playerItems = Math.floor(Math.random() * 4) + 1; encounterCount = 0; encounterResults = []; currentEncounterOriginalCount = 0; currentEncounterKills = 0; currentEncounterSpared = 0; inFinalBoss = !1; opponents = generateOpponents(); updateHP(); log("Game restarted!"); enableMenu(); if (resetBtn) resetBtn.style.display = 'none'; chosenTrack = musicTracks[Math.floor(Math.random() * musicTracks.length)]; audio.src = chosenTrack; try { audio.currentTime = 0; audio.play() } catch (e) { }
+        playerHP = 100; playerPP = 0; playerItems = Math.floor(Math.random() * 4) + 1; encounterCount = 0; encounterResults = []; currentEncounterOriginalCount = 0; currentEncounterKills = 0; currentEncounterSpared = 0; inFinalBoss = !1; opponents = generateOpponents(); updateHP(); updatePPUI(); log("Game restarted!"); enableMenu(); if (resetBtn) resetBtn.style.display = 'none'; chosenTrack = musicTracks[Math.floor(Math.random() * musicTracks.length)]; audio.src = chosenTrack; try { audio.currentTime = 0; audio.play() } catch (e) { }
         try { if (currentBossMusic) currentBossMusic.pause(); } catch (e) { }
         totalInsults = 0; totalCompliments = 0; totalSpared = 0; totalKilled = 0; if (playerName) { const el = $('player-name-label'); if (el) el.textContent = playerName }
     }
     if (resetBtn) { resetBtn.onclick = resetGame }
     window.startGameInit = function (name, color, soulPng) {
-        playerName = name || "Your"; playerSoulColor = color || "#ff0000"; playerSoulPng = soulPng || "r.png"; playerHP = 100; playerItems = Math.floor(Math.random() * 4) + 1; turnActive = !0; menuState = "main"; selectedIndex = 0; if (!globalKeyHandlerBound) { document.addEventListener('keydown', globalKeyHandler); globalKeyHandlerBound = !0 }
-        opponents = generateOpponents(); selectedOpponentIndex = 0; const nameLabel = $('player-name-label'); if (nameLabel) nameLabel.textContent = playerName; updateHP(); enableMenu(); log(`Welcome,Use arrow keys to select, Z/Enter to confirm, X/Shift to go back.`); try { audio.currentTime = 0; audio.play() } catch (e) { }
-    }; if (!opponents || opponents.length === 0) opponents = generateOpponents(); const slurBtn = $('slur'); const actBtn = $('act'); const itemBtn = $('item'); const mercyBtn = $('mercy'); if (slurBtn) slurBtn.onclick = () => { showOpponentMenu("Slur") }; if (actBtn) actBtn.onclick = () => { showOpponentMenu("act") }; if (itemBtn) itemBtn.onclick = () => { useItem() }; if (mercyBtn) mercyBtn.onclick = () => { showOpponentMenu("mercy") }; window._game = { getState: () => ({ playerHP, playerItems, playerName, opponents, encounterCount, encounterResults, totalKilled, totalSpared }) }; function opponentText(op) {
+        playerName = name || "Your"; playerSoulColor = color || "#ff0000"; playerSoulPng = soulPng || "r.png"; playerHP = 100; playerPP = 0; playerItems = Math.floor(Math.random() * 4) + 1; turnActive = !0; menuState = "main"; selectedIndex = 0; if (!globalKeyHandlerBound) { document.addEventListener('keydown', globalKeyHandler); globalKeyHandlerBound = !0 }
+        opponents = generateOpponents(); selectedOpponentIndex = 0; const nameLabel = $('player-name-label'); if (nameLabel) nameLabel.textContent = playerName; updateHP(); updatePPUI(); enableMenu(); log(`Welcome,Use arrow keys to select, Z/Enter to confirm, X/Shift to go back.`); try { audio.currentTime = 0; audio.play() } catch (e) { }
+    }; if (!opponents || opponents.length === 0) opponents = generateOpponents(); const slurBtn = $('slur'); const actBtn = $('act'); const itemBtn = $('item'); const mercyBtn = $('mercy'); if (slurBtn) slurBtn.onclick = () => { showOpponentMenu("Slur") }; if (actBtn) actBtn.onclick = () => { showOpponentMenu("act") }; if (itemBtn) itemBtn.onclick = () => { useItem() }; if (mercyBtn) mercyBtn.onclick = () => { showOpponentMenu("mercy") }; window._game = { getState: () => ({ playerHP, playerItems, playerName, playerPP, opponents, encounterCount, encounterResults, totalKilled, totalSpared }), addPP: (n=10) => { playerPP = Math.min(MAX_PP, playerPP + n); updatePPUI(); log(`DEBUG: +${n} PP`); }, printTestPlan: () => { console.info('TEST PLAN:\n1) Enter battle, move near (not touch) attacks; confirm log "Grazed an attack!" and PP increases.\n2) Act -> PSI: open the PSI submenu; verify buttons show cost and disabled if insufficient PP.\n3) Use PK actions when you have enough PP: PK CUSS (-100 HP all), PK THERAPY (spare all), PK STUN (stun enemies), PK REDUCE (+PP).\n4) Confirm keyboard and mouse selection both work and disabled items can\'t be chosen.\nUse window._game.addPP(n) to add test PP.' ) } }; function opponentText(op) {
         try { if (op && op.name) return op.name; if (opponents && opponents[0] && opponents[0].name) return opponents[0].name } catch (e) { }
         return "The enemy"
     }

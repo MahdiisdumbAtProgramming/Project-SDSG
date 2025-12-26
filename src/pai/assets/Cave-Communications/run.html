@@ -46,6 +46,17 @@
             <div class="hp-bar"><span id="player-name-label">Your</span>'s Mental Health: <span id="player-hp">100</span></div>
             <div class="hp-bar">Opponent's Mental Health: <span id="enemy-hp">100</span></div>
 
+            <!-- PSI Meter -->
+            <div id="psi-container" style="margin:8px 0; color:white; font-family:monospace;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:220px; background:#222; border:1px solid #444; height:22px; position:relative;">
+                        <div id="psi-fill" style="background:url('./png/bar.png') repeat-x; height:100%; width:0%;"></div>
+                    </div>
+                    <div id="pp-count">0/100 PP</div>
+                </div>
+                <div style="font-size:12px; color:#ccc;">Grazing enemy attacks fills your PSI. Use PK acts in Act menu.</div>
+            </div>
+
             <div id="battle-container">
                 <canvas id="battle-canvas"></canvas>
                 <div id="fight-container" style="position: relative; width: 600px; height: 150px; background: black;">
@@ -56,9 +67,9 @@
                 <div class="log" id="log"></div>
 
                 <div class="menu" id="main-menu">
-                    <button id="slur">SLUR -20MH</button>
+                    <button id="slur">SLUR</button>
                     <button id="act">ACT</button>
-                    <button id="item">REMEMBER +20MH</button>
+                    <button id="item">REMEMBER</button>
                     <button id="mercy">MERCY</button>
                 </div>
 
@@ -66,7 +77,16 @@
                     <button id="act-insult">INSULT</button>
                     <button id="act-compliment">COMPLIMENT</button>
                     <button id="act-flirt">FLIRT</button>
+                    <button id="act-psi">PSI</button>
                     <button id="act-back">BACK</button>
+                </div>
+
+                <div class="submenu" id="psi-menu" style="display:none;">
+                    <button id="psi-cuss">PK CUSS</button>
+                    <button id="psi-therapy">PK THERAPY</button>
+                    <button id="psi-stun">PK STUN</button>
+                    <button id="psi-reduce">PK REDUCE</button>
+                    <button id="psi-back">BACK</button>
                 </div>
 
                 <div class="submenu" id="mercy-menu" style="display:none;">

@@ -149,13 +149,18 @@ button {
     font-weight: bold;
 }
 
-.menu, .submenu {
-    margin-top: 16px;
-}
+.menu { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top: 16px; }
+.submenu { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top: 16px; }
 
     .submenu button {
         margin: 4px;
+        min-width: 110px;
     }
+
+    #psi-container { display:flex; flex-direction:column; align-items:center; gap:6px; }
+    #psi-container > div { display:flex; align-items:center; gap:8px; }
+
+    .floating-pp { position: absolute; pointer-events: none; color: #ffdd55; font-weight: bold; font-family: monospace; text-shadow: 0 0 6px #000; transition: transform 800ms ease-out, opacity 800ms ease-out; }
 
 .log {
     margin-top: 8px;
