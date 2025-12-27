@@ -18,10 +18,53 @@
     let consecutiveKills = 0; const musicTracks = [
   "mus/1.mp3", "mus/2.mp3", "mus/3.mp3", "mus/4.mp3", "mus/5.mp3",
   "mus/6.ogg", "mus/7.mp3", "mus/8.ogg", "mus/9.ogg", "mus/10.mp3",
-]; let chosenTrack = musicTracks[Math.floor(Math.random() * musicTracks.length)]; const audio = document.createElement('audio'); audio.src = chosenTrack; audio.volume = 0.5; audio.loop = !0; audio.id = 'bg-music'; document.body.appendChild(audio); const olAudio = document.createElement('audio'); olAudio.src = "mus/OL.ogg"; olAudio.volume = 0.5; olAudio.loop = !0; olAudio.id = 'ol-music'; document.body.appendChild(olAudio); const heartbeatAudio = document.createElement('audio'); heartbeatAudio.src = 'sfx/heartbeat.wav'; document.body.appendChild(heartbeatAudio); const winAudio = document.createElement('audio'); winAudio.src = "sfx/w.ogg"; document.body.appendChild(winAudio); const loseAudio = document.createElement('audio'); loseAudio.src = "sfx/l.mp3"; document.body.appendChild(loseAudio); const hurtAudio = document.createElement('audio'); hurtAudio.src = "sfx/hurt.wav"; document.body.appendChild(hurtAudio); const slashAudio = document.createElement('audio'); slashAudio.src = "sfx/slash.wav"; document.body.appendChild(slashAudio); const healAudio = document.createElement('audio'); healAudio.src = "sfx/heal.wav"; document.body.appendChild(healAudio); const ohealAudio = document.createElement('audio'); ohealAudio.src = "sfx/oheal.wav"; document.body.appendChild(ohealAudio); const spareAudio = document.createElement('audio'); spareAudio.src = "sfx/s.wav"; document.body.appendChild(spareAudio); const killAudio = document.createElement('audio'); killAudio.src = "sfx/k.mp3"; document.body.appendChild(killAudio); const moveAudio = document.createElement('audio'); moveAudio.src = "sfx/mv.wav"; moveAudio.preload = "auto"; moveAudio.volume = 1; document.body.appendChild(moveAudio); const selectAudio = document.createElement('audio'); selectAudio.src = "sfx/sel.wav"; selectAudio.preload = "auto"; selectAudio.volume = 1; document.body.appendChild(selectAudio); let currentBossMusic = null; let heartbeatIntervalId = null; let isLowHPMusicPlaying = !1; function stopAllMusic() { safePause(audio); safePause(olAudio); safePause(currentBossMusic); safePause(winAudio); safePause(loseAudio) }
+]; let chosenTrack = musicTracks[Math.floor(Math.random() * musicTracks.length)]; const audio = document.createElement('audio'); audio.src = chosenTrack; audio.volume = 0.5; audio.loop = !0; audio.id = 'bg-music'; document.body.appendChild(audio); const olAudio = document.createElement('audio'); olAudio.src = "mus/OL.ogg"; olAudio.volume = 0.5; olAudio.loop = !0; olAudio.id = 'ol-music'; document.body.appendChild(olAudio); const heartbeatAudio = document.createElement('audio'); heartbeatAudio.src = 'sfx/heartbeat.wav'; document.body.appendChild(heartbeatAudio); const winAudio = document.createElement('audio'); winAudio.src = "sfx/w.ogg"; document.body.appendChild(winAudio); const loseAudio = document.createElement('audio'); loseAudio.src = "sfx/l.wav"; document.body.appendChild(loseAudio); const gameoverAudio = document.createElement('audio'); gameoverAudio.src = 'mus/gameover.ogg'; gameoverAudio.loop = !0; gameoverAudio.volume = 0.65; document.body.appendChild(gameoverAudio); const hurtAudio = document.createElement('audio'); hurtAudio.src = "sfx/hurt.wav"; document.body.appendChild(hurtAudio); const slashAudio = document.createElement('audio'); slashAudio.src = "sfx/slash.wav"; document.body.appendChild(slashAudio); const healAudio = document.createElement('audio'); healAudio.src = "sfx/heal.wav"; document.body.appendChild(healAudio); const ohealAudio = document.createElement('audio'); ohealAudio.src = "sfx/oheal.wav"; document.body.appendChild(ohealAudio); const spareAudio = document.createElement('audio'); spareAudio.src = "sfx/s.wav"; document.body.appendChild(spareAudio); const killAudio = document.createElement('audio'); killAudio.src = "sfx/k.mp3"; document.body.appendChild(killAudio); const moveAudio = document.createElement('audio'); moveAudio.src = "sfx/mv.wav"; moveAudio.preload = "auto"; moveAudio.volume = 1; document.body.appendChild(moveAudio); const selectAudio = document.createElement('audio'); selectAudio.src = "sfx/sel.wav"; selectAudio.preload = "auto"; selectAudio.volume = 1; document.body.appendChild(selectAudio); let currentBossMusic = null; let heartbeatIntervalId = null; let isLowHPMusicPlaying = !1; function stopAllMusic() { try { safePause(audio); safePause(olAudio); if (currentBossMusic) try { safePause(currentBossMusic) } catch (e) {} safePause(winAudio); safePause(loseAudio); if (typeof gameoverAudio !== 'undefined') try { safePause(gameoverAudio) } catch (e) {} safePause(heartbeatAudio); // also reset common sfx
+try { [slashAudio, healAudio, ohealAudio, spareAudio, killAudio, moveAudio, selectAudio].forEach(s => { if (s && typeof s.pause === 'function') { try { s.pause(); s.currentTime = 0 } catch (e) {} } }) } catch (e) {}
+// remove any lingering lose handler
+try { if (loseAudio && loseAudio._onEnded) { loseAudio.removeEventListener('ended', loseAudio._onEnded); loseAudio._onEnded = null } } catch (e) {}
+isLowHPMusicPlaying = !1 } catch (e) { console.debug('stopAllMusic error', e) } }
     function playMusic(file) { try { if (currentBossMusic) safePause(currentBossMusic); currentBossMusic = new Audio(file); currentBossMusic.loop = !0; currentBossMusic.volume = 1.0; safePlay(currentBossMusic) } catch (e) { } }
     function startHeartbeat() { if (heartbeatIntervalId) return; heartbeatIntervalId = setInterval(() => { try { heartbeatAudio.currentTime = 0; safePlay(heartbeatAudio) } catch (e) { } }, 1000) }
     function stopHeartbeat() { if (heartbeatIntervalId) { clearInterval(heartbeatIntervalId); heartbeatIntervalId = null } }
+function fadeAudio(a, toVol, dur = 600, cb) { try { if (!a || typeof a.volume === 'undefined') { if (cb) cb(); return } const start = a.volume; const delta = toVol - start; const startTime = Date.now(); const iv = setInterval(() => { const t = Math.min(1, (Date.now() - startTime) / dur); try { a.volume = start + delta * t } catch (e) {} if (t >= 1) { clearInterval(iv); if (cb) cb() } }, 30) } catch (e) { if (cb) cb(); console.debug('fadeAudio error', e) } }
+function playGameOverSequence() { try {
+    stopHeartbeat(); if (audio && typeof audio.volume !== 'undefined') fadeAudio(audio, 0, 600); if (currentBossMusic && typeof currentBossMusic.volume !== 'undefined') fadeAudio(currentBossMusic, 0, 600); if (olAudio && isLowHPMusicPlaying) fadeAudio(olAudio, 0, 600);
+    // Ensure music paused but do NOT start gameover until lose finishes
+    stopAllMusic();
+    try { if (gameoverAudio) { try { gameoverAudio.pause(); gameoverAudio.currentTime = 0 } catch (e) {} } } catch(e){}
+
+    // prepare end handler
+    const onLoseEnded = function onLoseEnded() {
+        try { safePlay(gameoverAudio); fadeAudio(gameoverAudio, 0.65, 600) } catch (err) { console.debug('gameover play failed', err) }
+        try { if (loseAudio) { loseAudio.removeEventListener('ended', onLoseEnded); loseAudio._onEnded = null } } catch (e) {}
+    };
+
+    try {
+        if (loseAudio) {
+            // attach handler before trying to play
+            try { if (loseAudio._onEnded) { loseAudio.removeEventListener('ended', loseAudio._onEnded); loseAudio._onEnded = null } } catch(e){}
+            loseAudio._onEnded = onLoseEnded;
+            loseAudio.addEventListener('ended', onLoseEnded);
+            try { loseAudio.currentTime = 0; const playPromise = loseAudio.play();
+                if (playPromise && typeof playPromise.then === 'function') {
+                    playPromise.then(()=>{
+                        // playing successfully; wait for 'ended' event
+                    }).catch(err=>{
+                        // playback blocked; fallback to gameover immediately
+                        console.debug('lose play blocked:', err);
+                        try { loseAudio.removeEventListener('ended', onLoseEnded); loseAudio._onEnded = null } catch(e){}
+                        safePlay(gameoverAudio); fadeAudio(gameoverAudio, 0.65, 600);
+                    });
+                }
+            } catch (e) { console.debug('loseAudio play error', e); // fallback
+                try { loseAudio.removeEventListener('ended', onLoseEnded); loseAudio._onEnded = null } catch(e){}
+                safePlay(gameoverAudio); fadeAudio(gameoverAudio, 0.65, 600);
+            }
+        } else {
+            safePlay(gameoverAudio); fadeAudio(gameoverAudio, 0.65, 600);
+        }
+    } catch (e) { console.debug('playGameOverSequence error', e); safePlay(gameoverAudio); }
+} catch (e) { console.debug('playGameOverSequence outer error', e) } }
     function startMusic() {
         if (!isLowHPMusicPlaying) try { audio.play().catch(() => { }) } catch (e) { }
         document.body.removeEventListener('click', startMusic); document.body.removeEventListener('keydown', startMusic)
@@ -34,7 +77,7 @@
     }
     const mercyPatterns = [["compliment", "compliment", "flirt", "compliment", "insult"], ["insult", "flirt", "compliment", "insult", "compliment"], ["compliment", "flirt", "compliment", "insult", "flirt"], ["flirt", "compliment", "insult", "flirt", "compliment"], ["insult", "compliment", "flirt", "compliment", "insult"]]; const opponentNames = ["Paper", "Sand", "Flowerpot", "Boreiel", "Undone", "Alfice", "Asbore", "Metta-gone", "Napstablank", "Tempy", "BurgerShorts", "Muffin", "Creature Kid", "Jerrican", "Doggo", "Greater Cat", "Lesser Cat", "Glad Smarty", "Shywrong", "Gersad", "Kindy", "Doggy", "Grassrake", "Baron", "Washout", "Moldbig", "weakaircraft", "Volcano", "Not like", "waterrake", "pi", "Dipin", "Character", "Dreamer", "Mettaboy", "Flowbee", "Tormentor", "Unfine", "Ascore", "Napstapunk", "Temptation", "Burgerking", "Muffintop", "Unusual Pal", "Jerrycan", "Kitty", "Greater Wolf", "Lesser Wolf", "Happy Smarty", "Shyright", "Germson", "Bratcat", "Kitbrat", "Snowman", "Aarun", "Washya", "Moldtiny", "Tsunderecar", "Vulkan", "Not Sorry"]; let playerHP = 100; let playerPP = 0; // PP (psi points) and configuration
     const MAX_PP = 100; // maximum PP
-    const GRAZE_RADIUS = 28; // pixels beyond soul bounding box considered a "graze"
+    const GRAZE_RADIUS = 14; // pixels beyond soul bounding box considered a "graze" — reduced to make grazing harder
     const GRAZE_GAIN = 5; // PP gained per graze
     const PK_COSTS = {cuss:100, therapy:25, stun:15, reduce:0}; // PP costs for PK acts
     const STUN_DURATION = 6000; // milliseconds enemies stay stunned
@@ -81,7 +124,9 @@
     function checkLowHP() { const lowOpponent = opponents.find(op => op.hp > 0 && op.hp <= 20); if (lowOpponent && !isLowHPMusicPlaying) { audio.pause(); olAudio.currentTime = 0; olAudio.play(); isLowHPMusicPlaying = !0 } else if (!lowOpponent && isLowHPMusicPlaying) { olAudio.pause(); audio.play(); isLowHPMusicPlaying = !1 } }
     function generateOpponents(options = {}) {
         const isFinal = !!options.finalBoss; const list = []; if (isFinal) { list.push({ name: "Mahdiisdumb", hp: 400, state: "angry", mercyPattern: [], mercyProgress: 0, isFinal: !0 }) } else { const count = Math.floor(Math.random() * 3) + 1; const used = new Set(); for (let i = 0; i < count; i++) { let name; do { name = opponentNames[Math.floor(Math.random() * opponentNames.length)] } while (used.has(name)); used.add(name); list.push({ name, hp: 100, state: "angry", mercyPattern: mercyPatterns[Math.floor(Math.random() * mercyPatterns.length)], mercyProgress: 0, isFinal: !1 }) } }
-        opponents = list; currentEncounterOriginalCount = list.length; currentEncounterKills = 0; currentEncounterSpared = 0; inFinalBoss = !!options.finalBoss; if (inFinalBoss) { const route = determineRoute(); const boss = opponents[0]; stopAllMusic(); if (route === "pacifist") { boss.name = "=)"; boss.hp = 999999; boss.mercyPattern = ["SURVIVE"]; boss.noAttack = !1; boss.attackType = "nonMercy"; boss.lowDamage = !1; playMusic("mus/dan.mp3"); startHeartbeat(); let battleTime = 0; const maxTime = 600000; const timerInterval = 1000; boss.canBeSpared = !1; const timerId = setInterval(() => { battleTime += timerInterval; const seconds = Math.floor(battleTime / 1000); log(`Survive time: ${seconds} / 600`); if (battleTime >= maxTime) { clearInterval(timerId); boss.canBeSpared = !0; boss.mercyPattern = ["YOU CAN SPARE NOW"]; log("You survived long enough! You can now spare WHAT EVER THE FUCK THIS CREATURE IS!") } }, timerInterval); const enemyBP = () => { const intensity = { spawnInterval: 5, speed: 16, insultChance: 1.0, damageRange: [5, 12], }; const bp = startBattlePhase(boss, 10000, intensity); bp.onAttackSpawn = (attack) => { if (!attack.hasCompliment && Math.random() < 0.1) { attack.hasCompliment = !0; log(`${boss.name} says: "You can do it!"`) } }; bp.setOnEnd(() => { if (battleTime < maxTime) enableMenu(); }) }; enemyBP() } else if (route === "genocide") { boss.name = "Mahdiisdumb"; boss.hp = 10000; boss.mercyPattern = ["NO MERCY"]; boss.noAttack = !1; boss.alwaysAttack = !0; boss.attackType = "insult"; playMusic("mus/sinner.mp3"); startHeartbeat() } else { boss.name = "Lambda Flower"; boss.hp = 5000; boss.mercyPattern = ["null"]; boss.noAttack = !1; boss.lowDamage = !0; boss.attackType = "mixed"; playMusic("mus/sb.mp3"); startHeartbeat() } }
+        opponents = list; currentEncounterOriginalCount = list.length; currentEncounterKills = 0; currentEncounterSpared = 0; inFinalBoss = !!options.finalBoss; if (inFinalBoss) { const route = determineRoute(); const boss = opponents[0]; stopAllMusic(); if (route === "pacifist") { boss.name = "=)"; boss.hp = 999999; boss.mercyPattern = ["SURVIVE"]; boss.noAttack = !1; boss.attackType = "nonMercy"; boss.lowDamage = !1; playMusic("mus/dan.mp3"); startHeartbeat(); let battleTime = 0; const maxTime = 600000; const timerInterval = 1000; boss.canBeSpared = !1; const timerId = setInterval(() => { battleTime += timerInterval; const seconds = Math.floor(battleTime / 1000); log(`Survive time: ${seconds} / 600`); if (battleTime >= maxTime) { clearInterval(timerId); boss.canBeSpared = !0; boss.mercyPattern = ["YOU CAN SPARE NOW"]; log("You survived long enough! You can now spare WHAT EVER THE FUCK THIS CREATURE IS!") } }, timerInterval); const enemyBP = () => { const intensity = { spawnInterval: 80, speed: 6, insultChance: 0.5, complimentChance: 0.35, damageRange: [5, 12], flirtHeal: 12, complimentHeal: 8 }; // pacifist pre-battle wave: many mixed fast attacks that jumble your HP
+                    intensity.joined = Math.max(2, Math.min(6, Math.round(list.length * 3)));
+                    const bp = startBattlePhase(boss, 10000, intensity); bp.onAttackSpawn = (attack) => { if (!attack.hasCompliment && Math.random() < 0.1) { attack.hasCompliment = !0; log(`${boss.name} says: "You can do it!"`) } }; bp.setOnEnd(() => { if (battleTime < maxTime) enableMenu(); }) }; enemyBP() } else if (route === "genocide") { boss.name = "Mahdiisdumb"; boss.hp = 10000; boss.mercyPattern = ["NO MERCY"]; boss.noAttack = !1; boss.alwaysAttack = !0; boss.attackType = "insult"; playMusic("mus/sinner.mp3"); startHeartbeat() } else { boss.name = "Lambda Flower"; boss.hp = 5000; boss.mercyPattern = ["null"]; boss.noAttack = !1; boss.lowDamage = !0; boss.attackType = "mixed"; playMusic("mus/sb.mp3"); startHeartbeat() } }
         updateHP(); return opponents
     }
     function clearBattleAndUIForEnding() {
@@ -329,14 +374,39 @@
         }
         setTimeout(enemyTurn, 1200) 
     }
-    const BOX_W = attackCanvas ? (attackCanvas.width || 400) : 400; const BOX_H = attackCanvas ? (attackCanvas.height || 200) : 200; const SOUL_SIZE = 18; let soul = { x: BOX_W / 2 - SOUL_SIZE / 2, y: BOX_H / 2 - SOUL_SIZE / 2, w: SOUL_SIZE, h: SOUL_SIZE, speed: 4 }; let keys = {}; let projectiles = []; let battleAnimId = null; let projectileSpawner = null; let battlePhaseActive = !1; const insultWords = ["Idiot", "Dumbass", "Donkey", "Numbnuts", "Prick", "Dork", "[Insert Slur]", "Tch", "ugh", "UNC", "Sybau", "SYFM", "🥀"]; const complimentWords = ["Einstine", "Goofy", "Funny", "Good Freind", "Great", "🌹", "Keep Talking", "Massive", "Kind", "👍", "Uncle", "Freind"]; function startBattlePhase(opponent, duration = 7000, intensity = { spawnInterval: 600, speed: 1.5, insultChance: 0.5 }) {
+    const BOX_W = attackCanvas ? (attackCanvas.width || 400) : 400; const BOX_H = attackCanvas ? (attackCanvas.height || 200) : 200; const SOUL_SIZE = 18; let soul = { x: BOX_W / 2 - SOUL_SIZE / 2, y: BOX_H / 2 - SOUL_SIZE / 2, w: SOUL_SIZE, h: SOUL_SIZE, speed: 4 }; let keys = {}; let projectiles = []; let battleAnimId = null; let projectileSpawner = null; let battlePhaseActive = !1; const insultWords = ["Idiot", "Dumbass", "Donkey", "Numbnuts", "Prick", "Dork", "[Insert Slur]", "Tch", "ugh", "UNC", "Sybau", "SYFM", "🥀"]; const complimentWords = ["Einstine", "Goofy", "Funny", "Good Freind", "Great", "🌹", "Keep Talking", "Massive", "Kind", "👍", "Uncle", "Freind"]; function startBattlePhase(opponent, duration = 7000, intensity = { spawnInterval: 600, speed: 2.0, insultChance: 0.5 }) {
         if (!attackCanvas || !ctx) { setTimeout(() => { if (typeof onBattlePhaseEnd === 'function') onBattlePhaseEnd(); }, duration); return { stopBattle: () => { }, setOnEnd(cb) { onBattlePhaseEnd = cb } } }
         attackCanvas.style.display = "block"; battlePhaseActive = !0; menuState = "attack"; soul.x = BOX_W / 2 - soul.w / 2; soul.y = BOX_H - soul.h - 8; projectiles = []; keys = {}; function keyDown(e) { if (e.code === "ArrowLeft") keys.left = !0; if (e.code === "ArrowRight") keys.right = !0; if (e.code === "ArrowUp") keys.up = !0; if (e.code === "ArrowDown") keys.down = !0 }
         function keyUp(e) { if (e.code === "ArrowLeft") keys.left = !1; if (e.code === "ArrowRight") keys.right = !1; if (e.code === "ArrowUp") keys.up = !1; if (e.code === "ArrowDown") keys.down = !1 }
         window.addEventListener('keydown', keyDown); window.addEventListener('keyup', keyUp); projectileSpawner = setInterval(() => {
-            if (!battlePhaseActive) return; const rand = Math.random(); let type = "insult"; let word = ""; if (rand < 0.5) { type = "insult"; word = insultWords[Math.floor(Math.random() * insultWords.length)] } else if (rand < 0.85) { type = "compliment"; word = complimentWords[Math.floor(Math.random() * complimentWords.length)] } else { type = "flirt"; word = flirts[Math.floor(Math.random() * flirts.length)] }
-            const spawnSide = Math.random(); let proj = { x: 0, y: 0, vx: 0, vy: 0, text: word, type, w: 0, h: 0 }; const speed = (intensity.speed || 1.5) + Math.random() * 1.2; if (spawnSide < 0.6) { proj.x = Math.random() * (BOX_W - 40) + 20; proj.y = -10; proj.vx = (Math.random() - 0.5) * 0.6; proj.vy = speed } else if (spawnSide < 0.8) { proj.x = -40; proj.y = Math.random() * (BOX_H - 20) + 10; proj.vx = speed; proj.vy = (Math.random() - 0.5) * 0.6 } else { proj.x = BOX_W + 40; proj.y = Math.random() * (BOX_H - 20) + 10; proj.vx = -speed; proj.vy = (Math.random() - 0.5) * 0.6 }
-            proj.w = (word.length * 6) + 10; proj.h = 18; projectiles.push(proj)
+            if (!battlePhaseActive) return; const r = Math.random();
+            const insultChance = (typeof intensity.insultChance === 'number') ? intensity.insultChance : 0.5;
+            const complimentChance = (typeof intensity.complimentChance === 'number') ? intensity.complimentChance : 0.35;
+            let type = "insult"; let word = "";
+            if (r < insultChance) { type = "insult"; word = insultWords[Math.floor(Math.random() * insultWords.length)]; }
+            else if (r < insultChance + complimentChance) { type = "compliment"; word = complimentWords[Math.floor(Math.random() * complimentWords.length)]; }
+            else { type = "flirt"; word = flirts[Math.floor(Math.random() * flirts.length)]; }
+
+            // If intensity.joined > 1, spawn multiple projectiles this tick (joined attack)
+            const joinedCount = Math.max(1, Math.min(6, Math.round(intensity.joined || 1)));
+            for (let jc = 0; jc < joinedCount; jc++) {
+                const spawnSide = Math.random(); let proj = { x: 0, y: 0, vx: 0, vy: 0, text: word, type, w: 0, h: 0 };
+                const speed = (intensity.speed || 1.5) + Math.random() * 1.2 + (jc * 0.2);
+                if (spawnSide < 0.6) { proj.x = Math.random() * (BOX_W - 40) + 20 + (jc * 8 - (joinedCount * 4)); proj.y = -10; proj.vx = (Math.random() - 0.5) * 0.6; proj.vy = speed } else if (spawnSide < 0.8) { proj.x = -40; proj.y = Math.random() * (BOX_H - 20) + 10 + (jc * 6 - (joinedCount * 3)); proj.vx = speed; proj.vy = (Math.random() - 0.5) * 0.6 } else { proj.x = BOX_W + 40; proj.y = Math.random() * (BOX_H - 20) + 10 + (jc * 6 - (joinedCount * 3)); proj.vx = -speed; proj.vy = (Math.random() - 0.5) * 0.6 }
+
+                proj.w = (word.length * 6) + 10; proj.h = 18;
+                if (proj.type === 'insult') {
+                    if (Array.isArray(intensity.damageRange) && intensity.damageRange.length === 2) {
+                        const low = intensity.damageRange[0], high = intensity.damageRange[1]; proj.damage = Math.floor(low + Math.random() * (high - low + 1));
+                    } else { proj.damage = 10; }
+                } else if (proj.type === 'flirt') {
+                    proj.heal = (typeof intensity.flirtHeal === 'number') ? intensity.flirtHeal : 15;
+                } else if (proj.type === 'compliment') {
+                    proj.heal = (typeof intensity.complimentHeal === 'number') ? intensity.complimentHeal : 10;
+                }
+
+                projectiles.push(proj)
+            }
         }, intensity.spawnInterval || 600); const Soul = new Image(); Soul.src = playerSoulPng
         function step() {
             if (!battlePhaseActive) return; if (keys.left) soul.x -= soul.speed; if (keys.right) soul.x += soul.speed; if (keys.up) soul.y -= soul.speed; if (keys.down) soul.y += soul.speed; soul.x = Math.max(0, Math.min(soul.x, BOX_W - soul.w)); soul.y = Math.max(0, Math.min(soul.y, BOX_H - soul.h)); for (let i = projectiles.length - 1; i >= 0; i--) {
@@ -350,7 +420,11 @@
                     if (!p.grazed && !isColliding && dist < Math.max(soul.w, soul.h) + GRAZE_RADIUS) { p.grazed = true; const gain = GRAZE_GAIN; playerPP = Math.min(MAX_PP, playerPP + gain); log(`Grazed an attack! +${gain} PP`); updatePPUI(); // visual + sound feedback
                         try { const projCX = p.x + (p.w||10)/2, projCY = p.y + (p.h||10)/2; showFloatingPP(projCX, projCY, gain); playPPBeep(); } catch(e){} }
                 } catch (e) { }
-                if (!(p.x + p.w < soul.x || p.x > soul.x + soul.w || p.y + p.h < soul.y || p.y > soul.y + soul.h)) { if (p.type === "insult") playerHP -= 10, safePlay(hurtAudio); else if (p.type === "flirt") playerHP += 15, safePlay(healAudio); else if (p.type === "compliment") playerHP += 10, safePlay(healAudio); projectiles.splice(i, 1); updateHP() }
+                if (!(p.x + p.w < soul.x || p.x > soul.x + soul.w || p.y + p.h < soul.y || p.y > soul.y + soul.h)) {
+                    if (p.type === "insult") { playerHP -= (p.damage || 10); safePlay(hurtAudio); }
+                    else if (p.type === "flirt") { playerHP += (p.heal || 15); safePlay(healAudio); }
+                    else if (p.type === "compliment") { playerHP += (p.heal || 10); safePlay(healAudio); }
+                    projectiles.splice(i, 1); updateHP(); }
             }
             ctx.clearRect(0, 0, BOX_W, BOX_H); ctx.fillStyle = "#000"; ctx.fillRect(0, 0, BOX_W, BOX_H); projectiles.forEach(p => { ctx.font = "30px DTM"; ctx.fillStyle = p.type === "insult" ? "#ff4444" : p.type === "flirt" ? "#ff69b4" : "#00ff00"; ctx.fillText(p.text, p.x, p.y) }); ctx.drawImage(Soul, soul.x, soul.y, soul.w, soul.h); battleAnimId = requestAnimationFrame(step)
         }
@@ -389,8 +463,8 @@ function handleEnemyDeath(opponentIndex) {
         }
     }
 }     // At game start (after selecting name & soul)
-    const eye = document.getElementById("player-eye");
-    eye.style.display = "none"; // hide it initially
+    let eye = document.getElementById("player-eye");
+    try { if (eye) eye.style.display = "none"; } catch(e) {} // hide it initially
 
     // Modify your SlurMenu function
    function SlurMenu(opponent) {
@@ -398,8 +472,8 @@ function handleEnemyDeath(opponentIndex) {
     if (!opponent) return;
 
     const container = document.getElementById("fight-container");
-    const eye = document.getElementById("player-eye");
-    eye.style.display = "block";
+    const eyeEl = eye || document.getElementById("player-eye");
+    if (eyeEl) eyeEl.style.display = "block";
 
     // Eye pulse
     let pulseDir = 1, pulseActive = true;
@@ -418,7 +492,7 @@ function handleEnemyDeath(opponentIndex) {
 
     // Moving bar
     container.style.position = "relative";
-    const eyeCenter = eye.offsetLeft + eye.offsetWidth / 2;
+    const eyeCenter = (eyeEl && (eyeEl.offsetLeft + eyeEl.offsetWidth / 2)) || (eye && (eye.offsetLeft + eye.offsetWidth / 2)) || 0;
 
     const bar = document.createElement("div");
     Object.assign(bar.style, {
@@ -486,11 +560,18 @@ function handleEnemyDeath(opponentIndex) {
         if (!opponents || opponents.length === 0) { handleEncounterClear(); return }
         if (playerHP <= 0) { endGame("You lost! Your mental health is depleted."); return }
         disableMenu(); const actingOpponent = opponents[Math.floor(Math.random() * opponents.length)]; if (actingOpponent.isFinal) {
-            const route = determineRoute(); if (route === "pacifist" && actingOpponent.attackType === "nonMercy") { const intensity = { spawnInterval: 500, speed: 1.5, insultChance: 1.0, damageRange: [5, 12], complimentPerAttack: 1 }; const bp = startBattlePhase(actingOpponent, 8000, intensity); bp.onAttackSpawn = (attack) => { if (!attack.hasCompliment) { attack.hasCompliment = !0; if (Math.random() < 0.1 && actingOpponent.mercyPattern.includes("compliment")) { log(`${actingOpponent.name} says something encouraging...`) } } }; bp.setOnEnd(() => { enableMenu() }); return }
-            let intensity = {}; if (route === "neutral") { intensity = { spawnInterval: 700, speed: 1.2, insultChance: 0.5, damageRange: [3, 6] } } else if (route === "genocide") { intensity = { spawnInterval: 300, speed: 2.4, insultChance: 1.0, damageRange: [10, 18] } }
+            const route = determineRoute(); if (route === "pacifist" && actingOpponent.attackType === "nonMercy") { const intensity = { spawnInterval: 250, speed: 3.2, insultChance: 0.5, complimentChance: 0.35, damageRange: [6, 12], flirtHeal: 12, complimentHeal: 8 }; // pacifist: jumble health — many fast mixed attacks
+                intensity.joined = opponents ? Math.max(2, Math.min(6, Math.round(opponents.length * 3))) : 2;
+                const bp = startBattlePhase(actingOpponent, 8000, intensity); bp.onAttackSpawn = (attack) => { /* pacifist gives mixed effect attacks */ }; bp.setOnEnd(() => { enableMenu() }); return }
+            let intensity = {}; if (route === "neutral") { intensity = { spawnInterval: 700, speed: 1.6, insultChance: 0.5, complimentChance: 0.35, damageRange: [4, 8] } } else if (route === "genocide") { intensity = { spawnInterval: 260, speed: 3.6, insultChance: 1.0, complimentChance: 0, damageRange: [12, 22] } }
+            // bosses: scale joined attacks and cap to avoid overload
+            intensity.joined = opponents ? Math.max(1, Math.min(6, Math.round(opponents.length * (route === 'genocide' ? 2 : 1.25)))) : 1;
             const bp = startBattlePhase(actingOpponent, 7000, intensity); bp.setOnEnd(() => { enableMenu() }); return
         }
-        const baseInsultChance = actingOpponent.state === "angry" ? 0.7 : 0.35; const intensity = { spawnInterval: 600, speed: 1.6, insultChance: baseInsultChance, damageRange: [6, 12] }; const bp = startBattlePhase(actingOpponent, 6000, intensity); bp.setOnEnd(() => { enableMenu() })
+        const baseInsultChance = actingOpponent.state === "angry" ? 0.7 : 0.45; const intensity = { spawnInterval: 500, speed: 1.9, insultChance: baseInsultChance, complimentChance: 0.35, damageRange: [6, 12] };
+            // scaled joined attacks so more enemies -> multiplied attacks (   kept capped)
+            intensity.joined = opponents ? Math.max(1, Math.min(4, opponents.length)) : 1;
+            const bp = startBattlePhase(actingOpponent, 6000, intensity); bp.setOnEnd(() => { enableMenu() })
     }
     function endGame(msg) {
         try { if (currentBossMusic) currentBossMusic.pause(); } catch (e) { }
@@ -500,14 +581,164 @@ function handleEnemyDeath(opponentIndex) {
         } else if (opponents && opponents.length === 0) {
             if (totalKilled > 0 && totalSpared === 0) { endingMsg = "GO TO HELL MURDERERاللعنة عليك اذهب اقتل نفسك ولا تقتل أي شخص أبدا!"; safePlay(loseAudio) } else if (totalSpared > 0 && totalKilled === 0) { endingMsg = "Very Impressive you didnt kill anyone. يمكنك الحصول على رحمتي الآن لعدم الصراخ عليّ"; safePlay(winAudio) } else if (totalSpared > 0 && totalKilled > 0) { endingMsg = `Uhh Ok so you used self Defense judging by my data. DATA: Had Mercy On: ${totalSpared}, Had no mercy on: ${totalKilled}. Your actions would make you be a neutral guy`; safePlay(winAudio) }
             endingMsg += `<i>EH EH here is more data you nerd! Total Insults: ${totalInsults}, Total Compliments: ${totalCompliments}</i>`
-        } else if (playerHP <= 0) { endingMsg = "Your mental health was depleted. Did you listen enough, or did you fight too much?"; safePlay(loseAudio) }
-        log(endingMsg); disableMenu(); if (resetBtn) resetBtn.style.display = 'inline-block'; try { audio.pause(); olAudio.pause(); isLowHPMusicPlaying = !1 } catch (e) { }
+        } else if (playerHP <= 0) { endingMsg = "Your mental health was depleted. Did you listen enough, or did you fight too much?" }
+        log(endingMsg); disableMenu(); // For player death, show the father dialog instead of a restart button
+        if (playerHP <= 0) {
+            // Hide reset button and show the death dialog overlay
+            if (resetBtn) resetBtn.style.display = 'none';
+            try { playGameOverSequence(); } catch (e) { console.debug('playGameOverSequence failure', e) }
+            try { showDeathDialog(); } catch (e) { console.debug('showDeathDialog failure', e) }
+        } else {
+            if (resetBtn) resetBtn.style.display = 'inline-block';
+        }
+        try { audio.pause(); olAudio.pause(); isLowHPMusicPlaying = !1 } catch (e) { }
+    }    function showDeathDialog() {
+        // Create a full-screen red overlay with dialog
+        try {
+            const existing = document.getElementById('death-overlay'); if (existing) existing.remove();
+            const overlay = document.createElement('div'); overlay.id = 'death-overlay';
+            Object.assign(overlay.style, { position: 'fixed', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(170,0,0,0.92)', zIndex: 2147483647, color: '#fff', padding: '20px', textAlign: 'center' });
+            const box = document.createElement('div'); Object.assign(box.style, { maxWidth: '720px', width: '90%', background: 'rgba(0,0,0,0.35)', borderRadius: '8px', padding: '28px', boxShadow: '0 10px 40px rgba(0,0,0,0.8)' });
+            const title = document.createElement('div'); title.innerHTML = `<h2 style="margin:0 0 10px 0;">${playerName}! </h2>`; title.style.fontFamily = 'DTM, monospace';
+            const msg = document.createElement('p'); msg.innerText = `This is your father speaking to you  it's all just a bad dream. Get up!`; msg.style.margin = '12px 0 24px 0'; msg.style.fontSize = '18px';
+            const btnRow = document.createElement('div'); Object.assign(btnRow.style, { display: 'flex', gap: '12px', justifyContent: 'center' });
+            const yes = document.createElement('button'); yes.textContent = 'Yes'; Object.assign(yes.style, { padding: '10px 18px', fontSize: '16px', cursor: 'pointer', background: '#00aa00', color: '#fff', border: 'none', borderRadius: '6px' });
+            const no = document.createElement('button'); no.textContent = 'No'; Object.assign(no.style, { padding: '10px 18px', fontSize: '16px', cursor: 'pointer', background: '#cc2222', color: '#fff', border: 'none', borderRadius: '6px' });
+            btnRow.appendChild(yes); btnRow.appendChild(no); box.appendChild(title); box.appendChild(msg); box.appendChild(btnRow); overlay.appendChild(box); document.body.appendChild(overlay);
+
+            // Stop other inputs and visually mark UI as dead
+            try { submenuActive = true; turnActive = false; } catch(e){}
+
+            function cleanup() { try { const el = document.getElementById('death-overlay'); if (el) el.remove(); submenuActive = false; } catch(e){} }
+
+            yes.addEventListener('click', () => { try { cleanup(); stopAllMusic(); if (gameoverAudio) try { gameoverAudio.pause(); gameoverAudio.currentTime = 0 } catch(e){} resetGame(); } catch (e) { console.debug('death yes error', e) } });
+            no.addEventListener('click', () => { try { cleanup(); // attempt to close the tab
+                    try { window.close(); } catch (e) {} // fallback
+                    try { window.open('', '_self'); window.close(); } catch (e) { location.href = 'about:blank'; } } catch (e) { console.debug('death no error', e) } });
+
+            // keyboard: Enter -> yes, Escape -> no
+            function keyHandler(e){ if (e.key === 'Enter') { e.preventDefault(); yes.click(); } else if (e.key === 'Escape') { e.preventDefault(); no.click(); } }
+            document.addEventListener('keydown', keyHandler);
+            // remove listener on cleanup
+            const observer = new MutationObserver(() => { if (!document.getElementById('death-overlay')) { try { document.removeEventListener('keydown', keyHandler); observer.disconnect(); } catch (e) {} } });
+            observer.observe(document.body, { childList: true, subtree: false });
+        } catch (e) { console.debug('showDeathDialog failed', e) }
     }
     function resetGame() {
         playerHP = 100; playerPP = 0; playerItems = Math.floor(Math.random() * 4) + 1; encounterCount = 0; encounterResults = []; currentEncounterOriginalCount = 0; currentEncounterKills = 0; currentEncounterSpared = 0; inFinalBoss = !1; opponents = generateOpponents(); updateHP(); updatePPUI(); log("Game restarted!"); enableMenu(); if (resetBtn) resetBtn.style.display = 'none'; chosenTrack = musicTracks[Math.floor(Math.random() * musicTracks.length)]; audio.src = chosenTrack; try { audio.currentTime = 0; audio.play() } catch (e) { }
         try { if (currentBossMusic) currentBossMusic.pause(); } catch (e) { }
         totalInsults = 0; totalCompliments = 0; totalSpared = 0; totalKilled = 0; if (playerName) { const el = $('player-name-label'); if (el) el.textContent = playerName }
     }
+    // --- Startup screens: naming and soul selection wiring ---
+    // Use explicit elements and robust guards (keeps behavior consistent with HTML)
+    const nameScreen = document.getElementById('naming-screen');
+    const soulScreen = document.getElementById('soul-screen');
+    const gameUI = document.getElementById('game-ui');
+    const nameInput = document.getElementById('player-name-input');
+    const nameConfirmBtn = document.getElementById('name-confirm-btn');
+    const soulBtns = Array.from(document.querySelectorAll('.soul-btn')) || [];
+    const soulConfirmBtn = document.getElementById('soul-confirm-btn');
+
+
+    let selectedSoulIndex = 0;
+    playerName = playerName || '';
+    playerSoulColor = playerSoulColor || '';
+    playerSoulPng = playerSoulPng || '';
+
+    function showScreen(screen) {
+        [nameScreen, soulScreen, gameUI].forEach(s => { if (s && s.classList) s.classList.remove('active') });
+        if (screen && screen.classList) screen.classList.add('active');
+    }
+
+    function updateSoulSelected() {
+        const btn = soulBtns[selectedSoulIndex];
+        // Clear previous UI state
+        soulBtns.forEach(b => {
+            b.classList.remove('selected');
+            b.style.border = '2px solid transparent';
+            b.style.boxShadow = 'none';
+        });
+        if (!btn) {
+            const sel = document.getElementById('soul-selected'); if (sel) sel.innerHTML = '';
+            return;
+        }
+        btn.classList.add('selected');
+        const color = btn.dataset && btn.dataset.color ? btn.dataset.color : '';
+        const png = btn.dataset && btn.dataset.png ? btn.dataset.png : '';
+        if (color) { btn.style.border = `2px solid ${color}`; btn.style.boxShadow = `0 0 10px 4px ${color}80`; }
+        const sel = document.getElementById('soul-selected');
+        if (sel) sel.innerHTML = `<span style="font-size:1.1em;">Selected: </span><img src="${png}" style="width:32px;height:32px;vertical-align:middle;">`;
+    }
+
+    // Keyboard navigation for name & soul screens
+    function startupKeyHandler(e) {
+        // Name screen: Enter confirms name
+        if (nameScreen && nameScreen.classList.contains('active')) {
+            if (e.key === 'Enter') {
+                const nameVal = nameInput ? nameInput.value.trim() : '';
+                if (!nameVal) { alert('Please enter a name.'); if (nameInput) nameInput.focus(); return }
+                playerName = nameVal;
+                showScreen(soulScreen);
+                selectedSoulIndex = 0; updateSoulSelected();
+                if (soulConfirmBtn) soulConfirmBtn.style.display = 'inline-block';
+                e.preventDefault();
+            }
+            return;
+        }
+        // Soul screen: left/right select, Enter confirm, X/Shift back
+        if (soulScreen && soulScreen.classList.contains('active')) {
+            if (e.key === 'ArrowRight') {
+                selectedSoulIndex = (selectedSoulIndex + 1) % (soulBtns.length || 1);
+                updateSoulSelected();
+                e.preventDefault();
+            } else if (e.key === 'ArrowLeft') {
+                selectedSoulIndex = (selectedSoulIndex - 1 + (soulBtns.length || 1)) % (soulBtns.length || 1);
+                updateSoulSelected();
+                e.preventDefault();
+            } else if (e.key === 'Enter' || e.key.toLowerCase() === 'z') {
+                // finalize selection
+                const btn = soulBtns[selectedSoulIndex];
+                playerSoulColor = btn && btn.dataset ? btn.dataset.color : '#ff0000';
+                playerSoulPng = btn && btn.dataset ? btn.dataset.png : 'png/r.png';
+                showScreen(gameUI);
+                if (eye) eye.style.display = 'block';
+                const logEl = document.getElementById('log'); if (logEl) logEl.innerHTML = 'Game started! Use arrow keys to navigate menus.';
+                if (typeof window.startGameInit === 'function') window.startGameInit(playerName, playerSoulColor, playerSoulPng);
+                e.preventDefault();
+            } else if (e.key.toLowerCase() === 'x' || e.key === 'Shift') {
+                showScreen(nameScreen); if (nameInput) nameInput.focus(); e.preventDefault();
+            }
+            return;
+        }
+    }
+
+    // Attach a single startup key handler
+    try { document.removeEventListener('keydown', startupKeyHandler); } catch (e) {}
+    document.addEventListener('keydown', startupKeyHandler);
+
+    // Mouse interactions for soul buttons
+    soulBtns.forEach((btn, index) => {
+        btn.addEventListener('click', () => {
+            selectedSoulIndex = index; updateSoulSelected();
+            if (soulConfirmBtn) soulConfirmBtn.style.display = 'inline-block';
+        });
+    });
+
+    if (soulConfirmBtn) {
+        soulConfirmBtn.addEventListener('click', () => {
+            const btn = soulBtns[selectedSoulIndex];
+            playerSoulColor = btn && btn.dataset ? btn.dataset.color : '#ff0000';
+            playerSoulPng = btn && btn.dataset ? btn.dataset.png : 'png/r.png';
+            showScreen(gameUI);
+            if (eye) eye.style.display = 'block';
+            const logEl = document.getElementById('log'); if (logEl) logEl.innerHTML = 'Game started! Use arrow keys to navigate menus.';
+            if (typeof window.startGameInit === 'function') window.startGameInit(playerName, playerSoulColor, playerSoulPng);
+        });
+    }
+
+    // Initialize startup screen
+    if (nameScreen) { showScreen(nameScreen); if (nameInput) nameInput.focus(); }
+
     if (resetBtn) { resetBtn.onclick = resetGame }
     window.startGameInit = function (name, color, soulPng) {
         playerName = name || "Your"; playerSoulColor = color || "#ff0000"; playerSoulPng = soulPng || "r.png"; playerHP = 100; playerPP = 0; playerItems = Math.floor(Math.random() * 4) + 1; turnActive = !0; menuState = "main"; selectedIndex = 0; if (!globalKeyHandlerBound) { document.addEventListener('keydown', globalKeyHandler); globalKeyHandlerBound = !0 }
