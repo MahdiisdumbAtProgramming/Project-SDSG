@@ -1,0 +1,99 @@
+// scanGames.js
+const fs = require('fs');
+const path = require('path');
+
+const normal = './pai/assets/';
+const premium = './pai/PREMIUM/assets/huh/stealer leave/there is nothing pay then you get/what are you doing/STOP/i cant understand/security left';
+
+let totalGames = 0;
+const allGames = [];
+
+// Recursive function to find all run.html files
+function findRunHtml(dir, basePath = '', isPremium = false) {
+    try {
+        const items = fs.readdirSync(dir, { withFileTypes: true });
+        
+        items.forEach(item => {
+            const fullPath = path.join(dir, item.name);
+            const relativePath = path.join(basePath, item.name);
+            
+            if (item.isDirectory()) {
+                // Recursively search subdirectories
+                findRunHtml(fullPath, relativePath, isPremium);
+            } else if (item.name === 'run.html') {
+                totalGames++;
+                const gameInfo = {
+                    path: relativePath,
+                    fullPath: fullPath,
+                    type: isPremium ? 'PREMIUM' : 'NORMAL'
+                };
+                allGames.push(gameInfo);
+                console.log(`${isPremium ? '💎' : '🎮'} [${totalGames}] ${relativePath}`);
+            }
+        });
+    } catch (error) {
+        console.error(`❌ Error reading directory ${dir}:`, error.message);
+    }
+}
+
+console.log('🔍 Scanning for all run.html files...\n');
+console.log('Current working directory:', process.cwd());
+console.log('Script location:', __dirname);
+console.log('═'.repeat(60));
+
+// Scan normal games
+console.log('\n📁 NORMAL GAMES:');
+console.log('─'.repeat(60));
+if (fs.existsSync(normal)) {
+    findRunHtml(normal, '', false);
+} else {
+    console.error(`❌ Normal games directory not found: ${path.resolve(normal)}`);
+}
+
+// Scan premium games
+console.log('\n📁 PREMIUM GAMES:');
+console.log('─'.repeat(60));
+if (fs.existsSync(premium)) {
+    findRunHtml(premium, '', true);
+} else {
+    console.log(`⚠️  Premium games directory not found: ${path.resolve(premium)}`);
+}
+
+// Summary
+console.log('\n' + '═'.repeat(60));
+console.log('📊 SUMMARY:');
+console.log('═'.repeat(60));
+
+const normalCount = allGames.filter(g => g.type === 'NORMAL').length;
+const premiumCount = allGames.filter(g => g.type === 'PREMIUM').length;
+
+console.log(`🎮 Normal Games:  ${normalCount}`);
+console.log(`💎 Premium Games: ${premiumCount}`);
+console.log(`🎯 TOTAL GAMES:   ${totalGames}`);
+console.log('═'.repeat(60));
+
+// Group by parent folder
+console.log('\n📦 GAMES BY FOLDER:');
+console.log('─'.repeat(60));
+
+const gamesByFolder = {};
+allGames.forEach(game => {
+    const folder = game.path.split(path.sep)[0];
+    if (!gamesByFolder[folder]) {
+        gamesByFolder[folder] = [];
+    }
+    gamesByFolder[folder].push(game.path);
+});
+
+Object.keys(gamesByFolder).sort().forEach(folder => {
+    const count = gamesByFolder[folder].length;
+    const icon = gamesByFolder[folder][0].includes('PREMIUM') ? '💎' : '🎮';
+    console.log(`${icon} ${folder}: ${count} game${count > 1 ? 's' : ''}`);
+    if (count > 1) {
+        gamesByFolder[folder].forEach(gamePath => {
+            console.log(`   └─ ${gamePath}`);
+        });
+    }
+});
+
+console.log('\n✅ Scan complete!');

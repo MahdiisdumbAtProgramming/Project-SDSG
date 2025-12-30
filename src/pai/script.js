@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", function () {
         location.href = "changelogs/run.html";
     };
     document.getElementById("gameOG").onclick = function () {
-        location.href = "assets/legacy(WIFI)/run.html";
+        location.href = "legacy/run.html";
     };
     document.getElementById("status").onclick = function () {
         location.href = "./status/status.html";

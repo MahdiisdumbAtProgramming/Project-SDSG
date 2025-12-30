@@ -82,8 +82,6 @@ function handleCommand(cmd) {
             }
 
             const premiumActive = localStorage.getItem("SDSG") === "active";
-            const games = ["AoOni","Appel","Arena","BeanPlats3D","BELTAGOON","Bomb-Tag","calc","Cave-Communications","CeaserCipher","ChinesePVZ","ClickCounter","CookieClicker","CPS","CrazyCattle3D","DANK-FLOWEY","Diddy", "echovr2d","Fish","FlappyBird","FlipAMeanGuy","freemoney","Geometry-Dash-(ASS)", "Goofy-Goober","Half-Price", "ITU(WIFI)", "Kabby-Lame-Ahh","legacy(WIFI)","Level-Gen","Lore", "Marcord(Wifi)", "Mario", "MinecraftOffline", "Minesweeper","music","Omega-Flowey","Pac-Man","Parry-Sim","Perlin-Noise","Platformer","Ransomware","Raycaster-Engine","Redirect-Test","Relegioustext","RenderEngine","RisingShepTone","Scampton","SDKTEST","Sitetest","Slope","Snake","SnowRider3D","Soundbuttons","SpaceInvaders","Tag","VoxelTest","WEARE1","WebsiteTest","ZombieRaid","ZombyecareVsMahdiStudios"];
-            const premiumGames = ["BaldisBaisics","BaldisPlus","bergentruck","Deltatraveler","Earthbound","karlson","Minesweeperplus","OGFNF","PeoplePlayground","PizzaTower","raft","slender","Sonic.EXE","UCN","UltraKill","UNDERTALE-and-DELTARUNE" ];
 
             const steps = [
                 "Launching SDSG...",

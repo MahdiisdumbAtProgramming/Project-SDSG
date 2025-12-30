@@ -1,12 +1,12 @@
 // Auto-generated premium games list
 const premiumGames = [
-    "BaldisBaisics",
     "BaldisPlus",
-    "bergentruck",
+    "Baldi’sBasics",
+    "BergenTruck",
     "Deltatraveler",
     "Earthbound",
-    "karlson",
-    "Minesweeperplus",
+    "KARLSON",
+    "MinesweeperPlus",
     "OGFNF",
     "PeoplePlayground",
     "PizzaTower",
@@ -14,6 +14,6 @@ const premiumGames = [
     "slender",
     "Sonic.EXE",
     "UCN",
-    "UltraKill",
+    "ULTRAKILL",
     "UNDERTALE-and-DELTARUNE"
 ];
