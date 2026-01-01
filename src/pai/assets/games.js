@@ -53,6 +53,7 @@ const games = [
     "Soundbuttons",
     "SpaceInvaders",
     "Tag",
+    "Thank-SMG4",
     "UNFAIRDYNE",
     "VoxelTest",
     "WEARE1",
