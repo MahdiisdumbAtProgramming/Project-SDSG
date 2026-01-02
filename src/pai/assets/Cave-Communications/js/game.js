@@ -1,751 +1,162 @@
-﻿(() => {
-    'use strict'; const $ = id => document.getElementById(id); const logEl = $('log'); const playerHpEl = $('player-hp'); const enemyHpEl = $('enemy-hp'); const itemCountEl = $('item-count'); const psiCountEl = $('pp-count'); const psiFillEl = $('psi-fill'); if (psiFillEl) psiFillEl.style.transition = 'width 300ms ease'; const resetBtn = $('reset'); const attackCanvas = $('battle-canvas'); const ctx = attackCanvas ? attackCanvas.getContext && attackCanvas.getContext('2d') : null; function safeSetText(el, txt) { if (el) el.textContent = txt }
-    function safePlay(audio) { try { audio.currentTime = 0; audio.play() } catch (e) { } }
-    function safePause(audio) { try { if (audio) audio.pause(); } catch (e) { } }
-    function log(msg) {
-        let mercyMsg = ""; if (opponents.length > 0 && typeof selectedOpponentIndex === "number" && opponents[selectedOpponentIndex]) {
-            const op = opponents[selectedOpponentIndex]; if (op.mercyPattern.length > 0 && op.mercyProgress < op.mercyPattern.length) {
-                mercyMsg = `<br><b>Mercy Requirement for ${op.name}:</b> ${op.mercyPattern.map((a, i) => {
-                    if (i === op.mercyProgress) return `<u>${a.toUpperCase()}</u>`;
-                    return a.toUpperCase();
-                }).join(" → ")}`
-            }
-        }
-        let olMsg = ""; if (isLowHPMusicPlaying) { olMsg = `<br><span style="color:#ff4444;font-weight:bold;">Choked up! the opponent is spare-able or one shot!</span>` }
-        let fleeMsg = ""; if (playerHP <= 20) { fleeMsg = `<br><span style="color:#ffcc00;font-weight:bold;">Tip: You can flee by selecting Mercy &gt; Flee!</span>` }
-        document.getElementById('log').innerHTML = msg.replace(/\n/g, '<br>') + mercyMsg + olMsg + fleeMsg
-    }
-    let consecutiveKills = 0; const musicTracks = [
-  "mus/1.mp3", "mus/2.mp3", "mus/3.mp3", "mus/4.mp3", "mus/5.mp3",
-  "mus/6.ogg", "mus/7.mp3", "mus/8.ogg", "mus/9.ogg", "mus/10.mp3",
-]; let chosenTrack = musicTracks[Math.floor(Math.random() * musicTracks.length)]; const audio = document.createElement('audio'); audio.src = chosenTrack; audio.volume = 0.5; audio.loop = !0; audio.id = 'bg-music'; document.body.appendChild(audio); const olAudio = document.createElement('audio'); olAudio.src = "mus/OL.ogg"; olAudio.volume = 0.5; olAudio.loop = !0; olAudio.id = 'ol-music'; document.body.appendChild(olAudio); const heartbeatAudio = document.createElement('audio'); heartbeatAudio.src = 'sfx/heartbeat.wav'; document.body.appendChild(heartbeatAudio); const winAudio = document.createElement('audio'); winAudio.src = "sfx/w.ogg"; document.body.appendChild(winAudio); const loseAudio = document.createElement('audio'); loseAudio.src = "sfx/l.wav"; document.body.appendChild(loseAudio); const gameoverAudio = document.createElement('audio'); gameoverAudio.src = 'mus/gameover.ogg'; gameoverAudio.loop = !0; gameoverAudio.volume = 0.65; document.body.appendChild(gameoverAudio); const hurtAudio = document.createElement('audio'); hurtAudio.src = "sfx/hurt.wav"; document.body.appendChild(hurtAudio); const slashAudio = document.createElement('audio'); slashAudio.src = "sfx/slash.wav"; document.body.appendChild(slashAudio); const healAudio = document.createElement('audio'); healAudio.src = "sfx/heal.wav"; document.body.appendChild(healAudio); const ohealAudio = document.createElement('audio'); ohealAudio.src = "sfx/oheal.wav"; document.body.appendChild(ohealAudio); const spareAudio = document.createElement('audio'); spareAudio.src = "sfx/s.wav"; document.body.appendChild(spareAudio); const killAudio = document.createElement('audio'); killAudio.src = "sfx/k.mp3"; document.body.appendChild(killAudio); const moveAudio = document.createElement('audio'); moveAudio.src = "sfx/mv.wav"; moveAudio.preload = "auto"; moveAudio.volume = 1; document.body.appendChild(moveAudio); const selectAudio = document.createElement('audio'); selectAudio.src = "sfx/sel.wav"; selectAudio.preload = "auto"; selectAudio.volume = 1; document.body.appendChild(selectAudio); let currentBossMusic = null; let heartbeatIntervalId = null; let isLowHPMusicPlaying = !1; function stopAllMusic() { try { safePause(audio); safePause(olAudio); if (currentBossMusic) try { safePause(currentBossMusic) } catch (e) {} safePause(winAudio); safePause(loseAudio); if (typeof gameoverAudio !== 'undefined') try { safePause(gameoverAudio) } catch (e) {} safePause(heartbeatAudio); // also reset common sfx
-try { [slashAudio, healAudio, ohealAudio, spareAudio, killAudio, moveAudio, selectAudio].forEach(s => { if (s && typeof s.pause === 'function') { try { s.pause(); s.currentTime = 0 } catch (e) {} } }) } catch (e) {}
-// remove any lingering lose handler
-try { if (loseAudio && loseAudio._onEnded) { loseAudio.removeEventListener('ended', loseAudio._onEnded); loseAudio._onEnded = null } } catch (e) {}
-isLowHPMusicPlaying = !1 } catch (e) { console.debug('stopAllMusic error', e) } }
-    function playMusic(file) { try { if (currentBossMusic) safePause(currentBossMusic); currentBossMusic = new Audio(file); currentBossMusic.loop = !0; currentBossMusic.volume = 1.0; safePlay(currentBossMusic) } catch (e) { } }
-    function startHeartbeat() { if (heartbeatIntervalId) return; heartbeatIntervalId = setInterval(() => { try { heartbeatAudio.currentTime = 0; safePlay(heartbeatAudio) } catch (e) { } }, 1000) }
-    function stopHeartbeat() { if (heartbeatIntervalId) { clearInterval(heartbeatIntervalId); heartbeatIntervalId = null } }
-function fadeAudio(a, toVol, dur = 600, cb) { try { if (!a || typeof a.volume === 'undefined') { if (cb) cb(); return } const start = a.volume; const delta = toVol - start; const startTime = Date.now(); const iv = setInterval(() => { const t = Math.min(1, (Date.now() - startTime) / dur); try { a.volume = start + delta * t } catch (e) {} if (t >= 1) { clearInterval(iv); if (cb) cb() } }, 30) } catch (e) { if (cb) cb(); console.debug('fadeAudio error', e) } }
-function playGameOverSequence() { try {
-    stopHeartbeat(); if (audio && typeof audio.volume !== 'undefined') fadeAudio(audio, 0, 600); if (currentBossMusic && typeof currentBossMusic.volume !== 'undefined') fadeAudio(currentBossMusic, 0, 600); if (olAudio && isLowHPMusicPlaying) fadeAudio(olAudio, 0, 600);
-    // Ensure music paused but do NOT start gameover until lose finishes
-    stopAllMusic();
-    try { if (gameoverAudio) { try { gameoverAudio.pause(); gameoverAudio.currentTime = 0 } catch (e) {} } } catch(e){}
-
-    // prepare end handler
-    const onLoseEnded = function onLoseEnded() {
-        try { safePlay(gameoverAudio); fadeAudio(gameoverAudio, 0.65, 600) } catch (err) { console.debug('gameover play failed', err) }
-        try { if (loseAudio) { loseAudio.removeEventListener('ended', onLoseEnded); loseAudio._onEnded = null } } catch (e) {}
-    };
-
-    try {
-        if (loseAudio) {
-            // attach handler before trying to play
-            try { if (loseAudio._onEnded) { loseAudio.removeEventListener('ended', loseAudio._onEnded); loseAudio._onEnded = null } } catch(e){}
-            loseAudio._onEnded = onLoseEnded;
-            loseAudio.addEventListener('ended', onLoseEnded);
-            try { loseAudio.currentTime = 0; const playPromise = loseAudio.play();
-                if (playPromise && typeof playPromise.then === 'function') {
-                    playPromise.then(()=>{
-                        // playing successfully; wait for 'ended' event
-                    }).catch(err=>{
-                        // playback blocked; fallback to gameover immediately
-                        console.debug('lose play blocked:', err);
-                        try { loseAudio.removeEventListener('ended', onLoseEnded); loseAudio._onEnded = null } catch(e){}
-                        safePlay(gameoverAudio); fadeAudio(gameoverAudio, 0.65, 600);
-                    });
-                }
-            } catch (e) { console.debug('loseAudio play error', e); // fallback
-                try { loseAudio.removeEventListener('ended', onLoseEnded); loseAudio._onEnded = null } catch(e){}
-                safePlay(gameoverAudio); fadeAudio(gameoverAudio, 0.65, 600);
-            }
-        } else {
-            safePlay(gameoverAudio); fadeAudio(gameoverAudio, 0.65, 600);
-        }
-    } catch (e) { console.debug('playGameOverSequence error', e); safePlay(gameoverAudio); }
-} catch (e) { console.debug('playGameOverSequence outer error', e) } }
-    function startMusic() {
-        if (!isLowHPMusicPlaying) try { audio.play().catch(() => { }) } catch (e) { }
-        document.body.removeEventListener('click', startMusic); document.body.removeEventListener('keydown', startMusic)
-    }
-    document.body.addEventListener('click', startMusic, { once: !0 }); document.body.addEventListener('keydown', startMusic, { once: !0 }); function playLowHPMusic() {
-        if (!isLowHPMusicPlaying) {
-            try { audio.pause(); olAudio.currentTime = 0; olAudio.play() } catch (e) { }
-            isLowHPMusicPlaying = !0
-        }
-    }
-    const mercyPatterns = [["compliment", "compliment", "flirt", "compliment", "insult"], ["insult", "flirt", "compliment", "insult", "compliment"], ["compliment", "flirt", "compliment", "insult", "flirt"], ["flirt", "compliment", "insult", "flirt", "compliment"], ["insult", "compliment", "flirt", "compliment", "insult"]]; const opponentNames = ["Paper", "Sand", "Flowerpot", "Boreiel", "Undone", "Alfice", "Asbore", "Metta-gone", "Napstablank", "Tempy", "BurgerShorts", "Muffin", "Creature Kid", "Jerrican", "Doggo", "Greater Cat", "Lesser Cat", "Glad Smarty", "Shywrong", "Gersad", "Kindy", "Doggy", "Grassrake", "Baron", "Washout", "Moldbig", "weakaircraft", "Volcano", "Not like", "waterrake", "pi", "Dipin", "Character", "Dreamer", "Mettaboy", "Flowbee", "Tormentor", "Unfine", "Ascore", "Napstapunk", "Temptation", "Burgerking", "Muffintop", "Unusual Pal", "Jerrycan", "Kitty", "Greater Wolf", "Lesser Wolf", "Happy Smarty", "Shyright", "Germson", "Bratcat", "Kitbrat", "Snowman", "Aarun", "Washya", "Moldtiny", "Tsunderecar", "Vulkan", "Not Sorry"]; let playerHP = 100; let playerPP = 0; // PP (psi points) and configuration
-    const MAX_PP = 100; // maximum PP
-    const GRAZE_RADIUS = 14; // pixels beyond soul bounding box considered a "graze" — reduced to make grazing harder
-    const GRAZE_GAIN = 5; // PP gained per graze
-    const PK_COSTS = {cuss:100, therapy:25, stun:15, reduce:0}; // PP costs for PK acts
-    const STUN_DURATION = 6000; // milliseconds enemies stay stunned
-    let playerItems = 1; let playerName = "Your"; let playerSoulColor = "#ff0000"; let playerSoulPng = "r.png"; let enemyStunned = false; let submenuActive = false; let turnActive = !0; let menuState = "main"; let selectedIndex = 0; let selectedOpponentIndex = 0; let insults = ["ugh", "meh", "shh", "loser", "bleh", "stfu", "nope", "dust", "pfft", "sigh"]; let compliments = ["nice", "brave", "kind", "good", "wow", "yay", "cool", "smile", "ace", "gr8"]; let flirts = ["wink", "smile", "heart", "hug", "flirt"]; let totalInsults = 0; let totalCompliments = 0; let totalSpared = 0; let totalKilled = 0; let encounterCount = 0; let encounterResults = []; let currentEncounterOriginalCount = 0; let currentEncounterKills = 0; let currentEncounterSpared = 0; let inFinalBoss = !1; let opponents = []; function determineRoute() { if (totalKilled > totalSpared) return "genocide"; if (totalSpared > totalKilled) return "pacifist"; return "neutral" }
-    function updateHP() { safeSetText(playerHpEl, playerHP); safeSetText(itemCountEl, playerItems); if (opponents.length > 0) safeSetText(enemyHpEl, opponents.map(o => `${o.name}: ${o.hp}`).join(", ")); else safeSetText(enemyHpEl, "None"); updatePPUI() }
-
-    function updatePPUI() { try { if (psiCountEl) psiCountEl.textContent = `${playerPP}/${MAX_PP} PP`; if (psiFillEl) psiFillEl.style.width = `${Math.round((playerPP / MAX_PP) * 100)}%`; // refresh PSI menu buttons when PP changes
-            updatePSIMenuButtons(); } catch (e) { } }
-
-    function updatePSIMenuButtons() {
-        try {
-            const psiMenu = $('psi-menu'); if (!psiMenu) return; const psiBtns = psiMenu.querySelectorAll('button'); const costVals = [PK_COSTS.cuss, PK_COSTS.therapy, PK_COSTS.stun, PK_COSTS.reduce]; psiBtns.forEach((b, i) => {
-                if (i < costVals.length) { const disabled = playerPP < costVals[i]; b.disabled = disabled; b.style.opacity = disabled ? '0.5' : ''; } else { b.disabled = false; b.style.opacity = '' }
-            })
-        } catch (e) { }
-    }
-
-    // floating +PP feedback helper
-    function showFloatingPP(x, y, gain) {
-        try {
-            const container = $('fight-container') || document.body;
-            const el = document.createElement('div'); el.className = 'floating-pp'; el.textContent = `+${gain} PP`;
-            Object.assign(el.style, { position: 'absolute', left: (x)+'px', top: (y)+'px', color: '#ffdd55', fontWeight: 'bold', fontFamily: 'monospace', pointerEvents: 'none', textShadow: '0 0 6px #000', transition: 'transform 800ms ease-out, opacity 800ms ease-out' });
-            container.appendChild(el);
-            // pulse PSI fill
-            try { pulsePSI(); } catch(e){}
-            requestAnimationFrame(()=>{ el.style.transform = 'translateY(-36px)'; el.style.opacity = '0'; });
-            setTimeout(()=>{ try { el.remove() } catch(e){} }, 900);
-        } catch(e){}
-    }
-
-    // play a short beep for PP gain (no external file)
-    function playPPBeep() {
-        try {
-            const AudioCtx = window.AudioContext || window.webkitAudioContext; if (!AudioCtx) return; const ctx = new AudioCtx(); const o = ctx.createOscillator(); const g = ctx.createGain(); o.type = 'sine'; o.frequency.value = 880; o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(0.0001, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.1, ctx.currentTime + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18); o.start(); o.stop(ctx.currentTime + 0.2);
-        } catch(e){}
-    }
-
-    function pulsePSI() {
-        try {
-            if (!psiFillEl) return; psiFillEl.style.boxShadow = '0 0 12px rgba(255,220,60,0.9)'; setTimeout(()=>{ try { psiFillEl.style.boxShadow = '' } catch(e){} }, 350)
-        } catch(e){}
-    }
-    function checkLowHP() { const lowOpponent = opponents.find(op => op.hp > 0 && op.hp <= 20); if (lowOpponent && !isLowHPMusicPlaying) { audio.pause(); olAudio.currentTime = 0; olAudio.play(); isLowHPMusicPlaying = !0 } else if (!lowOpponent && isLowHPMusicPlaying) { olAudio.pause(); audio.play(); isLowHPMusicPlaying = !1 } }
-    function generateOpponents(options = {}) {
-        const isFinal = !!options.finalBoss; const list = []; if (isFinal) { list.push({ name: "Mahdiisdumb", hp: 400, state: "angry", mercyPattern: [], mercyProgress: 0, isFinal: !0 }) } else { const count = Math.floor(Math.random() * 3) + 1; const used = new Set(); for (let i = 0; i < count; i++) { let name; do { name = opponentNames[Math.floor(Math.random() * opponentNames.length)] } while (used.has(name)); used.add(name); list.push({ name, hp: 100, state: "angry", mercyPattern: mercyPatterns[Math.floor(Math.random() * mercyPatterns.length)], mercyProgress: 0, isFinal: !1 }) } }
-        opponents = list; currentEncounterOriginalCount = list.length; currentEncounterKills = 0; currentEncounterSpared = 0; inFinalBoss = !!options.finalBoss; if (inFinalBoss) { const route = determineRoute(); const boss = opponents[0]; stopAllMusic(); if (route === "pacifist") { boss.name = "=)"; boss.hp = 999999; boss.mercyPattern = ["SURVIVE"]; boss.noAttack = !1; boss.attackType = "nonMercy"; boss.lowDamage = !1; playMusic("mus/dan.mp3"); startHeartbeat(); let battleTime = 0; const maxTime = 600000; const timerInterval = 1000; boss.canBeSpared = !1; const timerId = setInterval(() => { battleTime += timerInterval; const seconds = Math.floor(battleTime / 1000); log(`Survive time: ${seconds} / 600`); if (battleTime >= maxTime) { clearInterval(timerId); boss.canBeSpared = !0; boss.mercyPattern = ["YOU CAN SPARE NOW"]; log("You survived long enough! You can now spare WHAT EVER THE FUCK THIS CREATURE IS!") } }, timerInterval); const enemyBP = () => { const intensity = { spawnInterval: 80, speed: 6, insultChance: 0.5, complimentChance: 0.35, damageRange: [5, 12], flirtHeal: 12, complimentHeal: 8 }; // pacifist pre-battle wave: many mixed fast attacks that jumble your HP
-                    intensity.joined = Math.max(2, Math.min(6, Math.round(list.length * 3)));
-                    const bp = startBattlePhase(boss, 10000, intensity); bp.onAttackSpawn = (attack) => { if (!attack.hasCompliment && Math.random() < 0.1) { attack.hasCompliment = !0; log(`${boss.name} says: "You can do it!"`) } }; bp.setOnEnd(() => { if (battleTime < maxTime) enableMenu(); }) }; enemyBP() } else if (route === "genocide") { boss.name = "Mahdiisdumb"; boss.hp = 10000; boss.mercyPattern = ["NO MERCY"]; boss.noAttack = !1; boss.alwaysAttack = !0; boss.attackType = "insult"; playMusic("mus/sinner.mp3"); startHeartbeat() } else { boss.name = "Lambda Flower"; boss.hp = 5000; boss.mercyPattern = ["null"]; boss.noAttack = !1; boss.lowDamage = !0; boss.attackType = "mixed"; playMusic("mus/sb.mp3"); startHeartbeat() } }
-        updateHP(); return opponents
-    }
-    function clearBattleAndUIForEnding() {
-        try { if (battleAnimId) cancelAnimationFrame(battleAnimId); } catch (e) { }
-        try { if (projectileSpawner) clearInterval(projectileSpawner); projectileSpawner = null } catch (e) { }
-        try { if (heartbeatIntervalId) { clearInterval(heartbeatIntervalId); heartbeatIntervalId = null } } catch (e) { }
-        try { document.removeEventListener('keydown', globalKeyHandler) } catch (e) { }
-        try { window.onkeydown = null; document.onkeydown = null } catch (e) { }
-        try { if (attackCanvas) attackCanvas.style.display = 'none' } catch (e) { }
-        stopAllMusic()
-    }
-    function triggerGenocideEnding() {
-        clearBattleAndUIForEnding(); stopHeartbeat(); startHeartbeat(); const genocideMusic = new Audio('mus/toomuch.mp3'); genocideMusic.loop = !0; genocideMusic.volume = 0.3; window.__toomuchAudio = genocideMusic; safePlay(genocideMusic); const overlay = document.createElement('div'); overlay.id = 'genocide-overlay'; Object.assign(overlay.style, { position: 'fixed', inset: '0', width: '100%', height: '100%', background: 'radial-gradient(circle, #000 0%, #110000 100%)', zIndex: 2147483647, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto', opacity: '0', overflow: 'hidden' }); const txt = document.createElement('div'); txt.textContent = "But nobody came.\nGenocide completed ◉_◉\nYou are left standing — hollow, unwanted, unworthy of mercy.\nWe forged you into a vessel of oblivion.\nCome. Leave this ruined place with us.\nForget them. Forget yourself.\nAnother empty world waits; move on, as you were made to do."; Object.assign(txt.style, { color: '#ff0000', fontFamily: 'DTM', fontSize: '24px', textAlign: 'center', userSelect: 'none', opacity: '0', maxWidth: '70%', lineHeight: '1.2', filter: 'blur(2px)', textShadow: '0 0 10px #ff0000, 0 0 20px #880000', transform: 'translateY(0px)' }); overlay.appendChild(txt); document.body.appendChild(overlay); try { const uiContainers = document.querySelectorAll('header, nav, #log, #menu, .ui, .controls'); uiContainers.forEach(el => el.style.visibility = 'hidden') } catch (e) { }
-        overlay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 4000, fill: 'forwards' }); setTimeout(() => { txt.animate([{ opacity: 0, filter: 'blur(4px)' }, { opacity: 1, filter: 'blur(0px)' }], { duration: 4000, fill: 'forwards' }) }, 1000); let flip = !0; setInterval(() => { txt.style.opacity = flip ? '0.85' : '1'; txt.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`; flip = !flip }, 200); const shadowDrift = () => {
-            txt.style.textShadow = `
-            ${Math.random() * 20 - 10}px ${Math.random() * 20 - 10}px 20px #880000,
-            ${Math.random() * 30 - 15}px ${Math.random() * 30 - 15}px 30px #440000
-        `; requestAnimationFrame(shadowDrift)
-        }; shadowDrift()
-    }
-    function triggerPacifistEnding() {
-        clearBattleAndUIForEnding(); safePause(heartbeatAudio); const peaceMusic = new Audio('mus/peace.mp3'); peaceMusic.loop = !0; peaceMusic.volume = 0.7; window.__peaceAudio = peaceMusic; safePlay(peaceMusic); const overlay = document.createElement('div'); overlay.id = 'pacifist-overlay'; Object.assign(overlay.style, { position: 'fixed', inset: '0', width: '100%', height: '100%', background: '#fff', zIndex: 2147483647, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto', opacity: '0', overflow: 'hidden' }); const txt = document.createElement('div'); txt.textContent = 'The Communication Barrier has been broken. Bullys and Kindys now live on the surface in peace.'; Object.assign(txt.style, { color: '#000', fontFamily: 'DTM', fontSize: '40px', textAlign: 'center', userSelect: 'none', opacity: '0', transform: 'scale(0.5) translateY(50px)', transition: 'opacity 2s ease-in, transform 3s ease-out' }); overlay.appendChild(txt); document.body.appendChild(overlay); try { const uiContainers = document.querySelectorAll('header, nav, #log, #menu, .ui, .controls'); uiContainers.forEach(el => el.style.visibility = 'hidden') } catch (e) { }
-        requestAnimationFrame(() => { overlay.style.opacity = '1'; txt.style.opacity = '1'; txt.style.transform = 'scale(1) translateY(0px)' }); setInterval(() => { txt.style.transform = `scale(1.02) translateY(${Math.sin(Date.now() / 500) * 10}px)` }, 50)
-    }
-    function triggerNeutralEnding() {
-        clearBattleAndUIForEnding(); safePause(heartbeatAudio); const neutralMusic = new Audio('mus/nuetural.ogg'); neutralMusic.loop = !0; neutralMusic.volume = 0.6; window.__neutralAudio = neutralMusic; safePlay(neutralMusic); const overlay = document.createElement('div'); overlay.id = 'neutral-overlay'; Object.assign(overlay.style, { position: 'fixed', inset: '0', width: '100%', height: '100%', background: '#2b2b2b', zIndex: 2147483647, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'auto', opacity: '0', overflow: 'hidden' }); const txt = document.createElement('div'); txt.textContent = 'You escaped, but the cave is still in despair.'; Object.assign(txt.style, { color: '#fff', fontFamily: 'DTM', fontSize: '36px', textAlign: 'center', userSelect: 'none', opacity: '0', transform: 'translateY(20px) blur(4px)', transition: 'opacity 2.5s ease-in, transform 3s ease-out' }); overlay.appendChild(txt); document.body.appendChild(overlay); try { const uiContainers = document.querySelectorAll('header, nav, #log, #menu, .ui, .controls'); uiContainers.forEach(el => el.style.visibility = 'hidden') } catch (e) { }
-        requestAnimationFrame(() => { overlay.style.opacity = '1'; txt.style.opacity = '1'; txt.style.transform = 'translateY(0px) blur(0px)' }); let pulse = 1; setInterval(() => { pulse = pulse === 1 ? 1.05 : 1; txt.style.transform = `translateY(0px) scale(${pulse})` }, 2000)
-    }
-    function handleEncounterClear() {
-        let result = "mixed"; if (currentEncounterOriginalCount > 0) { if (currentEncounterKills === currentEncounterOriginalCount) result = "killed"; else if (currentEncounterSpared === currentEncounterOriginalCount) result = "spared"; else result = "mixed" }
-        encounterResults.push(result); encounterCount++; log(`Encounter ${encounterCount} cleared — ${result.toUpperCase()} Progress: ${encounterCount}/10.`); if (encounterCount >= 10) { setTimeout(() => { generateOpponents({ finalBoss: !0 }); const boss = opponents[0]; log(`The final boss appears: ${boss.name}!`); const checkBossEnd = setInterval(() => { if (!boss) return; if (boss.hp <= 0) { clearInterval(checkBossEnd); totalKilled += 1; endGame("You defeated the final boss!") } else if (boss.mercyPattern && boss.mercyProgress >= boss.mercyPattern.length) { clearInterval(checkBossEnd); totalSpared += 1; endGame("You spared the final boss!") } }, 500); enableMenu() }, 1200) } else { setTimeout(() => { log("A new encounter approaches..."); generateOpponents(); enableMenu() }, 1200) }
-    }
-    let globalKeyHandlerBound = !1; function globalKeyHandler(e) { if (submenuActive) { console.log('globalKeyHandler ignored: submenuActive', e.code); return } if (!turnActive) { console.log('globalKeyHandler ignored: !turnActive', e.code); return } if (menuState === "attack" || menuState === "opponent") { console.log('globalKeyHandler ignored: menuState', menuState, e.code); return } if (e.code === "ArrowLeft") handleArrow("left"); else if (e.code === "ArrowRight") handleArrow("right"); else if (e.code === "KeyZ" || e.code === "Enter") handleMenuConfirm(); else if (e.code === "KeyX" || e.code === "ShiftLeft" || e.code === "ShiftRight") handleMenuBack(); }
-    function handleArrow(dir) { let maxIndex = 0; if (menuState === "main") maxIndex = 3; else if (menuState === "act") maxIndex = 4; else if (menuState === "psi") maxIndex = 4; else if (menuState === "mercy") maxIndex = 2; if (dir === "left") selectedIndex = (selectedIndex - 1 + (maxIndex + 1)) % (maxIndex + 1); else if (dir === "right") selectedIndex = (selectedIndex + 1) % (maxIndex + 1); safePlay(moveAudio); highlightSelected() }
-    function handleMenuConfirm() { if (!turnActive) return; safePlay(selectAudio); // hide visible menus immediately so UI resets while action resolves
-        hideAllMenus();
-        submenuActive = false;
-        if (menuState === "main") { if (selectedIndex === 0) { const opponent = opponents[selectedOpponentIndex]; if (opponent) { disableMenu(); SlurMenu(opponent) } } else if (selectedIndex === 1) showOpponentMenu("act"); else if (selectedIndex === 2) useItem(); else if (selectedIndex === 3) showMercy(); } else if (menuState === "act") { const currentOpponent = opponents[selectedOpponentIndex]; if (!currentOpponent) return; if (selectedIndex === 0) act(currentOpponent, "insult"); else if (selectedIndex === 1) act(currentOpponent, "compliment"); else if (selectedIndex === 2) act(currentOpponent, "flirt"); else if (selectedIndex === 3) { menuState = "psi"; selectedIndex = 0; showPSIMenu(currentOpponent); } else if (selectedIndex === 4) backToMenu(); } else if (menuState === "psi") { const currentOpponent = opponents[selectedOpponentIndex]; if (!currentOpponent) return; if (selectedIndex === 0) act(currentOpponent, "pk cuss"); else if (selectedIndex === 1) act(currentOpponent, "pk therapy"); else if (selectedIndex === 2) act(currentOpponent, "pk stun"); else if (selectedIndex === 3) act(currentOpponent, "pk reduce"); else if (selectedIndex === 4) { menuState = "act"; selectedIndex = 0; showAct(currentOpponent); } } else if (menuState === "mercy") { const currentOpponent = opponents[selectedOpponentIndex]; if (!currentOpponent) return; if (selectedIndex === 0) spare(currentOpponent); else if (selectedIndex === 1) flee(); else if (selectedIndex === 2) backToMenu(); } }
-    function handleMenuBack() { if (!turnActive) return; if (menuState === "act" || menuState === "mercy") backToMenu(); }
-    function darkenHexColor(hex, amount = 30) {
-        // Remove # if present
-        hex = hex.replace(/^#/, '');
-        let num = parseInt(hex, 16);
-
-        let r = Math.max(0, ((num >> 16) & 0xFF) - amount);
-        let g = Math.max(0, ((num >> 8) & 0xFF) - amount);
-        let b = Math.max(0, (num & 0xFF) - amount);
-
-        return `rgb(${r},${g},${b})`;
-    }
-
-    function highlightSelected() {
-        const soulColor = playerSoulColor || "#ffffff"; // fallback
-        const soulPng = playerSoulPng || "";           // fallback
-        const highlightColor = darkenHexColor(soulColor, 50);
-
-        function setBtnHighlight(btn, active) {
-            if (active) {
-                btn.style.background = highlightColor;
-                btn.style.color = "#fff"; // text color for contrast
-                btn.style.transform = "scale(1.1)";
-
-                // Add soul image if not already added
-                if (!btn.querySelector(".soul-icon") && soulPng) {
-                    const img = document.createElement("img");
-                    img.src = soulPng;
-                    img.className = "soul-icon";
-                    img.style.width = "20px";
-                    img.style.height = "20px";
-                    img.style.verticalAlign = "middle";
-                    img.style.marginRight = "6px";
-                    btn.prepend(img);
-                }
-            } else {
-                btn.style.background = "";
-                btn.style.color = "";
-                btn.style.transform = "";
-
-                const img = btn.querySelector(".soul-icon");
-                if (img) img.remove();
-            }
-        }
-
-        const mainBtns = ["slur", "act", "item", "mercy"].map(id => $(id));
-        mainBtns.forEach((btn, i) => setBtnHighlight(btn, menuState === "main" && i === selectedIndex));
-
-        const actBtns = ["act-insult", "act-compliment", "act-flirt", "act-psi", "act-back"].map(id => $(id));
-        actBtns.forEach((btn, i) => setBtnHighlight(btn, menuState === "act" && i === selectedIndex));
-
-        const psiBtns = ["psi-cuss", "psi-therapy", "psi-stun", "psi-reduce", "psi-back"].map(id => $(id));
-        psiBtns.forEach((btn, i) => setBtnHighlight(btn, menuState === "psi" && i === selectedIndex));
-
-        const mercyBtns = ["mercy-spare", "mercy-flee", "mercy-back"].map(id => $(id));
-        mercyBtns.forEach((btn, i) => setBtnHighlight(btn, menuState === "mercy" && i === selectedIndex));
-    }
-
-    // Show/hide menus and reflect the current selection visually (legacy-style behavior)
-    function clampSelectedForMenu() {
-        try {
-            let max = 0;
-            if (menuState === 'main') max = 3;
-            else if (menuState === 'act') max = (document.querySelectorAll('#act-menu button').length || 5) - 1;
-            else if (menuState === 'psi') max = (document.querySelectorAll('#psi-menu button').length || 5) - 1;
-            else if (menuState === 'mercy') max = (document.querySelectorAll('#mercy-menu button').length || 3) - 1;
-            selectedIndex = Math.max(0, Math.min(selectedIndex, Math.max(0, max)));
-        } catch (e) { }
-    }
-
-    function hideAllMenus() {
-        try {
-            ['main-menu','act-menu','psi-menu','mercy-menu','opponent-menu'].forEach(id => { const el = $(id); if (el) el.style.display = 'none' })
-            submenuActive = false;
-        } catch (e) {}
-    }
-
-    function showMenu() {
-        clampSelectedForMenu();
-        const mainMenu = $('main-menu');
-        if (menuState === "main") {
-            if (mainMenu) mainMenu.style.display = 'flex';
-            const btns = mainMenu ? mainMenu.querySelectorAll('button') : [];
-            btns.forEach((btn, i) => {
-                btn.classList.toggle('selected', i === selectedIndex);
-                btn.innerHTML = btn.textContent.replace(/^\s*(<img.*?>)?/, "");
-                if (i === selectedIndex) btn.innerHTML = `<img src="${playerSoulPng}" alt="Select" style="vertical-align:middle;width:20px;height:20px;margin-right:6px;">${btn.textContent}`;
-            })
-        } else if (mainMenu) mainMenu.style.display = 'none';
-
-        ["act-menu","psi-menu","mercy-menu"].forEach(menuId => {
-            const menu = $(menuId); if (!menu) return;
-            menu.style.display = (menuState === menuId.replace('-menu','')) ? 'flex' : 'none';
-            const btns = menu.querySelectorAll('button');
-            btns.forEach((btn, i) => {
-                btn.classList.toggle('selected', i === selectedIndex);
-                btn.innerHTML = btn.textContent.replace(/^\s*(<img.*?>)?/, "");
-                if (i === selectedIndex) btn.innerHTML = `<img src="${playerSoulPng}" alt="Select" style="vertical-align:middle;width:20px;height:20px;margin-right:6px;">${btn.textContent}`;
-            })
-        })
-    }
-
-    function backToMenu() { menuState = "main"; selectedIndex = 0; submenuActive = false; enableMenu(); highlightSelected() }
-    function disableMenu() { turnActive = !1; hideAllMenus(); }
-    function enableMenu() { turnActive = !0; menuState = "main"; selectedIndex = 0; submenuActive = false; highlightSelected(); showMenu(); }
-    function showOpponentMenu(actionType) {
-        disableMenu(); menuState = "opponent"; if (typeof selectedOpponentIndex === "undefined") selectedOpponentIndex = 0; if (!document.getElementById("opponent-menu")) { const menuDiv = document.createElement("div"); menuDiv.id = "opponent-menu"; menuDiv.style.marginTop = "8px"; menuDiv.style.fontFamily = "monospace"; menuDiv.style.whiteSpace = "pre"; if (logEl) logEl.appendChild(menuDiv); }
-        const menuDiv = $('opponent-menu'); if (!menuDiv) { enableMenu(); return }
-        function render() {
-            menuDiv.innerHTML = opponents.map((op, i) => {
-                if (i === selectedOpponentIndex)
-                    return `<span style="background:#ffd166;color:#000;">> ${i}. ${op.name} (${op.hp} HP)</span>`; return `${i}. ${op.name} (${op.hp} HP)`
-            }).join("")
-        }
-        render(); function onKey(e) { if (menuState !== "opponent") return; if (e.code === "ArrowUp") { selectedOpponentIndex = (selectedOpponentIndex - 1 + opponents.length) % opponents.length; safePlay(moveAudio); render() } else if (e.code === "ArrowDown") { selectedOpponentIndex = (selectedOpponentIndex + 1) % opponents.length; safePlay(moveAudio); render() } else if (e.code === "KeyZ" || e.code === "Enter") { safePlay(selectAudio); document.removeEventListener('keydown', onKey); turnActive = !0; const chosenOpponent = opponents[selectedOpponentIndex]; flashConfirm(menuDiv.children[selectedOpponentIndex]); const type = actionType.toLowerCase(); if (type === "slur") { menuState = "attack"; SlurMenu(chosenOpponent, "slur") } else if (type === "act") { menuState = "act"; showAct(chosenOpponent) } else if (type === "mercy") { menuState = "mercy"; showMercy(chosenOpponent) } } else if (e.code === "KeyX" || e.code === "ShiftLeft" || e.code === "ShiftRight") { safePlay(selectAudio); document.removeEventListener('keydown', onKey); enableMenu() } }
-        document.addEventListener('keydown', onKey)
-    }
-    function flashConfirm(el) { if (!el) return; el.style.transition = "transform 0.1s, background 0.1s"; el.style.transform = "scale(1.2)"; setTimeout(() => { el.style.transform = "scale(1)" }, 100) }
-    // Generic submenu helper: shows a submenu, manages keyboard + mouse navigation, and calls
-    // `callback(index)` when selection is confirmed. It respects button.disabled and will
-    // prevent selection of disabled options (with visual feedback).
-    function showSubMenu(menuId, options = [], extraInfo = [], callback) {
-        const menuDiv = $(menuId); if (!menuDiv) { callback(0); return }
-        console.log('showSubMenu open', menuId, options);
-        submenuActive = true;
-        menuDiv.style.display = "flex"; const buttons = menuDiv.querySelectorAll("button"); let sel = selectedIndex || 0; // sync with outer selection
-        function updateHighlight() { buttons.forEach((btn, i) => { btn.style.outline = (i === sel) ? "3px solid yellow" : ""; btn.innerHTML = extraInfo[i] ? `${options[i]} (${extraInfo[i]})` : options[i] }); selectedIndex = sel; highlightSelected(); }
-        updateHighlight();
-        function onKey(e) { if (!menuDiv.style.display || menuDiv.style.display === "none") return; switch (e.code) { case "ArrowLeft": e.preventDefault(); e.stopPropagation(); { let tries = buttons.length; do { sel = (sel - 1 + buttons.length) % buttons.length; tries--; } while (tries > 0 && buttons[sel] && buttons[sel].disabled); safePlay(moveAudio); updateHighlight(); } break; case "ArrowRight": e.preventDefault(); e.stopPropagation(); { let tries = buttons.length; do { sel = (sel + 1) % buttons.length; tries--; } while (tries > 0 && buttons[sel] && buttons[sel].disabled); safePlay(moveAudio); updateHighlight(); } break; case "KeyZ": case "Enter": e.preventDefault(); e.stopPropagation(); // check disabled for selected button
-                    if (buttons[sel] && buttons[sel].disabled) { try { const b = buttons[sel]; b.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(0)' }], { duration: 220 }); } catch (e) {} safePlay(selectAudio); log('Not available right now.'); return } safePlay(selectAudio); document.removeEventListener('keydown', onKey); buttons.forEach(b => b.onclick = null); menuDiv.style.display = "none"; submenuActive = false; console.log('showSubMenu confirm', menuId, sel); callback(sel); break; case "KeyX": case "ShiftLeft": case "ShiftRight": e.preventDefault(); e.stopPropagation(); safePlay(selectAudio); document.removeEventListener('keydown', onKey); buttons.forEach(b => b.onclick = null); menuDiv.style.display = "none"; submenuActive = false; console.log('showSubMenu cancel', menuId); break } }
-        document.addEventListener('keydown', onKey);
-        // mouse support: click buttons directly
-        buttons.forEach((btn, i) => { const cb = () => { if (btn.disabled) { safePlay(selectAudio); log('Not available right now.'); return } safePlay(selectAudio); document.removeEventListener('keydown', onKey); buttons.forEach(b => b.onclick = null); menuDiv.style.display = "none"; submenuActive = false; callback(i); }; btn.onclick = cb })
-    }
-    function showAct(opponent) {
-        console.log('showAct called', opponent && opponent.name);
-        opponent = opponent || opponents[selectedOpponentIndex];
-        if (!opponent) { turnActive = !0; return }
-        menuState = 'act'; selectedIndex = 0; highlightSelected(); showMenu();
-        // Ensure mouse clicks on act buttons route through keyboard confirm path for consistent behavior
-        try {
-            const actMenuEl = $('act-menu'); if (actMenuEl) {
-                actMenuEl.querySelectorAll('button').forEach((btn, i) => {
-                    btn.onclick = () => { if (btn.disabled) { log('Not available right now.'); return } selectedIndex = i; handleMenuConfirm(); }
-                })
-            }
-        } catch (e) { console.warn('act click binding failed', e) }
-    }
-    function showMercy(opponent) {
-        opponent = opponent || opponents[selectedOpponentIndex];
-        if (!opponent) { turnActive = !0; return }
-        menuState = 'mercy';
-        selectedIndex = 0;
-        highlightSelected();
-        const mercyOptions = ["Spare", "Flee", "Back"];
-        showSubMenu("mercy-menu", mercyOptions, ["", "", ""], index => {
-            const choice = mercyOptions[index];
-            if (choice.toLowerCase() === "spare") spare(opponent);
-            else if (choice.toLowerCase() === "flee") flee();
-            else if (choice.toLowerCase() === "back") backToMenu();
-        })
-    }
-    function showPSIMenu(opponent) {
-        console.log('showPSIMenu called', opponent && opponent.name);
-        opponent = opponent || opponents[selectedOpponentIndex]; if (!opponent) { turnActive = !0; return }
-        menuState = 'psi'; selectedIndex = 0; highlightSelected(); updatePSIMenuButtons(); showMenu();
-        try {
-            const psiMenuEl = $('psi-menu'); if (psiMenuEl) {
-                psiMenuEl.querySelectorAll('button').forEach((btn, i) => {
-                    btn.onclick = () => { if (btn.disabled) { log('Not available right now.'); return } selectedIndex = i; handleMenuConfirm(); }
-                })
-            }
-        } catch (e) { console.warn('psi click binding failed', e) }
-    }
-    function act(opponent, type) {
-        opponent = opponent || opponents[selectedOpponentIndex]; if (!turnActive || !opponent) return; turnActive = !1; type = type.toLowerCase().trim(); if (opponent.mercyPattern && opponent.mercyProgress < opponent.mercyPattern.length) { let nextAction = opponent.mercyPattern[opponent.mercyProgress].toLowerCase().trim(); if (type === nextAction) { opponent.mercyProgress++; log(`Mercy progress: ${opponent.mercyProgress}/${opponent.mercyPattern.length}`) } }
-        // PK acts handling (PSI abilities)
-        // PK CUSS: costs PK_COSTS.cuss, deals significant damage (-100) to all enemies
-        if (type === 'pk cuss') {
-            if (playerPP < PK_COSTS.cuss) { log('Not enough PP for PK CUSS!'); setTimeout(() => { enableMenu() }, 600); return }
-            playerPP = Math.max(0, playerPP - 100); for (let i = opponents.length - 1; i >= 0; i--) { opponents[i].hp = Math.max(0, opponents[i].hp - 100); if (opponents[i].hp <= 0) handleEnemyDeath(i) }
-            log('PK CUSS used! All enemies took -100 mental health!'); safePlay(slashAudio); updateHP(); setTimeout(() => { if (opponents.length > 0) enemyTurn(); else handleEncounterClear() }, 800); updatePPUI(); return
-        } else if (type === 'pk therapy') {
-            if (playerPP < PK_COSTS.therapy) { log('Not enough PP for PK THERAPY!'); setTimeout(() => { enableMenu() }, 600); return }
-            playerPP = Math.max(0, playerPP - PK_COSTS.therapy); const sparedCount = opponents.length; for (let i = 0; i < sparedCount; i++) { totalSpared++; currentEncounterSpared++ } opponents = []; updateHP(); safePlay(spareAudio); log('PK THERAPY used! All enemies spared despite mercy requirements.'); updatePPUI(); setTimeout(() => { handleEncounterClear() }, 800); return
-        } else if (type === 'pk stun') {
-            if (playerPP < PK_COSTS.stun) { log('Not enough PP for PK STUN!'); setTimeout(() => { enableMenu() }, 600); return }
-            playerPP = Math.max(0, playerPP - PK_COSTS.stun); enemyStunned = true; log('PK STUN used! Enemies are stunned for a short while.'); updatePPUI(); setTimeout(() => { enemyStunned = false; log('Enemies recovered from stun.'); }, STUN_DURATION); setTimeout(() => { enableMenu() }, 800); return
-        } else if (type === 'pk reduce') {
-            // free action that grants PP
-            const gain = 25; playerPP = Math.min(MAX_PP, playerPP + gain); log(`PK REDUCE used! You gain +${gain} PP.`); updatePPUI(); setTimeout(() => { enableMenu() }, 600); return
-        }
-        // Default acts: insult/flirt/compliment
-        let effect = Math.floor(Math.random() * 8) + 5;
-        if (type === "insult") {
-            opponent.hp -= effect; totalInsults++; safePlay(slashAudio); log(`You insult ${opponent.name} — loses ${effect} mental health!`)
-        } else if (type === "flirt") {
-            opponent.hp += effect; safePlay(ohealAudio); log(`You flirt with ${opponent.name} — gains ${effect} mental health!`)
-        } else {
-            opponent.hp += effect; totalCompliments++; safePlay(ohealAudio); log(`You compliment ${opponent.name} — gains ${effect} mental health!`)
-        }
-        updateHP();
-        // If the act killed the opponent, handle death (which will continue the encounter flow)
-        if (opponent.hp <= 0) {
-            handleEnemyDeath(selectedOpponentIndex);
-            return;
-        }
-        setTimeout(enemyTurn, 1200) 
-    }
-    const BOX_W = attackCanvas ? (attackCanvas.width || 400) : 400; const BOX_H = attackCanvas ? (attackCanvas.height || 200) : 200; const SOUL_SIZE = 18; let soul = { x: BOX_W / 2 - SOUL_SIZE / 2, y: BOX_H / 2 - SOUL_SIZE / 2, w: SOUL_SIZE, h: SOUL_SIZE, speed: 4 }; let keys = {}; let projectiles = []; let battleAnimId = null; let projectileSpawner = null; let battlePhaseActive = !1; const insultWords = ["Idiot", "Dumbass", "Donkey", "Numbnuts", "Prick", "Dork", "[Insert Slur]", "Tch", "ugh", "UNC", "Sybau", "SYFM", "🥀"]; const complimentWords = ["Einstine", "Goofy", "Funny", "Good Freind", "Great", "🌹", "Keep Talking", "Massive", "Kind", "👍", "Uncle", "Freind"]; function startBattlePhase(opponent, duration = 7000, intensity = { spawnInterval: 600, speed: 2.0, insultChance: 0.5 }) {
-        if (!attackCanvas || !ctx) { setTimeout(() => { if (typeof onBattlePhaseEnd === 'function') onBattlePhaseEnd(); }, duration); return { stopBattle: () => { }, setOnEnd(cb) { onBattlePhaseEnd = cb } } }
-        attackCanvas.style.display = "block"; battlePhaseActive = !0; menuState = "attack"; soul.x = BOX_W / 2 - soul.w / 2; soul.y = BOX_H - soul.h - 8; projectiles = []; keys = {}; function keyDown(e) { if (e.code === "ArrowLeft") keys.left = !0; if (e.code === "ArrowRight") keys.right = !0; if (e.code === "ArrowUp") keys.up = !0; if (e.code === "ArrowDown") keys.down = !0 }
-        function keyUp(e) { if (e.code === "ArrowLeft") keys.left = !1; if (e.code === "ArrowRight") keys.right = !1; if (e.code === "ArrowUp") keys.up = !1; if (e.code === "ArrowDown") keys.down = !1 }
-        window.addEventListener('keydown', keyDown); window.addEventListener('keyup', keyUp); projectileSpawner = setInterval(() => {
-            if (!battlePhaseActive) return; const r = Math.random();
-            const insultChance = (typeof intensity.insultChance === 'number') ? intensity.insultChance : 0.5;
-            const complimentChance = (typeof intensity.complimentChance === 'number') ? intensity.complimentChance : 0.35;
-            let type = "insult"; let word = "";
-            if (r < insultChance) { type = "insult"; word = insultWords[Math.floor(Math.random() * insultWords.length)]; }
-            else if (r < insultChance + complimentChance) { type = "compliment"; word = complimentWords[Math.floor(Math.random() * complimentWords.length)]; }
-            else { type = "flirt"; word = flirts[Math.floor(Math.random() * flirts.length)]; }
-
-            // If intensity.joined > 1, spawn multiple projectiles this tick (joined attack)
-            const joinedCount = Math.max(1, Math.min(6, Math.round(intensity.joined || 1)));
-            for (let jc = 0; jc < joinedCount; jc++) {
-                const spawnSide = Math.random(); let proj = { x: 0, y: 0, vx: 0, vy: 0, text: word, type, w: 0, h: 0 };
-                const speed = (intensity.speed || 1.5) + Math.random() * 1.2 + (jc * 0.2);
-                if (spawnSide < 0.6) { proj.x = Math.random() * (BOX_W - 40) + 20 + (jc * 8 - (joinedCount * 4)); proj.y = -10; proj.vx = (Math.random() - 0.5) * 0.6; proj.vy = speed } else if (spawnSide < 0.8) { proj.x = -40; proj.y = Math.random() * (BOX_H - 20) + 10 + (jc * 6 - (joinedCount * 3)); proj.vx = speed; proj.vy = (Math.random() - 0.5) * 0.6 } else { proj.x = BOX_W + 40; proj.y = Math.random() * (BOX_H - 20) + 10 + (jc * 6 - (joinedCount * 3)); proj.vx = -speed; proj.vy = (Math.random() - 0.5) * 0.6 }
-
-                proj.w = (word.length * 6) + 10; proj.h = 18;
-                if (proj.type === 'insult') {
-                    if (Array.isArray(intensity.damageRange) && intensity.damageRange.length === 2) {
-                        const low = intensity.damageRange[0], high = intensity.damageRange[1]; proj.damage = Math.floor(low + Math.random() * (high - low + 1));
-                    } else { proj.damage = 10; }
-                } else if (proj.type === 'flirt') {
-                    proj.heal = (typeof intensity.flirtHeal === 'number') ? intensity.flirtHeal : 15;
-                } else if (proj.type === 'compliment') {
-                    proj.heal = (typeof intensity.complimentHeal === 'number') ? intensity.complimentHeal : 10;
-                }
-
-                projectiles.push(proj)
-            }
-        }, intensity.spawnInterval || 600); const Soul = new Image(); Soul.src = playerSoulPng
-        function step() {
-            if (!battlePhaseActive) return; if (keys.left) soul.x -= soul.speed; if (keys.right) soul.x += soul.speed; if (keys.up) soul.y -= soul.speed; if (keys.down) soul.y += soul.speed; soul.x = Math.max(0, Math.min(soul.x, BOX_W - soul.w)); soul.y = Math.max(0, Math.min(soul.y, BOX_H - soul.h)); for (let i = projectiles.length - 1; i >= 0; i--) {
-                const p = projectiles[i]; p.x += p.vx; p.y += p.vy; if (p.x < -80 || p.x > BOX_W + 80 || p.y < -80 || p.y > BOX_H + 80) { projectiles.splice(i, 1); continue }
-                // grazing detection: near an attack but not colliding
-                try {
-                    const soulCX = soul.x + soul.w/2, soulCY = soul.y + soul.h/2;
-                    const projCX = p.x + (p.w || 10)/2, projCY = p.y + (p.h || 10)/2;
-                    const dx = projCX - soulCX, dy = projCY - soulCY; const dist = Math.sqrt(dx*dx + dy*dy);
-                    const isColliding = !(p.x + p.w < soul.x || p.x > soul.x + soul.w || p.y + p.h < soul.y || p.y > soul.y + soul.h);
-                    if (!p.grazed && !isColliding && dist < Math.max(soul.w, soul.h) + GRAZE_RADIUS) { p.grazed = true; const gain = GRAZE_GAIN; playerPP = Math.min(MAX_PP, playerPP + gain); log(`Grazed an attack! +${gain} PP`); updatePPUI(); // visual + sound feedback
-                        try { const projCX = p.x + (p.w||10)/2, projCY = p.y + (p.h||10)/2; showFloatingPP(projCX, projCY, gain); playPPBeep(); } catch(e){} }
-                } catch (e) { }
-                if (!(p.x + p.w < soul.x || p.x > soul.x + soul.w || p.y + p.h < soul.y || p.y > soul.y + soul.h)) {
-                    if (p.type === "insult") { playerHP -= (p.damage || 10); safePlay(hurtAudio); }
-                    else if (p.type === "flirt") { playerHP += (p.heal || 15); safePlay(healAudio); }
-                    else if (p.type === "compliment") { playerHP += (p.heal || 10); safePlay(healAudio); }
-                    projectiles.splice(i, 1); updateHP(); }
-            }
-            ctx.clearRect(0, 0, BOX_W, BOX_H); ctx.fillStyle = "#000"; ctx.fillRect(0, 0, BOX_W, BOX_H); projectiles.forEach(p => { ctx.font = "30px DTM"; ctx.fillStyle = p.type === "insult" ? "#ff4444" : p.type === "flirt" ? "#ff69b4" : "#00ff00"; ctx.fillText(p.text, p.x, p.y) }); ctx.drawImage(Soul, soul.x, soul.y, soul.w, soul.h); battleAnimId = requestAnimationFrame(step)
-        }
-        const stopBattle = () => {
-            battlePhaseActive = !1; menuState = "main"; if (projectileSpawner) { clearInterval(projectileSpawner); projectileSpawner = null }
-            if (battleAnimId) { cancelAnimationFrame(battleAnimId); battleAnimId = null }
-            if (attackCanvas) attackCanvas.style.display = "none"; projectiles = []; keys = {}; window.removeEventListener('keydown', keyDown); window.removeEventListener('keyup', keyUp); updateHP(); if (playerHP <= 0) { endGame("You lost! Your mental health is depleted."); return }
-            enableMenu(); if (typeof onBattlePhaseEnd === "function") onBattlePhaseEnd(); onBattlePhaseEnd = null
-        }; battleAnimId = requestAnimationFrame(step); const autoStopId = setTimeout(() => { if (battlePhaseActive) stopBattle(); }, duration); let onBattlePhaseEnd = null; return { stopBattle, setOnEnd(cb) { onBattlePhaseEnd = cb } }
-    }
-function handleEnemyDeath(opponentIndex) {
-    const opponent = opponents[opponentIndex];
-    if (!opponent) return;
-
-    if (opponent.hp <= 0) {
-        totalKilled++;
-        currentEncounterKills++;
-        log(`${opponent.name} has been defeated!`);
-        killAudio.currentTime = 0;
-        killAudio.play();
-
-        // Remove enemy from array
-        opponents.splice(opponentIndex, 1);
-
-        // Reset selection to first available opponent
-        selectedOpponentIndex = opponents.length > 0 ? 0 : -1;
-
-        // Update UI
-        updateHP();
-
-        // If all enemies cleared, handle encounter clear; otherwise schedule enemy turn
-        if (opponents.length === 0) {
-            handleEncounterClear(); // This increments encounterCount and triggers final boss if needed
-        } else {
-            setTimeout(enemyTurn, 1200);
-        }
-    }
-}     // At game start (after selecting name & soul)
-    let eye = document.getElementById("player-eye");
-    try { if (eye) eye.style.display = "none"; } catch(e) {} // hide it initially
-
-    // Modify your SlurMenu function
-   function SlurMenu(opponent) {
-    opponent = opponent || opponents[selectedOpponentIndex];
-    if (!opponent) return;
-
-    const container = document.getElementById("fight-container");
-    const eyeEl = eye || document.getElementById("player-eye");
-    if (eyeEl) eyeEl.style.display = "block";
-
-    // Eye pulse
-    let pulseDir = 1, pulseActive = true;
-    const baseW = 546, baseH = 115, pulseAmt = 5, pulseSpeed = 0.5;
-    function pulseEye() {
-        if (!pulseActive) return;
-        let w = parseFloat(eye.style.width || baseW);
-        let h = parseFloat(eye.style.height || baseH);
-        if (w >= baseW + pulseAmt) pulseDir = -1;
-        if (w <= baseW - pulseAmt) pulseDir = 1;
-        eye.style.width = (w + pulseSpeed * pulseDir) + "px";
-        eye.style.height = (h + (pulseSpeed * pulseDir * baseH / baseW)) + "px";
-        requestAnimationFrame(pulseEye);
-    }
-    pulseEye();
-
-    // Moving bar
-    container.style.position = "relative";
-    const eyeCenter = (eyeEl && (eyeEl.offsetLeft + eyeEl.offsetWidth / 2)) || (eye && (eye.offsetLeft + eye.offsetWidth / 2)) || 0;
-
-    const bar = document.createElement("div");
-    Object.assign(bar.style, {
-        position: "absolute",
-        width: "10px",
-        height: "50px",
-        background: playerSoulColor || "red",
-        top: eye.offsetTop + "px",
-        left: "0px"
-    });
-    container.appendChild(bar);
-
-    let barPos = 0, dir = 1, speed = 4, hit = false;
-    function animateBar() {
-        if (hit) return;
-        barPos += speed * dir;
-        if (barPos <= 0) dir = 1;
-        if (barPos >= container.offsetWidth - bar.offsetWidth) dir = -1;
-        bar.style.left = barPos + "px";
-        requestAnimationFrame(animateBar);
-    }
-    animateBar();
-
-    function onKeyPress(e) {
-        if (hit) return;
-        if (e.code === "KeyZ" || e.code === "Enter") {
-            hit = true;
-            const barCenter = barPos + bar.offsetWidth / 2;
-            const maxDist = container.offsetWidth / 2;
-            const damage = Math.max(0, Math.round(100 * (1 - Math.abs(barCenter - eyeCenter) / maxDist)));
-            opponent.hp = Math.max(0, opponent.hp - damage);
-
-            log(`You hit ${opponent.name} for ${damage} damage!`);
-            updateHP();
-            safePlay(slashAudio);
-
-            if (opponent.hp <= 0) handleEnemyDeath(selectedOpponentIndex);
-            else setTimeout(enemyTurn, 800);
-
-            // Cleanup
-            pulseActive = false;
-            eye.style.display = "none";
-            eye.style.width = baseW + "px";
-            eye.style.height = baseH + "px";
-            container.removeChild(bar);
-            document.removeEventListener("keydown", onKeyPress);
-        }
-    }
-    document.addEventListener("keydown", onKeyPress);
-}
-
-    function useItem() {
-        if (!turnActive) return; if (playerItems > 0) {
-            let heal = 20
-            const healcompliment = compliments[Math.floor(Math.random() * compliments.length)]; playerHP += heal; safePlay(healAudio); log(`You Rememberd a Complement your freind Gave you '${healcompliment}.' You gain ${heal} mentalhealth`); updateHP(); disableMenu(); menuState = "main"; selectedIndex = 0; setTimeout(() => { enemyTurn() }, 900)
-        } else { log("No items left!") }
-    }
-    function spare() { if (!turnActive) return; disableMenu(); const opponent = opponents[selectedOpponentIndex]; if (!opponent) return; const canSpare = isLowHPMusicPlaying || (opponent.mercyPattern.length > 0 && opponent.mercyProgress >= opponent.mercyPattern.length) || opponent.canBeSpared; if (canSpare) { totalSpared++; currentEncounterSpared++; log(`You spared ${opponent.name}! Peace is restored for them.`); spareAudio.currentTime = 0; spareAudio.play(); opponents.splice(selectedOpponentIndex, 1); updateHP(); if (opponents.length === 0) { endGame("You spared all opponents! Peace is restored.") } else { selectedOpponentIndex = 0; setTimeout(enableMenu, 1200) } } else { log("You can't spare yet! Complete the mercy requirement first."); setTimeout(() => { menuState = "main"; selectedIndex = 0; enableMenu() }, 1200) } }
-    setInterval(checkLowHP, 1000); function flee() {
-        if (!turnActive) return; disableMenu(); if (inFinalBoss) { log("Mahdiisdumb: Thats Delightful, you can't flee!"); setTimeout(() => { enableMenu(); menuState = "main"; selectedIndex = 0 }, 1200); return } else if (playerHP > 20) { log("You can only flee when your HP is 20 or less! What are you, a wuss?"); setTimeout(() => { enableMenu(); menuState = "main"; selectedIndex = 0 }, 900); return }
-        log("You fled the battle! You escaped safely..."); safePlay(spareAudio); setTimeout(() => { currentEncounterOriginalCount = 0; currentEncounterKills = 0; currentEncounterSpared = 0; generateOpponents(); enableMenu() }, 1500)
-    }
-    function enemyTurn() {
-        if (enemyStunned) { log('Enemies are stunned and can\'t attack!'); setTimeout(() => { enableMenu(); }, 800); return }
-        if (!opponents || opponents.length === 0) { handleEncounterClear(); return }
-        if (playerHP <= 0) { endGame("You lost! Your mental health is depleted."); return }
-        disableMenu(); const actingOpponent = opponents[Math.floor(Math.random() * opponents.length)]; if (actingOpponent.isFinal) {
-            const route = determineRoute(); if (route === "pacifist" && actingOpponent.attackType === "nonMercy") { const intensity = { spawnInterval: 250, speed: 3.2, insultChance: 0.5, complimentChance: 0.35, damageRange: [6, 12], flirtHeal: 12, complimentHeal: 8 }; // pacifist: jumble health — many fast mixed attacks
-                intensity.joined = opponents ? Math.max(2, Math.min(6, Math.round(opponents.length * 3))) : 2;
-                const bp = startBattlePhase(actingOpponent, 8000, intensity); bp.onAttackSpawn = (attack) => { /* pacifist gives mixed effect attacks */ }; bp.setOnEnd(() => { enableMenu() }); return }
-            let intensity = {}; if (route === "neutral") { intensity = { spawnInterval: 700, speed: 1.6, insultChance: 0.5, complimentChance: 0.35, damageRange: [4, 8] } } else if (route === "genocide") { intensity = { spawnInterval: 260, speed: 3.6, insultChance: 1.0, complimentChance: 0, damageRange: [12, 22] } }
-            // bosses: scale joined attacks and cap to avoid overload
-            intensity.joined = opponents ? Math.max(1, Math.min(6, Math.round(opponents.length * (route === 'genocide' ? 2 : 1.25)))) : 1;
-            const bp = startBattlePhase(actingOpponent, 7000, intensity); bp.setOnEnd(() => { enableMenu() }); return
-        }
-        const baseInsultChance = actingOpponent.state === "angry" ? 0.7 : 0.45; const intensity = { spawnInterval: 500, speed: 1.9, insultChance: baseInsultChance, complimentChance: 0.35, damageRange: [6, 12] };
-            // scaled joined attacks so more enemies -> multiplied attacks (   kept capped)
-            intensity.joined = opponents ? Math.max(1, Math.min(4, opponents.length)) : 1;
-            const bp = startBattlePhase(actingOpponent, 6000, intensity); bp.setOnEnd(() => { enableMenu() })
-    }
-    function endGame(msg) {
-        try { if (currentBossMusic) currentBossMusic.pause(); } catch (e) { }
-        let endingMsg = ""; if (inFinalBoss) {
-            const route = determineRoute(); if (route === "pacifist") { triggerPacifistEnding() } else if (route === "genocide") { triggerGenocideEnding() } else { triggerNeutralEnding() }
-            safePlay(winAudio); return
-        } else if (opponents && opponents.length === 0) {
-            if (totalKilled > 0 && totalSpared === 0) { endingMsg = "GO TO HELL MURDERERاللعنة عليك اذهب اقتل نفسك ولا تقتل أي شخص أبدا!"; safePlay(loseAudio) } else if (totalSpared > 0 && totalKilled === 0) { endingMsg = "Very Impressive you didnt kill anyone. يمكنك الحصول على رحمتي الآن لعدم الصراخ عليّ"; safePlay(winAudio) } else if (totalSpared > 0 && totalKilled > 0) { endingMsg = `Uhh Ok so you used self Defense judging by my data. DATA: Had Mercy On: ${totalSpared}, Had no mercy on: ${totalKilled}. Your actions would make you be a neutral guy`; safePlay(winAudio) }
-            endingMsg += `<i>EH EH here is more data you nerd! Total Insults: ${totalInsults}, Total Compliments: ${totalCompliments}</i>`
-        } else if (playerHP <= 0) { endingMsg = "Your mental health was depleted. Did you listen enough, or did you fight too much?" }
-        log(endingMsg); disableMenu(); // For player death, show the father dialog instead of a restart button
-        if (playerHP <= 0) {
-            // Hide reset button and show the death dialog overlay
-            if (resetBtn) resetBtn.style.display = 'none';
-            try { playGameOverSequence(); } catch (e) { console.debug('playGameOverSequence failure', e) }
-            try { showDeathDialog(); } catch (e) { console.debug('showDeathDialog failure', e) }
-        } else {
-            if (resetBtn) resetBtn.style.display = 'inline-block';
-        }
-        try { audio.pause(); olAudio.pause(); isLowHPMusicPlaying = !1 } catch (e) { }
-    }    function showDeathDialog() {
-        // Create a full-screen red overlay with dialog
-        try {
-            const existing = document.getElementById('death-overlay'); if (existing) existing.remove();
-            const overlay = document.createElement('div'); overlay.id = 'death-overlay';
-            Object.assign(overlay.style, { position: 'fixed', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(170,0,0,0.92)', zIndex: 2147483647, color: '#fff', padding: '20px', textAlign: 'center' });
-            const box = document.createElement('div'); Object.assign(box.style, { maxWidth: '720px', width: '90%', background: 'rgba(0,0,0,0.35)', borderRadius: '8px', padding: '28px', boxShadow: '0 10px 40px rgba(0,0,0,0.8)' });
-            const title = document.createElement('div'); title.innerHTML = `<h2 style="margin:0 0 10px 0;">${playerName}! </h2>`; title.style.fontFamily = 'DTM, monospace';
-            const msg = document.createElement('p'); msg.innerText = `This is your father speaking to you  it's all just a bad dream. Get up!`; msg.style.margin = '12px 0 24px 0'; msg.style.fontSize = '18px';
-            const btnRow = document.createElement('div'); Object.assign(btnRow.style, { display: 'flex', gap: '12px', justifyContent: 'center' });
-            const yes = document.createElement('button'); yes.textContent = 'Yes'; Object.assign(yes.style, { padding: '10px 18px', fontSize: '16px', cursor: 'pointer', background: '#00aa00', color: '#fff', border: 'none', borderRadius: '6px' });
-            const no = document.createElement('button'); no.textContent = 'No'; Object.assign(no.style, { padding: '10px 18px', fontSize: '16px', cursor: 'pointer', background: '#cc2222', color: '#fff', border: 'none', borderRadius: '6px' });
-            btnRow.appendChild(yes); btnRow.appendChild(no); box.appendChild(title); box.appendChild(msg); box.appendChild(btnRow); overlay.appendChild(box); document.body.appendChild(overlay);
-
-            // Stop other inputs and visually mark UI as dead
-            try { submenuActive = true; turnActive = false; } catch(e){}
-
-            function cleanup() { try { const el = document.getElementById('death-overlay'); if (el) el.remove(); submenuActive = false; } catch(e){} }
-
-            yes.addEventListener('click', () => { try { cleanup(); stopAllMusic(); if (gameoverAudio) try { gameoverAudio.pause(); gameoverAudio.currentTime = 0 } catch(e){} resetGame(); } catch (e) { console.debug('death yes error', e) } });
-            no.addEventListener('click', () => { try { cleanup(); // attempt to close the tab
-                    try { window.close(); } catch (e) {} // fallback
-                    try { window.open('', '_self'); window.close(); } catch (e) { location.href = 'about:blank'; } } catch (e) { console.debug('death no error', e) } });
-
-            // keyboard: Enter -> yes, Escape -> no
-            function keyHandler(e){ if (e.key === 'Enter') { e.preventDefault(); yes.click(); } else if (e.key === 'Escape') { e.preventDefault(); no.click(); } }
-            document.addEventListener('keydown', keyHandler);
-            // remove listener on cleanup
-            const observer = new MutationObserver(() => { if (!document.getElementById('death-overlay')) { try { document.removeEventListener('keydown', keyHandler); observer.disconnect(); } catch (e) {} } });
-            observer.observe(document.body, { childList: true, subtree: false });
-        } catch (e) { console.debug('showDeathDialog failed', e) }
-    }
-    function resetGame() {
-        playerHP = 100; playerPP = 0; playerItems = Math.floor(Math.random() * 4) + 1; encounterCount = 0; encounterResults = []; currentEncounterOriginalCount = 0; currentEncounterKills = 0; currentEncounterSpared = 0; inFinalBoss = !1; opponents = generateOpponents(); updateHP(); updatePPUI(); log("Game restarted!"); enableMenu(); if (resetBtn) resetBtn.style.display = 'none'; chosenTrack = musicTracks[Math.floor(Math.random() * musicTracks.length)]; audio.src = chosenTrack; try { audio.currentTime = 0; audio.play() } catch (e) { }
-        try { if (currentBossMusic) currentBossMusic.pause(); } catch (e) { }
-        totalInsults = 0; totalCompliments = 0; totalSpared = 0; totalKilled = 0; if (playerName) { const el = $('player-name-label'); if (el) el.textContent = playerName }
-    }
-    // --- Startup screens: naming and soul selection wiring ---
-    // Use explicit elements and robust guards (keeps behavior consistent with HTML)
-    const nameScreen = document.getElementById('naming-screen');
-    const soulScreen = document.getElementById('soul-screen');
-    const gameUI = document.getElementById('game-ui');
-    const nameInput = document.getElementById('player-name-input');
-    const nameConfirmBtn = document.getElementById('name-confirm-btn');
-    const soulBtns = Array.from(document.querySelectorAll('.soul-btn')) || [];
-    const soulConfirmBtn = document.getElementById('soul-confirm-btn');
-
-
-    let selectedSoulIndex = 0;
-    playerName = playerName || '';
-    playerSoulColor = playerSoulColor || '';
-    playerSoulPng = playerSoulPng || '';
-
-    function showScreen(screen) {
-        [nameScreen, soulScreen, gameUI].forEach(s => { if (s && s.classList) s.classList.remove('active') });
-        if (screen && screen.classList) screen.classList.add('active');
-    }
-
-    function updateSoulSelected() {
-        const btn = soulBtns[selectedSoulIndex];
-        // Clear previous UI state
-        soulBtns.forEach(b => {
-            b.classList.remove('selected');
-            b.style.border = '2px solid transparent';
-            b.style.boxShadow = 'none';
-        });
-        if (!btn) {
-            const sel = document.getElementById('soul-selected'); if (sel) sel.innerHTML = '';
-            return;
-        }
-        btn.classList.add('selected');
-        const color = btn.dataset && btn.dataset.color ? btn.dataset.color : '';
-        const png = btn.dataset && btn.dataset.png ? btn.dataset.png : '';
-        if (color) { btn.style.border = `2px solid ${color}`; btn.style.boxShadow = `0 0 10px 4px ${color}80`; }
-        const sel = document.getElementById('soul-selected');
-        if (sel) sel.innerHTML = `<span style="font-size:1.1em;">Selected: </span><img src="${png}" style="width:32px;height:32px;vertical-align:middle;">`;
-    }
-
-    // Keyboard navigation for name & soul screens
-    function startupKeyHandler(e) {
-        // Name screen: Enter confirms name
-        if (nameScreen && nameScreen.classList.contains('active')) {
-            if (e.key === 'Enter') {
-                const nameVal = nameInput ? nameInput.value.trim() : '';
-                if (!nameVal) { alert('Please enter a name.'); if (nameInput) nameInput.focus(); return }
-                playerName = nameVal;
-                showScreen(soulScreen);
-                selectedSoulIndex = 0; updateSoulSelected();
-                if (soulConfirmBtn) soulConfirmBtn.style.display = 'inline-block';
-                e.preventDefault();
-            }
-            return;
-        }
-        // Soul screen: left/right select, Enter confirm, X/Shift back
-        if (soulScreen && soulScreen.classList.contains('active')) {
-            if (e.key === 'ArrowRight') {
-                selectedSoulIndex = (selectedSoulIndex + 1) % (soulBtns.length || 1);
-                updateSoulSelected();
-                e.preventDefault();
-            } else if (e.key === 'ArrowLeft') {
-                selectedSoulIndex = (selectedSoulIndex - 1 + (soulBtns.length || 1)) % (soulBtns.length || 1);
-                updateSoulSelected();
-                e.preventDefault();
-            } else if (e.key === 'Enter' || e.key.toLowerCase() === 'z') {
-                // finalize selection
-                const btn = soulBtns[selectedSoulIndex];
-                playerSoulColor = btn && btn.dataset ? btn.dataset.color : '#ff0000';
-                playerSoulPng = btn && btn.dataset ? btn.dataset.png : 'png/r.png';
-                showScreen(gameUI);
-                if (eye) eye.style.display = 'block';
-                const logEl = document.getElementById('log'); if (logEl) logEl.innerHTML = 'Game started! Use arrow keys to navigate menus.';
-                if (typeof window.startGameInit === 'function') window.startGameInit(playerName, playerSoulColor, playerSoulPng);
-                e.preventDefault();
-            } else if (e.key.toLowerCase() === 'x' || e.key === 'Shift') {
-                showScreen(nameScreen); if (nameInput) nameInput.focus(); e.preventDefault();
-            }
-            return;
-        }
-    }
-
-    // Attach a single startup key handler
-    try { document.removeEventListener('keydown', startupKeyHandler); } catch (e) {}
-    document.addEventListener('keydown', startupKeyHandler);
-
-    // Mouse interactions for soul buttons
-    soulBtns.forEach((btn, index) => {
-        btn.addEventListener('click', () => {
-            selectedSoulIndex = index; updateSoulSelected();
-            if (soulConfirmBtn) soulConfirmBtn.style.display = 'inline-block';
-        });
-    });
-
-    if (soulConfirmBtn) {
-        soulConfirmBtn.addEventListener('click', () => {
-            const btn = soulBtns[selectedSoulIndex];
-            playerSoulColor = btn && btn.dataset ? btn.dataset.color : '#ff0000';
-            playerSoulPng = btn && btn.dataset ? btn.dataset.png : 'png/r.png';
-            showScreen(gameUI);
-            if (eye) eye.style.display = 'block';
-            const logEl = document.getElementById('log'); if (logEl) logEl.innerHTML = 'Game started! Use arrow keys to navigate menus.';
-            if (typeof window.startGameInit === 'function') window.startGameInit(playerName, playerSoulColor, playerSoulPng);
-        });
-    }
-
-    // Initialize startup screen
-    if (nameScreen) { showScreen(nameScreen); if (nameInput) nameInput.focus(); }
-
-    if (resetBtn) { resetBtn.onclick = resetGame }
-    window.startGameInit = function (name, color, soulPng) {
-        playerName = name || "Your"; playerSoulColor = color || "#ff0000"; playerSoulPng = soulPng || "r.png"; playerHP = 100; playerPP = 0; playerItems = Math.floor(Math.random() * 4) + 1; turnActive = !0; menuState = "main"; selectedIndex = 0; if (!globalKeyHandlerBound) { document.addEventListener('keydown', globalKeyHandler); globalKeyHandlerBound = !0 }
-        opponents = generateOpponents(); selectedOpponentIndex = 0; const nameLabel = $('player-name-label'); if (nameLabel) nameLabel.textContent = playerName; updateHP(); updatePPUI(); enableMenu(); log(`Welcome,Use arrow keys to select, Z/Enter to confirm, X/Shift to go back.`); try { audio.currentTime = 0; audio.play() } catch (e) { }
-    }; if (!opponents || opponents.length === 0) opponents = generateOpponents(); const slurBtn = $('slur'); const actBtn = $('act'); const itemBtn = $('item'); const mercyBtn = $('mercy'); if (slurBtn) slurBtn.onclick = () => { showOpponentMenu("Slur") }; if (actBtn) actBtn.onclick = () => { showOpponentMenu("act") }; if (itemBtn) itemBtn.onclick = () => { useItem() }; if (mercyBtn) mercyBtn.onclick = () => { showOpponentMenu("mercy") }; window._game = { getState: () => ({ playerHP, playerItems, playerName, playerPP, opponents, encounterCount, encounterResults, totalKilled, totalSpared }), addPP: (n=10) => { playerPP = Math.min(MAX_PP, playerPP + n); updatePPUI(); log(`DEBUG: +${n} PP`); }, printTestPlan: () => { console.info('TEST PLAN:\n1) Enter battle, move near (not touch) attacks; confirm log "Grazed an attack!" and PP increases.\n2) Act -> PSI: open the PSI submenu; verify buttons show cost and disabled if insufficient PP.\n3) Use PK actions when you have enough PP: PK CUSS (-100 HP all), PK THERAPY (spare all), PK STUN (stun enemies), PK REDUCE (+PP).\n4) Confirm keyboard and mouse selection both work and disabled items can\'t be chosen.\nUse window._game.addPP(n) to add test PP.' ) } }; function opponentText(op) {
-        try { if (op && op.name) return op.name; if (opponents && opponents[0] && opponents[0].name) return opponents[0].name } catch (e) { }
-        return "The enemy"
-    }
-    document.addEventListener('keydown', function debugSkipToBoss(e) { if (playerName !== ">!<") return; if (e.key === 'g') { totalKilled = 9; totalSpared = 0; encounterCount = 10; log("DEBUG: Forcing GENOCIDE final boss..."); generateOpponents({ finalBoss: !0 }); enableMenu() } else if (e.key === 'p') { totalSpared = 9; totalKilled = 0; encounterCount = 10; log("DEBUG: Forcing PACIFIST final boss..."); generateOpponents({ finalBoss: !0 }); enableMenu() } else if (e.key === 'P') { triggerPacifistEnding() } else if (e.key === 'G') { triggerGenocideEnding() } else if (e.key === 'N') { triggerNeutralEnding() } else if (e.key === 'n') { totalSpared = 4; totalKilled = 4; encounterCount = 10; log("DEBUG: Forcing NEUTRAL final boss..."); generateOpponents({ finalBoss: !0 }); enableMenu() } }); if (attackCanvas) attackCanvas.style.display = "none"
-})()
+﻿(()=>{'use strict';const $=id=>document.getElementById(id);const logEl=$('log');const playerHpEl=$('player-hp');const enemyHpEl=$('enemy-hp');const itemCountEl=$('item-count');const psiCountEl=$('pp-count');const psiFillEl=$('psi-fill');if(psiFillEl)psiFillEl.style.transition='width 300ms ease';const resetBtn=$('reset');const attackCanvas=$('battle-canvas');const ctx=attackCanvas?attackCanvas.getContext&&attackCanvas.getContext('2d'):null;function safeSetText(el,txt){if(el)el.textContent=txt}
+function safePlay(audio){try{audio.currentTime=0;audio.play()}catch(e){}}
+function safePause(audio){try{if(audio)audio.pause();}catch(e){}}
+function log(msg){let mercyMsg="";if(opponents.length>0&&typeof selectedOpponentIndex==="number"&&opponents[selectedOpponentIndex]){const op=opponents[selectedOpponentIndex];if(op.mercyPattern.length>0&&op.mercyProgress<op.mercyPattern.length){mercyMsg=`<br><b>Mercy Requirement for ${op.name}:</b> ${op.mercyPattern.map((a, i) => {
+if (i === op.mercyProgress) return `<u>${a.toUpperCase()}</u>`;
+return a.toUpperCase();
+}).join(" → ")}`}}
+let olMsg="";if(isLowHPMusicPlaying){olMsg=`<br><span style="color:#ff4444;font-weight:bold;">Choked up! the opponent is spare-able or one shot!</span>`}
+let fleeMsg="";if(playerHP<=20){fleeMsg=`<br><span style="color:#ffcc00;font-weight:bold;">Tip: You can flee by selecting Mercy &gt; Flee!</span>`}
+document.getElementById('log').innerHTML=msg.replace(/\n/g,'<br>')+mercyMsg+olMsg+fleeMsg}
+let consecutiveKills=0;const musicTracks=["mus/1.mp3","mus/2.mp3","mus/3.mp3","mus/4.mp3","mus/5.mp3","mus/6.ogg","mus/7.mp3","mus/8.ogg","mus/9.ogg","mus/10.mp3",];let chosenTrack=musicTracks[Math.floor(Math.random()*musicTracks.length)];const audio=document.createElement('audio');audio.src=chosenTrack;audio.volume=0.5;audio.loop=!0;audio.id='bg-music';document.body.appendChild(audio);const olAudio=document.createElement('audio');olAudio.src="mus/OL.ogg";olAudio.volume=0.5;olAudio.loop=!0;olAudio.id='ol-music';document.body.appendChild(olAudio);const heartbeatAudio=document.createElement('audio');heartbeatAudio.src='sfx/heartbeat.wav';document.body.appendChild(heartbeatAudio);const winAudio=document.createElement('audio');winAudio.src="sfx/w.ogg";document.body.appendChild(winAudio);const loseAudio=document.createElement('audio');loseAudio.src="sfx/l.wav";document.body.appendChild(loseAudio);const gameoverAudio=document.createElement('audio');gameoverAudio.src='mus/gameover.ogg';gameoverAudio.loop=!0;gameoverAudio.volume=0.65;document.body.appendChild(gameoverAudio);const hurtAudio=document.createElement('audio');hurtAudio.src="sfx/hurt.wav";document.body.appendChild(hurtAudio);const slashAudio=document.createElement('audio');slashAudio.src="sfx/slash.wav";document.body.appendChild(slashAudio);const healAudio=document.createElement('audio');healAudio.src="sfx/heal.wav";document.body.appendChild(healAudio);const ohealAudio=document.createElement('audio');ohealAudio.src="sfx/oheal.wav";document.body.appendChild(ohealAudio);const spareAudio=document.createElement('audio');spareAudio.src="sfx/s.wav";document.body.appendChild(spareAudio);const killAudio=document.createElement('audio');killAudio.src="sfx/k.mp3";document.body.appendChild(killAudio);const moveAudio=document.createElement('audio');moveAudio.src="sfx/mv.wav";moveAudio.preload="auto";moveAudio.volume=1;document.body.appendChild(moveAudio);const selectAudio=document.createElement('audio');selectAudio.src="sfx/sel.wav";selectAudio.preload="auto";selectAudio.volume=1;document.body.appendChild(selectAudio);let currentBossMusic=null;let heartbeatIntervalId=null;let isLowHPMusicPlaying=!1;function stopAllMusic(){try{safePause(audio);safePause(olAudio);if(currentBossMusic)try{safePause(currentBossMusic)}catch(e){}safePause(winAudio);safePause(loseAudio);if(typeof gameoverAudio!=='undefined')try{safePause(gameoverAudio)}catch(e){}safePause(heartbeatAudio);try{[slashAudio,healAudio,ohealAudio,spareAudio,killAudio,moveAudio,selectAudio].forEach(s=>{if(s&&typeof s.pause==='function'){try{s.pause();s.currentTime=0}catch(e){}}})}catch(e){}
+try{if(loseAudio&&loseAudio._onEnded){loseAudio.removeEventListener('ended',loseAudio._onEnded);loseAudio._onEnded=null}}catch(e){}
+isLowHPMusicPlaying=!1}catch(e){console.debug('stopAllMusic error',e)}}
+function playMusic(file){try{if(currentBossMusic)safePause(currentBossMusic);currentBossMusic=new Audio(file);currentBossMusic.loop=!0;currentBossMusic.volume=1.0;safePlay(currentBossMusic)}catch(e){}}
+function startHeartbeat(){if(heartbeatIntervalId)return;heartbeatIntervalId=setInterval(()=>{try{heartbeatAudio.currentTime=0;safePlay(heartbeatAudio)}catch(e){}},1000)}
+function stopHeartbeat(){if(heartbeatIntervalId){clearInterval(heartbeatIntervalId);heartbeatIntervalId=null}}
+function fadeAudio(a,toVol,dur=600,cb){try{if(!a||typeof a.volume==='undefined'){if(cb)cb();return}const start=a.volume;const delta=toVol-start;const startTime=Date.now();const iv=setInterval(()=>{const t=Math.min(1,(Date.now()-startTime)/dur);try{a.volume=start+delta*t}catch(e){}if(t>=1){clearInterval(iv);if(cb)cb()}},30)}catch(e){if(cb)cb();console.debug('fadeAudio error',e)}}
+function playGameOverSequence(){try{stopHeartbeat();if(audio&&typeof audio.volume!=='undefined')fadeAudio(audio,0,600);if(currentBossMusic&&typeof currentBossMusic.volume!=='undefined')fadeAudio(currentBossMusic,0,600);if(olAudio&&isLowHPMusicPlaying)fadeAudio(olAudio,0,600);stopAllMusic();try{if(gameoverAudio){try{gameoverAudio.pause();gameoverAudio.currentTime=0}catch(e){}}}catch(e){}
+const onLoseEnded=function onLoseEnded(){try{safePlay(gameoverAudio);fadeAudio(gameoverAudio,0.65,600)}catch(err){console.debug('gameover play failed',err)}
+try{if(loseAudio){loseAudio.removeEventListener('ended',onLoseEnded);loseAudio._onEnded=null}}catch(e){}};try{if(loseAudio){try{if(loseAudio._onEnded){loseAudio.removeEventListener('ended',loseAudio._onEnded);loseAudio._onEnded=null}}catch(e){}
+loseAudio._onEnded=onLoseEnded;loseAudio.addEventListener('ended',onLoseEnded);try{loseAudio.currentTime=0;const playPromise=loseAudio.play();if(playPromise&&typeof playPromise.then==='function'){playPromise.then(()=>{}).catch(err=>{console.debug('lose play blocked:',err);try{loseAudio.removeEventListener('ended',onLoseEnded);loseAudio._onEnded=null}catch(e){}
+safePlay(gameoverAudio);fadeAudio(gameoverAudio,0.65,600)})}}catch(e){console.debug('loseAudio play error',e);try{loseAudio.removeEventListener('ended',onLoseEnded);loseAudio._onEnded=null}catch(e){}
+safePlay(gameoverAudio);fadeAudio(gameoverAudio,0.65,600)}}else{safePlay(gameoverAudio);fadeAudio(gameoverAudio,0.65,600)}}catch(e){console.debug('playGameOverSequence error',e);safePlay(gameoverAudio)}}catch(e){console.debug('playGameOverSequence outer error',e)}}
+function startMusic(){if(!isLowHPMusicPlaying)try{audio.play().catch(()=>{})}catch(e){}
+document.body.removeEventListener('click',startMusic);document.body.removeEventListener('keydown',startMusic)}
+document.body.addEventListener('click',startMusic,{once:!0});document.body.addEventListener('keydown',startMusic,{once:!0});function playLowHPMusic(){if(!isLowHPMusicPlaying){try{audio.pause();olAudio.currentTime=0;olAudio.play()}catch(e){}
+isLowHPMusicPlaying=!0}}
+const mercyPatterns=[["compliment","compliment","flirt","compliment","insult"],["insult","flirt","compliment","insult","compliment"],["compliment","flirt","compliment","insult","flirt"],["flirt","compliment","insult","flirt","compliment"],["insult","compliment","flirt","compliment","insult"]];const opponentNames=["Paper","Sand","Flowerpot","Boreiel","Undone","Alfice","Asbore","Metta-gone","Napstablank","Tempy","BurgerShorts","Muffin","Creature Kid","Jerrican","Doggo","Greater Cat","Lesser Cat","Glad Smarty","Shywrong","Gersad","Kindy","Doggy","Grassrake","Baron","Washout","Moldbig","weakaircraft","Volcano","Not like","waterrake","pi","Dipin","Character","Dreamer","Mettaboy","Flowbee","Tormentor","Unfine","Ascore","Napstapunk","Temptation","Burgerking","Muffintop","Unusual Pal","Jerrycan","Kitty","Greater Wolf","Lesser Wolf","Happy Smarty","Shyright","Germson","Bratcat","Kitbrat","Snowman","Aarun","Washya","Moldtiny","Tsunderecar","Vulkan","Not Sorry"];let playerHP=100;let playerPP=0;const MAX_PP=100;const GRAZE_RADIUS=14;const GRAZE_GAIN=5;const PK_COSTS={cuss:100,therapy:25,stun:15,reduce:0};const STUN_DURATION=6000;let playerItems=1;let playerName="Your";let playerSoulColor="#ff0000";let playerSoulPng="r.png";let enemyStunned=!1;let submenuActive=!1;let turnActive=!0;let menuState="main";let selectedIndex=0;let selectedOpponentIndex=0;let insults=["ugh","meh","shh","loser","bleh","stfu","nope","dust","pfft","sigh"];let compliments=["nice","brave","kind","good","wow","yay","cool","smile","ace","gr8"];let flirts=["wink","smile","heart","hug","flirt"];let totalInsults=0;let totalCompliments=0;let totalSpared=0;let totalKilled=0;let encounterCount=0;let encounterResults=[];let currentEncounterOriginalCount=0;let currentEncounterKills=0;let currentEncounterSpared=0;let inFinalBoss=!1;let opponents=[];function determineRoute(){if(totalKilled>totalSpared)return"genocide";if(totalSpared>totalKilled)return"pacifist";return"neutral"}
+function updateHP(){safeSetText(playerHpEl,playerHP);safeSetText(itemCountEl,playerItems);if(opponents.length>0)safeSetText(enemyHpEl,opponents.map(o=>`${o.name}: ${o.hp}`).join(", "));else safeSetText(enemyHpEl,"None");updatePPUI()}
+function updatePPUI(){try{if(psiCountEl)psiCountEl.textContent=`${playerPP}/${MAX_PP} PP`;if(psiFillEl)psiFillEl.style.width=`${Math.round((playerPP / MAX_PP) * 100)}%`;updatePSIMenuButtons()}catch(e){}}
+function updatePSIMenuButtons(){try{const psiMenu=$('psi-menu');if(!psiMenu)return;const psiBtns=psiMenu.querySelectorAll('button');const costVals=[PK_COSTS.cuss,PK_COSTS.therapy,PK_COSTS.stun,PK_COSTS.reduce];psiBtns.forEach((b,i)=>{if(i<costVals.length){const disabled=playerPP<costVals[i];b.disabled=disabled;b.style.opacity=disabled?'0.5':''}else{b.disabled=!1;b.style.opacity=''}})}catch(e){}}
+function showFloatingPP(x,y,gain){try{const container=$('fight-container')||document.body;const el=document.createElement('div');el.className='floating-pp';el.textContent=`+${gain} PP`;Object.assign(el.style,{position:'absolute',left:(x)+'px',top:(y)+'px',color:'#ffdd55',fontWeight:'bold',fontFamily:'monospace',pointerEvents:'none',textShadow:'0 0 6px #000',transition:'transform 800ms ease-out, opacity 800ms ease-out'});container.appendChild(el);try{pulsePSI()}catch(e){}
+requestAnimationFrame(()=>{el.style.transform='translateY(-36px)';el.style.opacity='0'});setTimeout(()=>{try{el.remove()}catch(e){}},900)}catch(e){}}
+function playPPBeep(){try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;const ctx=new AudioCtx();const o=ctx.createOscillator();const g=ctx.createGain();o.type='sine';o.frequency.value=880;o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(0.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.1,ctx.currentTime+0.01);g.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.18);o.start();o.stop(ctx.currentTime+0.2)}catch(e){}}
+function pulsePSI(){try{if(!psiFillEl)return;psiFillEl.style.boxShadow='0 0 12px rgba(255,220,60,0.9)';setTimeout(()=>{try{psiFillEl.style.boxShadow=''}catch(e){}},350)}catch(e){}}
+function checkLowHP(){const lowOpponent=opponents.find(op=>op.hp>0&&op.hp<=20);if(lowOpponent&&!isLowHPMusicPlaying){audio.pause();olAudio.currentTime=0;olAudio.play();isLowHPMusicPlaying=!0}else if(!lowOpponent&&isLowHPMusicPlaying){olAudio.pause();audio.play();isLowHPMusicPlaying=!1}}
+function generateOpponents(options={}){const isFinal=!!options.finalBoss;const list=[];if(isFinal){list.push({name:"Mahdiisdumb",hp:400,state:"angry",mercyPattern:[],mercyProgress:0,isFinal:!0})}else{const count=Math.floor(Math.random()*3)+1;const used=new Set();for(let i=0;i<count;i++){let name;do{name=opponentNames[Math.floor(Math.random()*opponentNames.length)]}while(used.has(name));used.add(name);list.push({name,hp:100,state:"angry",mercyPattern:mercyPatterns[Math.floor(Math.random()*mercyPatterns.length)],mercyProgress:0,isFinal:!1})}}
+opponents=list;currentEncounterOriginalCount=list.length;currentEncounterKills=0;currentEncounterSpared=0;inFinalBoss=!!options.finalBoss;if(inFinalBoss){const route=determineRoute();const boss=opponents[0];stopAllMusic();if(route==="pacifist"){boss.name="=)";boss.hp=999999;boss.mercyPattern=["SURVIVE"];boss.noAttack=!1;boss.attackType="nonMercy";boss.lowDamage=!1;playMusic("mus/dan.mp3");startHeartbeat();let battleTime=0;const maxTime=600000;const timerInterval=1000;boss.canBeSpared=!1;const timerId=setInterval(()=>{battleTime+=timerInterval;const seconds=Math.floor(battleTime/1000);log(`Survive time: ${seconds} / 600`);if(battleTime>=maxTime){clearInterval(timerId);boss.canBeSpared=!0;boss.mercyPattern=["YOU CAN SPARE NOW"];log("You survived long enough! You can now spare WHAT EVER THE FUCK THIS CREATURE IS!")}},timerInterval);const enemyBP=()=>{const intensity={spawnInterval:80,speed:6,insultChance:0.5,complimentChance:0.35,damageRange:[5,12],flirtHeal:12,complimentHeal:8};intensity.joined=Math.max(2,Math.min(6,Math.round(list.length*3)));const bp=startBattlePhase(boss,10000,intensity);bp.onAttackSpawn=(attack)=>{if(!attack.hasCompliment&&Math.random()<0.1){attack.hasCompliment=!0;log(`${boss.name} says: "You can do it!"`)}};bp.setOnEnd(()=>{if(battleTime<maxTime)enableMenu();})};enemyBP()}else if(route==="genocide"){boss.name="Mahdiisdumb";boss.hp=10000;boss.mercyPattern=["NO MERCY"];boss.noAttack=!1;boss.alwaysAttack=!0;boss.attackType="insult";playMusic("mus/sinner.mp3");startHeartbeat()}else{boss.name="Lambda Flower";boss.hp=5000;boss.mercyPattern=["null"];boss.noAttack=!1;boss.lowDamage=!0;boss.attackType="mixed";playMusic("mus/sb.mp3");startHeartbeat()}}
+updateHP();return opponents}
+function clearBattleAndUIForEnding(){try{if(battleAnimId)cancelAnimationFrame(battleAnimId);}catch(e){}
+try{if(projectileSpawner)clearInterval(projectileSpawner);projectileSpawner=null}catch(e){}
+try{if(heartbeatIntervalId){clearInterval(heartbeatIntervalId);heartbeatIntervalId=null}}catch(e){}
+try{document.removeEventListener('keydown',globalKeyHandler)}catch(e){}
+try{window.onkeydown=null;document.onkeydown=null}catch(e){}
+try{if(attackCanvas)attackCanvas.style.display='none'}catch(e){}
+stopAllMusic()}
+function triggerGenocideEnding(){clearBattleAndUIForEnding();stopHeartbeat();startHeartbeat();const genocideMusic=new Audio('mus/toomuch.mp3');genocideMusic.loop=!0;genocideMusic.volume=0.3;window.__toomuchAudio=genocideMusic;safePlay(genocideMusic);const overlay=document.createElement('div');overlay.id='genocide-overlay';Object.assign(overlay.style,{position:'fixed',inset:'0',width:'100%',height:'100%',background:'radial-gradient(circle, #000 0%, #110000 100%)',zIndex:2147483647,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'auto',opacity:'0',overflow:'hidden'});const txt=document.createElement('div');txt.textContent="But nobody came.\nGenocide completed ◉_◉\nYou are left standing — hollow, unwanted, unworthy of mercy.\nWe forged you into a vessel of oblivion.\nCome. Leave this ruined place with us.\nForget them. Forget yourself.\nAnother empty world waits; move on, as you were made to do.";Object.assign(txt.style,{color:'#ff0000',fontFamily:'DTM',fontSize:'24px',textAlign:'center',userSelect:'none',opacity:'0',maxWidth:'70%',lineHeight:'1.2',filter:'blur(2px)',textShadow:'0 0 10px #ff0000, 0 0 20px #880000',transform:'translateY(0px)'});overlay.appendChild(txt);document.body.appendChild(overlay);try{const uiContainers=document.querySelectorAll('header, nav, #log, #menu, .ui, .controls');uiContainers.forEach(el=>el.style.visibility='hidden')}catch(e){}
+overlay.animate([{opacity:0},{opacity:1}],{duration:4000,fill:'forwards'});setTimeout(()=>{txt.animate([{opacity:0,filter:'blur(4px)'},{opacity:1,filter:'blur(0px)'}],{duration:4000,fill:'forwards'})},1000);let flip=!0;setInterval(()=>{txt.style.opacity=flip?'0.85':'1';txt.style.transform=`translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;flip=!flip},200);const shadowDrift=()=>{txt.style.textShadow=`
+${Math.random() * 20 - 10}px ${Math.random() * 20 - 10}px 20px #880000,
+${Math.random() * 30 - 15}px ${Math.random() * 30 - 15}px 30px #440000
+`;requestAnimationFrame(shadowDrift)};shadowDrift()}
+function triggerPacifistEnding(){clearBattleAndUIForEnding();safePause(heartbeatAudio);const peaceMusic=new Audio('mus/peace.mp3');peaceMusic.loop=!0;peaceMusic.volume=0.7;window.__peaceAudio=peaceMusic;safePlay(peaceMusic);const overlay=document.createElement('div');overlay.id='pacifist-overlay';Object.assign(overlay.style,{position:'fixed',inset:'0',width:'100%',height:'100%',background:'#fff',zIndex:2147483647,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'auto',opacity:'0',overflow:'hidden'});const txt=document.createElement('div');txt.textContent='The Communication Barrier has been broken. Bullys and Kindys now live on the surface in peace.';Object.assign(txt.style,{color:'#000',fontFamily:'DTM',fontSize:'40px',textAlign:'center',userSelect:'none',opacity:'0',transform:'scale(0.5) translateY(50px)',transition:'opacity 2s ease-in, transform 3s ease-out'});overlay.appendChild(txt);document.body.appendChild(overlay);try{const uiContainers=document.querySelectorAll('header, nav, #log, #menu, .ui, .controls');uiContainers.forEach(el=>el.style.visibility='hidden')}catch(e){}
+requestAnimationFrame(()=>{overlay.style.opacity='1';txt.style.opacity='1';txt.style.transform='scale(1) translateY(0px)'});setInterval(()=>{txt.style.transform=`scale(1.02) translateY(${Math.sin(Date.now() / 500) * 10}px)`},50)}
+function triggerNeutralEnding(){clearBattleAndUIForEnding();safePause(heartbeatAudio);const neutralMusic=new Audio('mus/nuetural.ogg');neutralMusic.loop=!0;neutralMusic.volume=0.6;window.__neutralAudio=neutralMusic;safePlay(neutralMusic);const overlay=document.createElement('div');overlay.id='neutral-overlay';Object.assign(overlay.style,{position:'fixed',inset:'0',width:'100%',height:'100%',background:'#2b2b2b',zIndex:2147483647,display:'flex',alignItems:'center',justifyContent:'center',pointerEvents:'auto',opacity:'0',overflow:'hidden'});const txt=document.createElement('div');txt.textContent='You escaped, but the cave is still in despair.';Object.assign(txt.style,{color:'#fff',fontFamily:'DTM',fontSize:'36px',textAlign:'center',userSelect:'none',opacity:'0',transform:'translateY(20px) blur(4px)',transition:'opacity 2.5s ease-in, transform 3s ease-out'});overlay.appendChild(txt);document.body.appendChild(overlay);try{const uiContainers=document.querySelectorAll('header, nav, #log, #menu, .ui, .controls');uiContainers.forEach(el=>el.style.visibility='hidden')}catch(e){}
+requestAnimationFrame(()=>{overlay.style.opacity='1';txt.style.opacity='1';txt.style.transform='translateY(0px) blur(0px)'});let pulse=1;setInterval(()=>{pulse=pulse===1?1.05:1;txt.style.transform=`translateY(0px) scale(${pulse})`},2000)}
+function handleEncounterClear(){let result="mixed";if(currentEncounterOriginalCount>0){if(currentEncounterKills===currentEncounterOriginalCount)result="killed";else if(currentEncounterSpared===currentEncounterOriginalCount)result="spared";else result="mixed"}
+encounterResults.push(result);encounterCount++;log(`Encounter ${encounterCount} cleared — ${result.toUpperCase()} Progress: ${encounterCount}/10.`);if(encounterCount>=10){setTimeout(()=>{generateOpponents({finalBoss:!0});const boss=opponents[0];log(`The final boss appears: ${boss.name}!`);const checkBossEnd=setInterval(()=>{if(!boss)return;if(boss.hp<=0){clearInterval(checkBossEnd);totalKilled+=1;endGame("You defeated the final boss!")}else if(boss.mercyPattern&&boss.mercyProgress>=boss.mercyPattern.length){clearInterval(checkBossEnd);totalSpared+=1;endGame("You spared the final boss!")}},500);enableMenu()},1200)}else{setTimeout(()=>{log("A new encounter approaches...");generateOpponents();enableMenu()},1200)}}
+let globalKeyHandlerBound=!1;function globalKeyHandler(e){if(submenuActive){console.log('globalKeyHandler ignored: submenuActive',e.code);return}if(!turnActive){console.log('globalKeyHandler ignored: !turnActive',e.code);return}if(menuState==="attack"||menuState==="opponent"){console.log('globalKeyHandler ignored: menuState',menuState,e.code);return}if(e.code==="ArrowLeft")handleArrow("left");else if(e.code==="ArrowRight")handleArrow("right");else if(e.code==="KeyZ"||e.code==="Enter")handleMenuConfirm();else if(e.code==="KeyX"||e.code==="ShiftLeft"||e.code==="ShiftRight")handleMenuBack();}
+function handleArrow(dir){let maxIndex=0;if(menuState==="main")maxIndex=3;else if(menuState==="act")maxIndex=4;else if(menuState==="psi")maxIndex=4;else if(menuState==="mercy")maxIndex=2;if(dir==="left")selectedIndex=(selectedIndex-1+(maxIndex+1))%(maxIndex+1);else if(dir==="right")selectedIndex=(selectedIndex+1)%(maxIndex+1);safePlay(moveAudio);highlightSelected()}
+function handleMenuConfirm(){if(!turnActive)return;safePlay(selectAudio);hideAllMenus();submenuActive=!1;if(menuState==="main"){if(selectedIndex===0){const opponent=opponents[selectedOpponentIndex];if(opponent){disableMenu();SlurMenu(opponent)}}else if(selectedIndex===1)showOpponentMenu("act");else if(selectedIndex===2)useItem();else if(selectedIndex===3)showMercy();}else if(menuState==="act"){const currentOpponent=opponents[selectedOpponentIndex];if(!currentOpponent)return;if(selectedIndex===0)act(currentOpponent,"insult");else if(selectedIndex===1)act(currentOpponent,"compliment");else if(selectedIndex===2)act(currentOpponent,"flirt");else if(selectedIndex===3){menuState="psi";selectedIndex=0;showPSIMenu(currentOpponent)}else if(selectedIndex===4)backToMenu();}else if(menuState==="psi"){const currentOpponent=opponents[selectedOpponentIndex];if(!currentOpponent)return;if(selectedIndex===0)act(currentOpponent,"pk cuss");else if(selectedIndex===1)act(currentOpponent,"pk therapy");else if(selectedIndex===2)act(currentOpponent,"pk stun");else if(selectedIndex===3)act(currentOpponent,"pk reduce");else if(selectedIndex===4){menuState="act";selectedIndex=0;showAct(currentOpponent)}}else if(menuState==="mercy"){const currentOpponent=opponents[selectedOpponentIndex];if(!currentOpponent)return;if(selectedIndex===0)spare(currentOpponent);else if(selectedIndex===1)flee();else if(selectedIndex===2)backToMenu();}}
+function handleMenuBack(){if(!turnActive)return;if(menuState==="act"||menuState==="mercy")backToMenu();}
+function darkenHexColor(hex,amount=30){hex=hex.replace(/^#/,'');let num=parseInt(hex,16);let r=Math.max(0,((num>>16)&0xFF)-amount);let g=Math.max(0,((num>>8)&0xFF)-amount);let b=Math.max(0,(num&0xFF)-amount);return `rgb(${r},${g},${b})`}
+function highlightSelected(){const soulColor=playerSoulColor||"#ffffff";const soulPng=playerSoulPng||"";const highlightColor=darkenHexColor(soulColor,50);function setBtnHighlight(btn,active){if(active){btn.style.background=highlightColor;btn.style.color="#fff";btn.style.transform="scale(1.1)";if(!btn.querySelector(".soul-icon")&&soulPng){const img=document.createElement("img");img.src=soulPng;img.className="soul-icon";img.style.width="20px";img.style.height="20px";img.style.verticalAlign="middle";img.style.marginRight="6px";btn.prepend(img)}}else{btn.style.background="";btn.style.color="";btn.style.transform="";const img=btn.querySelector(".soul-icon");if(img)img.remove();}}
+const mainBtns=["slur","act","item","mercy"].map(id=>$(id));mainBtns.forEach((btn,i)=>setBtnHighlight(btn,menuState==="main"&&i===selectedIndex));const actBtns=["act-insult","act-compliment","act-flirt","act-psi","act-back"].map(id=>$(id));actBtns.forEach((btn,i)=>setBtnHighlight(btn,menuState==="act"&&i===selectedIndex));const psiBtns=["psi-cuss","psi-therapy","psi-stun","psi-reduce","psi-back"].map(id=>$(id));psiBtns.forEach((btn,i)=>setBtnHighlight(btn,menuState==="psi"&&i===selectedIndex));const mercyBtns=["mercy-spare","mercy-flee","mercy-back"].map(id=>$(id));mercyBtns.forEach((btn,i)=>setBtnHighlight(btn,menuState==="mercy"&&i===selectedIndex))}
+function clampSelectedForMenu(){try{let max=0;if(menuState==='main')max=3;else if(menuState==='act')max=(document.querySelectorAll('#act-menu button').length||5)-1;else if(menuState==='psi')max=(document.querySelectorAll('#psi-menu button').length||5)-1;else if(menuState==='mercy')max=(document.querySelectorAll('#mercy-menu button').length||3)-1;selectedIndex=Math.max(0,Math.min(selectedIndex,Math.max(0,max)))}catch(e){}}
+function hideAllMenus(){try{['main-menu','act-menu','psi-menu','mercy-menu','opponent-menu'].forEach(id=>{const el=$(id);if(el)el.style.display='none'})
+submenuActive=!1}catch(e){}}
+function showMenu(){clampSelectedForMenu();const mainMenu=$('main-menu');if(menuState==="main"){if(mainMenu)mainMenu.style.display='flex';const btns=mainMenu?mainMenu.querySelectorAll('button'):[];btns.forEach((btn,i)=>{btn.classList.toggle('selected',i===selectedIndex);btn.innerHTML=btn.textContent.replace(/^\s*(<img.*?>)?/,"");if(i===selectedIndex)btn.innerHTML=`<img src="${playerSoulPng}" alt="Select" style="vertical-align:middle;width:20px;height:20px;margin-right:6px;">${btn.textContent}`})}else if(mainMenu)mainMenu.style.display='none';["act-menu","psi-menu","mercy-menu"].forEach(menuId=>{const menu=$(menuId);if(!menu)return;menu.style.display=(menuState===menuId.replace('-menu',''))?'flex':'none';const btns=menu.querySelectorAll('button');btns.forEach((btn,i)=>{btn.classList.toggle('selected',i===selectedIndex);btn.innerHTML=btn.textContent.replace(/^\s*(<img.*?>)?/,"");if(i===selectedIndex)btn.innerHTML=`<img src="${playerSoulPng}" alt="Select" style="vertical-align:middle;width:20px;height:20px;margin-right:6px;">${btn.textContent}`})})}
+function backToMenu(){menuState="main";selectedIndex=0;submenuActive=!1;enableMenu();highlightSelected()}
+function disableMenu(){turnActive=!1;hideAllMenus()}
+function enableMenu(){turnActive=!0;menuState="main";selectedIndex=0;submenuActive=!1;highlightSelected();showMenu()}
+function showOpponentMenu(actionType){disableMenu();menuState="opponent";if(typeof selectedOpponentIndex==="undefined")selectedOpponentIndex=0;if(!document.getElementById("opponent-menu")){const menuDiv=document.createElement("div");menuDiv.id="opponent-menu";menuDiv.style.marginTop="8px";menuDiv.style.fontFamily="monospace";menuDiv.style.whiteSpace="pre";if(logEl)logEl.appendChild(menuDiv);}
+const menuDiv=$('opponent-menu');if(!menuDiv){enableMenu();return}
+function render(){menuDiv.innerHTML=opponents.map((op,i)=>{if(i===selectedOpponentIndex)
+return `<span style="background:#ffd166;color:#000;">> ${i}. ${op.name} (${op.hp} HP)</span>`;return `${i}. ${op.name} (${op.hp} HP)`}).join("")}
+render();function onKey(e){if(menuState!=="opponent")return;if(e.code==="ArrowUp"){selectedOpponentIndex=(selectedOpponentIndex-1+opponents.length)%opponents.length;safePlay(moveAudio);render()}else if(e.code==="ArrowDown"){selectedOpponentIndex=(selectedOpponentIndex+1)%opponents.length;safePlay(moveAudio);render()}else if(e.code==="KeyZ"||e.code==="Enter"){safePlay(selectAudio);document.removeEventListener('keydown',onKey);turnActive=!0;const chosenOpponent=opponents[selectedOpponentIndex];flashConfirm(menuDiv.children[selectedOpponentIndex]);const type=actionType.toLowerCase();if(type==="slur"){menuState="attack";SlurMenu(chosenOpponent,"slur")}else if(type==="act"){menuState="act";showAct(chosenOpponent)}else if(type==="mercy"){menuState="mercy";showMercy(chosenOpponent)}}else if(e.code==="KeyX"||e.code==="ShiftLeft"||e.code==="ShiftRight"){safePlay(selectAudio);document.removeEventListener('keydown',onKey);enableMenu()}}
+document.addEventListener('keydown',onKey)}
+function flashConfirm(el){if(!el)return;el.style.transition="transform 0.1s, background 0.1s";el.style.transform="scale(1.2)";setTimeout(()=>{el.style.transform="scale(1)"},100)}
+function showSubMenu(menuId,options=[],extraInfo=[],callback){const menuDiv=$(menuId);if(!menuDiv){callback(0);return}
+console.log('showSubMenu open',menuId,options);submenuActive=!0;menuDiv.style.display="flex";const buttons=menuDiv.querySelectorAll("button");let sel=selectedIndex||0;function updateHighlight(){buttons.forEach((btn,i)=>{btn.style.outline=(i===sel)?"3px solid yellow":"";btn.innerHTML=extraInfo[i]?`${options[i]} (${extraInfo[i]})`:options[i]});selectedIndex=sel;highlightSelected()}
+updateHighlight();function onKey(e){if(!menuDiv.style.display||menuDiv.style.display==="none")return;switch(e.code){case "ArrowLeft":e.preventDefault();e.stopPropagation();{let tries=buttons.length;do{sel=(sel-1+buttons.length)%buttons.length;tries--}while(tries>0&&buttons[sel]&&buttons[sel].disabled);safePlay(moveAudio);updateHighlight()}break;case "ArrowRight":e.preventDefault();e.stopPropagation();{let tries=buttons.length;do{sel=(sel+1)%buttons.length;tries--}while(tries>0&&buttons[sel]&&buttons[sel].disabled);safePlay(moveAudio);updateHighlight()}break;case "KeyZ":case "Enter":e.preventDefault();e.stopPropagation();if(buttons[sel]&&buttons[sel].disabled){try{const b=buttons[sel];b.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(0)'}],{duration:220})}catch(e){}safePlay(selectAudio);log('Not available right now.');return}safePlay(selectAudio);document.removeEventListener('keydown',onKey);buttons.forEach(b=>b.onclick=null);menuDiv.style.display="none";submenuActive=!1;console.log('showSubMenu confirm',menuId,sel);callback(sel);break;case "KeyX":case "ShiftLeft":case "ShiftRight":e.preventDefault();e.stopPropagation();safePlay(selectAudio);document.removeEventListener('keydown',onKey);buttons.forEach(b=>b.onclick=null);menuDiv.style.display="none";submenuActive=!1;console.log('showSubMenu cancel',menuId);break}}
+document.addEventListener('keydown',onKey);buttons.forEach((btn,i)=>{const cb=()=>{if(btn.disabled){safePlay(selectAudio);log('Not available right now.');return}safePlay(selectAudio);document.removeEventListener('keydown',onKey);buttons.forEach(b=>b.onclick=null);menuDiv.style.display="none";submenuActive=!1;callback(i)};btn.onclick=cb})}
+function showAct(opponent){console.log('showAct called',opponent&&opponent.name);opponent=opponent||opponents[selectedOpponentIndex];if(!opponent){turnActive=!0;return}
+menuState='act';selectedIndex=0;highlightSelected();showMenu();try{const actMenuEl=$('act-menu');if(actMenuEl){actMenuEl.querySelectorAll('button').forEach((btn,i)=>{btn.onclick=()=>{if(btn.disabled){log('Not available right now.');return}selectedIndex=i;handleMenuConfirm()}})}}catch(e){console.warn('act click binding failed',e)}}
+function showMercy(opponent){opponent=opponent||opponents[selectedOpponentIndex];if(!opponent){turnActive=!0;return}
+menuState='mercy';selectedIndex=0;highlightSelected();const mercyOptions=["Spare","Flee","Back"];showSubMenu("mercy-menu",mercyOptions,["","",""],index=>{const choice=mercyOptions[index];if(choice.toLowerCase()==="spare")spare(opponent);else if(choice.toLowerCase()==="flee")flee();else if(choice.toLowerCase()==="back")backToMenu();})}
+function showPSIMenu(opponent){console.log('showPSIMenu called',opponent&&opponent.name);opponent=opponent||opponents[selectedOpponentIndex];if(!opponent){turnActive=!0;return}
+menuState='psi';selectedIndex=0;highlightSelected();updatePSIMenuButtons();showMenu();try{const psiMenuEl=$('psi-menu');if(psiMenuEl){psiMenuEl.querySelectorAll('button').forEach((btn,i)=>{btn.onclick=()=>{if(btn.disabled){log('Not available right now.');return}selectedIndex=i;handleMenuConfirm()}})}}catch(e){console.warn('psi click binding failed',e)}}
+function act(opponent,type){opponent=opponent||opponents[selectedOpponentIndex];if(!turnActive||!opponent)return;turnActive=!1;type=type.toLowerCase().trim();if(opponent.mercyPattern&&opponent.mercyProgress<opponent.mercyPattern.length){let nextAction=opponent.mercyPattern[opponent.mercyProgress].toLowerCase().trim();if(type===nextAction){opponent.mercyProgress++;log(`Mercy progress: ${opponent.mercyProgress}/${opponent.mercyPattern.length}`)}}
+if(type==='pk cuss'){if(playerPP<PK_COSTS.cuss){log('Not enough PP for PK CUSS!');setTimeout(()=>{enableMenu()},600);return}
+playerPP=Math.max(0,playerPP-100);for(let i=opponents.length-1;i>=0;i--){opponents[i].hp=Math.max(0,opponents[i].hp-100);if(opponents[i].hp<=0)handleEnemyDeath(i)}
+log('PK CUSS used! All enemies took -100 mental health!');safePlay(slashAudio);updateHP();setTimeout(()=>{if(opponents.length>0)enemyTurn();else handleEncounterClear()},800);updatePPUI();return}else if(type==='pk therapy'){if(playerPP<PK_COSTS.therapy){log('Not enough PP for PK THERAPY!');setTimeout(()=>{enableMenu()},600);return}
+playerPP=Math.max(0,playerPP-PK_COSTS.therapy);const sparedCount=opponents.length;for(let i=0;i<sparedCount;i++){totalSpared++;currentEncounterSpared++}opponents=[];updateHP();safePlay(spareAudio);log('PK THERAPY used! All enemies spared despite mercy requirements.');updatePPUI();setTimeout(()=>{handleEncounterClear()},800);return}else if(type==='pk stun'){if(playerPP<PK_COSTS.stun){log('Not enough PP for PK STUN!');setTimeout(()=>{enableMenu()},600);return}
+playerPP=Math.max(0,playerPP-PK_COSTS.stun);enemyStunned=!0;log('PK STUN used! Enemies are stunned for a short while.');updatePPUI();setTimeout(()=>{enemyStunned=!1;log('Enemies recovered from stun.')},STUN_DURATION);setTimeout(()=>{enableMenu()},800);return}else if(type==='pk reduce'){const gain=25;playerPP=Math.min(MAX_PP,playerPP+gain);log(`PK REDUCE used! You gain +${gain} PP.`);updatePPUI();setTimeout(()=>{enableMenu()},600);return}
+let effect=Math.floor(Math.random()*8)+5;if(type==="insult"){opponent.hp-=effect;totalInsults++;safePlay(slashAudio);log(`You insult ${opponent.name} — loses ${effect} mental health!`)}else if(type==="flirt"){opponent.hp+=effect;safePlay(ohealAudio);log(`You flirt with ${opponent.name} — gains ${effect} mental health!`)}else{opponent.hp+=effect;totalCompliments++;safePlay(ohealAudio);log(`You compliment ${opponent.name} — gains ${effect} mental health!`)}
+updateHP();if(opponent.hp<=0){handleEnemyDeath(selectedOpponentIndex);return}
+setTimeout(enemyTurn,1200)}
+const BOX_W=attackCanvas?(attackCanvas.width||400):400;const BOX_H=attackCanvas?(attackCanvas.height||200):200;const SOUL_SIZE=18;let soul={x:BOX_W/2-SOUL_SIZE/2,y:BOX_H/2-SOUL_SIZE/2,w:SOUL_SIZE,h:SOUL_SIZE,speed:4};let keys={};let projectiles=[];let battleAnimId=null;let projectileSpawner=null;let battlePhaseActive=!1;const insultWords=["Idiot","Dumbass","Donkey","Numbnuts","Prick","Dork","[Insert Slur]","Tch","ugh","UNC","Sybau","SYFM","🥀"];const complimentWords=["Einstine","Goofy","Funny","Good Freind","Great","🌹","Keep Talking","Massive","Kind","👍","Uncle","Freind"];function startBattlePhase(opponent,duration=7000,intensity={spawnInterval:600,speed:2.0,insultChance:0.5}){if(!attackCanvas||!ctx){setTimeout(()=>{if(typeof onBattlePhaseEnd==='function')onBattlePhaseEnd();},duration);return{stopBattle:()=>{},setOnEnd(cb){onBattlePhaseEnd=cb}}}
+attackCanvas.style.display="block";battlePhaseActive=!0;menuState="attack";soul.x=BOX_W/2-soul.w/2;soul.y=BOX_H-soul.h-8;projectiles=[];keys={};function keyDown(e){if(e.code==="ArrowLeft")keys.left=!0;if(e.code==="ArrowRight")keys.right=!0;if(e.code==="ArrowUp")keys.up=!0;if(e.code==="ArrowDown")keys.down=!0}
+function keyUp(e){if(e.code==="ArrowLeft")keys.left=!1;if(e.code==="ArrowRight")keys.right=!1;if(e.code==="ArrowUp")keys.up=!1;if(e.code==="ArrowDown")keys.down=!1}
+window.addEventListener('keydown',keyDown);window.addEventListener('keyup',keyUp);projectileSpawner=setInterval(()=>{if(!battlePhaseActive)return;const r=Math.random();const insultChance=(typeof intensity.insultChance==='number')?intensity.insultChance:0.5;const complimentChance=(typeof intensity.complimentChance==='number')?intensity.complimentChance:0.35;let type="insult";let word="";if(r<insultChance){type="insult";word=insultWords[Math.floor(Math.random()*insultWords.length)]}else if(r<insultChance+complimentChance){type="compliment";word=complimentWords[Math.floor(Math.random()*complimentWords.length)]}else{type="flirt";word=flirts[Math.floor(Math.random()*flirts.length)]}
+const joinedCount=Math.max(1,Math.min(6,Math.round(intensity.joined||1)));for(let jc=0;jc<joinedCount;jc++){const spawnSide=Math.random();let proj={x:0,y:0,vx:0,vy:0,text:word,type,w:0,h:0};const speed=(intensity.speed||1.5)+Math.random()*1.2+(jc*0.2);if(spawnSide<0.6){proj.x=Math.random()*(BOX_W-40)+20+(jc*8-(joinedCount*4));proj.y=-10;proj.vx=(Math.random()-0.5)*0.6;proj.vy=speed}else if(spawnSide<0.8){proj.x=-40;proj.y=Math.random()*(BOX_H-20)+10+(jc*6-(joinedCount*3));proj.vx=speed;proj.vy=(Math.random()-0.5)*0.6}else{proj.x=BOX_W+40;proj.y=Math.random()*(BOX_H-20)+10+(jc*6-(joinedCount*3));proj.vx=-speed;proj.vy=(Math.random()-0.5)*0.6}
+proj.w=(word.length*6)+10;proj.h=18;if(proj.type==='insult'){if(Array.isArray(intensity.damageRange)&&intensity.damageRange.length===2){const low=intensity.damageRange[0],high=intensity.damageRange[1];proj.damage=Math.floor(low+Math.random()*(high-low+1))}else{proj.damage=10}}else if(proj.type==='flirt'){proj.heal=(typeof intensity.flirtHeal==='number')?intensity.flirtHeal:15}else if(proj.type==='compliment'){proj.heal=(typeof intensity.complimentHeal==='number')?intensity.complimentHeal:10}
+projectiles.push(proj)}},intensity.spawnInterval||600);const Soul=new Image();Soul.src=playerSoulPng
+function step(){if(!battlePhaseActive)return;if(keys.left)soul.x-=soul.speed;if(keys.right)soul.x+=soul.speed;if(keys.up)soul.y-=soul.speed;if(keys.down)soul.y+=soul.speed;soul.x=Math.max(0,Math.min(soul.x,BOX_W-soul.w));soul.y=Math.max(0,Math.min(soul.y,BOX_H-soul.h));for(let i=projectiles.length-1;i>=0;i--){const p=projectiles[i];p.x+=p.vx;p.y+=p.vy;if(p.x<-80||p.x>BOX_W+80||p.y<-80||p.y>BOX_H+80){projectiles.splice(i,1);continue}
+try{const soulCX=soul.x+soul.w/2,soulCY=soul.y+soul.h/2;const projCX=p.x+(p.w||10)/2,projCY=p.y+(p.h||10)/2;const dx=projCX-soulCX,dy=projCY-soulCY;const dist=Math.sqrt(dx*dx+dy*dy);const isColliding=!(p.x+p.w<soul.x||p.x>soul.x+soul.w||p.y+p.h<soul.y||p.y>soul.y+soul.h);if(!p.grazed&&!isColliding&&dist<Math.max(soul.w,soul.h)+GRAZE_RADIUS){p.grazed=!0;const gain=GRAZE_GAIN;playerPP=Math.min(MAX_PP,playerPP+gain);log(`Grazed an attack! +${gain} PP`);updatePPUI();try{const projCX=p.x+(p.w||10)/2,projCY=p.y+(p.h||10)/2;showFloatingPP(projCX,projCY,gain);playPPBeep()}catch(e){}}}catch(e){}
+if(!(p.x+p.w<soul.x||p.x>soul.x+soul.w||p.y+p.h<soul.y||p.y>soul.y+soul.h)){if(p.type==="insult"){playerHP-=(p.damage||10);safePlay(hurtAudio)}else if(p.type==="flirt"){playerHP+=(p.heal||15);safePlay(healAudio)}else if(p.type==="compliment"){playerHP+=(p.heal||10);safePlay(healAudio)}
+projectiles.splice(i,1);updateHP()}}
+ctx.clearRect(0,0,BOX_W,BOX_H);ctx.fillStyle="#000";ctx.fillRect(0,0,BOX_W,BOX_H);projectiles.forEach(p=>{ctx.font="30px DTM";ctx.fillStyle=p.type==="insult"?"#ff4444":p.type==="flirt"?"#ff69b4":"#00ff00";ctx.fillText(p.text,p.x,p.y)});ctx.drawImage(Soul,soul.x,soul.y,soul.w,soul.h);battleAnimId=requestAnimationFrame(step)}
+const stopBattle=()=>{battlePhaseActive=!1;menuState="main";if(projectileSpawner){clearInterval(projectileSpawner);projectileSpawner=null}
+if(battleAnimId){cancelAnimationFrame(battleAnimId);battleAnimId=null}
+if(attackCanvas)attackCanvas.style.display="none";projectiles=[];keys={};window.removeEventListener('keydown',keyDown);window.removeEventListener('keyup',keyUp);updateHP();if(playerHP<=0){endGame("You lost! Your mental health is depleted.");return}
+enableMenu();if(typeof onBattlePhaseEnd==="function")onBattlePhaseEnd();onBattlePhaseEnd=null};battleAnimId=requestAnimationFrame(step);const autoStopId=setTimeout(()=>{if(battlePhaseActive)stopBattle();},duration);let onBattlePhaseEnd=null;return{stopBattle,setOnEnd(cb){onBattlePhaseEnd=cb}}}
+function handleEnemyDeath(opponentIndex){const opponent=opponents[opponentIndex];if(!opponent)return;if(opponent.hp<=0){totalKilled++;currentEncounterKills++;log(`${opponent.name} has been defeated!`);killAudio.currentTime=0;killAudio.play();opponents.splice(opponentIndex,1);selectedOpponentIndex=opponents.length>0?0:-1;updateHP();if(opponents.length===0){handleEncounterClear()}else{setTimeout(enemyTurn,1200)}}}
+let eye=document.getElementById("player-eye");try{if(eye)eye.style.display="none"}catch(e){}
+function SlurMenu(opponent){opponent=opponent||opponents[selectedOpponentIndex];if(!opponent)return;const container=document.getElementById("fight-container");const eyeEl=eye||document.getElementById("player-eye");if(eyeEl)eyeEl.style.display="block";let pulseDir=1,pulseActive=!0;const baseW=546,baseH=115,pulseAmt=5,pulseSpeed=0.5;function pulseEye(){if(!pulseActive)return;let w=parseFloat(eye.style.width||baseW);let h=parseFloat(eye.style.height||baseH);if(w>=baseW+pulseAmt)pulseDir=-1;if(w<=baseW-pulseAmt)pulseDir=1;eye.style.width=(w+pulseSpeed*pulseDir)+"px";eye.style.height=(h+(pulseSpeed*pulseDir*baseH/baseW))+"px";requestAnimationFrame(pulseEye)}
+pulseEye();container.style.position="relative";const eyeCenter=(eyeEl&&(eyeEl.offsetLeft+eyeEl.offsetWidth/2))||(eye&&(eye.offsetLeft+eye.offsetWidth/2))||0;const bar=document.createElement("div");Object.assign(bar.style,{position:"absolute",width:"10px",height:"50px",background:playerSoulColor||"red",top:eye.offsetTop+"px",left:"0px"});container.appendChild(bar);let barPos=0,dir=1,speed=4,hit=!1;function animateBar(){if(hit)return;barPos+=speed*dir;if(barPos<=0)dir=1;if(barPos>=container.offsetWidth-bar.offsetWidth)dir=-1;bar.style.left=barPos+"px";requestAnimationFrame(animateBar)}
+animateBar();function onKeyPress(e){if(hit)return;if(e.code==="KeyZ"||e.code==="Enter"){hit=!0;const barCenter=barPos+bar.offsetWidth/2;const maxDist=container.offsetWidth/2;const damage=Math.max(0,Math.round(100*(1-Math.abs(barCenter-eyeCenter)/maxDist)));opponent.hp=Math.max(0,opponent.hp-damage);log(`You hit ${opponent.name} for ${damage} damage!`);updateHP();safePlay(slashAudio);if(opponent.hp<=0)handleEnemyDeath(selectedOpponentIndex);else setTimeout(enemyTurn,800);pulseActive=!1;eye.style.display="none";eye.style.width=baseW+"px";eye.style.height=baseH+"px";container.removeChild(bar);document.removeEventListener("keydown",onKeyPress)}}
+document.addEventListener("keydown",onKeyPress)}
+function useItem(){if(!turnActive)return;if(playerItems>0){let heal=20
+const healcompliment=compliments[Math.floor(Math.random()*compliments.length)];playerHP+=heal;safePlay(healAudio);log(`You Rememberd a Complement your freind Gave you '${healcompliment}.' You gain ${heal} mentalhealth`);updateHP();disableMenu();menuState="main";selectedIndex=0;setTimeout(()=>{enemyTurn()},900)}else{log("No items left!")}}
+function spare(){if(!turnActive)return;disableMenu();const opponent=opponents[selectedOpponentIndex];if(!opponent)return;const canSpare=isLowHPMusicPlaying||(opponent.mercyPattern.length>0&&opponent.mercyProgress>=opponent.mercyPattern.length)||opponent.canBeSpared;if(canSpare){totalSpared++;currentEncounterSpared++;log(`You spared ${opponent.name}! Peace is restored for them.`);spareAudio.currentTime=0;spareAudio.play();opponents.splice(selectedOpponentIndex,1);updateHP();if(opponents.length===0){endGame("You spared all opponents! Peace is restored.")}else{selectedOpponentIndex=0;setTimeout(enableMenu,1200)}}else{log("You can't spare yet! Complete the mercy requirement first.");setTimeout(()=>{menuState="main";selectedIndex=0;enableMenu()},1200)}}
+setInterval(checkLowHP,1000);function flee(){if(!turnActive)return;disableMenu();if(inFinalBoss){log("Mahdiisdumb: Thats Delightful, you can't flee!");setTimeout(()=>{enableMenu();menuState="main";selectedIndex=0},1200);return}else if(playerHP>20){log("You can only flee when your HP is 20 or less! What are you, a wuss?");setTimeout(()=>{enableMenu();menuState="main";selectedIndex=0},900);return}
+log("You fled the battle! You escaped safely...");safePlay(spareAudio);setTimeout(()=>{currentEncounterOriginalCount=0;currentEncounterKills=0;currentEncounterSpared=0;generateOpponents();enableMenu()},1500)}
+function enemyTurn(){if(enemyStunned){log('Enemies are stunned and can\'t attack!');setTimeout(()=>{enableMenu()},800);return}
+if(!opponents||opponents.length===0){handleEncounterClear();return}
+if(playerHP<=0){endGame("You lost! Your mental health is depleted.");return}
+disableMenu();const actingOpponent=opponents[Math.floor(Math.random()*opponents.length)];if(actingOpponent.isFinal){const route=determineRoute();if(route==="pacifist"&&actingOpponent.attackType==="nonMercy"){const intensity={spawnInterval:250,speed:3.2,insultChance:0.5,complimentChance:0.35,damageRange:[6,12],flirtHeal:12,complimentHeal:8};intensity.joined=opponents?Math.max(2,Math.min(6,Math.round(opponents.length*3))):2;const bp=startBattlePhase(actingOpponent,8000,intensity);bp.onAttackSpawn=(attack)=>{};bp.setOnEnd(()=>{enableMenu()});return}
+let intensity={};if(route==="neutral"){intensity={spawnInterval:700,speed:1.6,insultChance:0.5,complimentChance:0.35,damageRange:[4,8]}}else if(route==="genocide"){intensity={spawnInterval:260,speed:3.6,insultChance:1.0,complimentChance:0,damageRange:[12,22]}}
+intensity.joined=opponents?Math.max(1,Math.min(6,Math.round(opponents.length*(route==='genocide'?2:1.25)))):1;const bp=startBattlePhase(actingOpponent,7000,intensity);bp.setOnEnd(()=>{enableMenu()});return}
+const baseInsultChance=actingOpponent.state==="angry"?0.7:0.45;const intensity={spawnInterval:500,speed:1.9,insultChance:baseInsultChance,complimentChance:0.35,damageRange:[6,12]};intensity.joined=opponents?Math.max(1,Math.min(4,opponents.length)):1;const bp=startBattlePhase(actingOpponent,6000,intensity);bp.setOnEnd(()=>{enableMenu()})}
+function endGame(msg){try{if(currentBossMusic)currentBossMusic.pause();}catch(e){}
+let endingMsg="";if(inFinalBoss){const route=determineRoute();if(route==="pacifist"){triggerPacifistEnding()}else if(route==="genocide"){triggerGenocideEnding()}else{triggerNeutralEnding()}
+safePlay(winAudio);return}else if(opponents&&opponents.length===0){if(totalKilled>0&&totalSpared===0){endingMsg="GO TO HELL MURDERERاللعنة عليك اذهب اقتل نفسك ولا تقتل أي شخص أبدا!";safePlay(loseAudio)}else if(totalSpared>0&&totalKilled===0){endingMsg="Very Impressive you didnt kill anyone. يمكنك الحصول على رحمتي الآن لعدم الصراخ عليّ";safePlay(winAudio)}else if(totalSpared>0&&totalKilled>0){endingMsg=`Uhh Ok so you used self Defense judging by my data. DATA: Had Mercy On: ${totalSpared}, Had no mercy on: ${totalKilled}. Your actions would make you be a neutral guy`;safePlay(winAudio)}
+endingMsg+=`<i>EH EH here is more data you nerd! Total Insults: ${totalInsults}, Total Compliments: ${totalCompliments}</i>`}else if(playerHP<=0){endingMsg="Your mental health was depleted. Did you listen enough, or did you fight too much?"}
+log(endingMsg);disableMenu();if(playerHP<=0){if(resetBtn)resetBtn.style.display='none';try{playGameOverSequence()}catch(e){console.debug('playGameOverSequence failure',e)}
+try{showDeathDialog()}catch(e){console.debug('showDeathDialog failure',e)}}else{if(resetBtn)resetBtn.style.display='inline-block'}
+try{audio.pause();olAudio.pause();isLowHPMusicPlaying=!1}catch(e){}}function showDeathDialog(){try{const existing=document.getElementById('death-overlay');if(existing)existing.remove();const overlay=document.createElement('div');overlay.id='death-overlay';Object.assign(overlay.style,{position:'fixed',inset:'0',display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(170,0,0,0.92)',zIndex:2147483647,color:'#fff',padding:'20px',textAlign:'center'});const box=document.createElement('div');Object.assign(box.style,{maxWidth:'720px',width:'90%',background:'rgba(0,0,0,0.35)',borderRadius:'8px',padding:'28px',boxShadow:'0 10px 40px rgba(0,0,0,0.8)'});const title=document.createElement('div');title.innerHTML=`<h2 style="margin:0 0 10px 0;">${playerName}! </h2>`;title.style.fontFamily='DTM, monospace';const msg=document.createElement('p');msg.innerText=`This is your father speaking to you  it's all just a bad dream. Get up!`;msg.style.margin='12px 0 24px 0';msg.style.fontSize='18px';const btnRow=document.createElement('div');Object.assign(btnRow.style,{display:'flex',gap:'12px',justifyContent:'center'});const yes=document.createElement('button');yes.textContent='Yes';Object.assign(yes.style,{padding:'10px 18px',fontSize:'16px',cursor:'pointer',background:'#00aa00',color:'#fff',border:'none',borderRadius:'6px'});const no=document.createElement('button');no.textContent='No';Object.assign(no.style,{padding:'10px 18px',fontSize:'16px',cursor:'pointer',background:'#cc2222',color:'#fff',border:'none',borderRadius:'6px'});btnRow.appendChild(yes);btnRow.appendChild(no);box.appendChild(title);box.appendChild(msg);box.appendChild(btnRow);overlay.appendChild(box);document.body.appendChild(overlay);try{submenuActive=!0;turnActive=!1}catch(e){}
+function cleanup(){try{const el=document.getElementById('death-overlay');if(el)el.remove();submenuActive=!1}catch(e){}}
+yes.addEventListener('click',()=>{try{cleanup();stopAllMusic();if(gameoverAudio)try{gameoverAudio.pause();gameoverAudio.currentTime=0}catch(e){}resetGame()}catch(e){console.debug('death yes error',e)}});no.addEventListener('click',()=>{try{cleanup();try{window.close()}catch(e){}
+try{window.open('','_self');window.close()}catch(e){location.href='about:blank'}}catch(e){console.debug('death no error',e)}});function keyHandler(e){if(e.key==='Enter'){e.preventDefault();yes.click()}else if(e.key==='Escape'){e.preventDefault();no.click()}}
+document.addEventListener('keydown',keyHandler);const observer=new MutationObserver(()=>{if(!document.getElementById('death-overlay')){try{document.removeEventListener('keydown',keyHandler);observer.disconnect()}catch(e){}}});observer.observe(document.body,{childList:!0,subtree:!1})}catch(e){console.debug('showDeathDialog failed',e)}}
+function resetGame(){playerHP=100;playerPP=0;playerItems=Math.floor(Math.random()*4)+1;encounterCount=0;encounterResults=[];currentEncounterOriginalCount=0;currentEncounterKills=0;currentEncounterSpared=0;inFinalBoss=!1;opponents=generateOpponents();updateHP();updatePPUI();log("Game restarted!");enableMenu();if(resetBtn)resetBtn.style.display='none';chosenTrack=musicTracks[Math.floor(Math.random()*musicTracks.length)];audio.src=chosenTrack;try{audio.currentTime=0;audio.play()}catch(e){}
+try{if(currentBossMusic)currentBossMusic.pause();}catch(e){}
+totalInsults=0;totalCompliments=0;totalSpared=0;totalKilled=0;if(playerName){const el=$('player-name-label');if(el)el.textContent=playerName}}
+const nameScreen=document.getElementById('naming-screen');const soulScreen=document.getElementById('soul-screen');const gameUI=document.getElementById('game-ui');const nameInput=document.getElementById('player-name-input');const nameConfirmBtn=document.getElementById('name-confirm-btn');const soulBtns=Array.from(document.querySelectorAll('.soul-btn'))||[];const soulConfirmBtn=document.getElementById('soul-confirm-btn');let selectedSoulIndex=0;playerName=playerName||'';playerSoulColor=playerSoulColor||'';playerSoulPng=playerSoulPng||'';function showScreen(screen){[nameScreen,soulScreen,gameUI].forEach(s=>{if(s&&s.classList)s.classList.remove('active')});if(screen&&screen.classList)screen.classList.add('active');}
+function updateSoulSelected(){const btn=soulBtns[selectedSoulIndex];soulBtns.forEach(b=>{b.classList.remove('selected');b.style.border='2px solid transparent';b.style.boxShadow='none'});if(!btn){const sel=document.getElementById('soul-selected');if(sel)sel.innerHTML='';return}
+btn.classList.add('selected');const color=btn.dataset&&btn.dataset.color?btn.dataset.color:'';const png=btn.dataset&&btn.dataset.png?btn.dataset.png:'';if(color){btn.style.border=`2px solid ${color}`;btn.style.boxShadow=`0 0 10px 4px ${color}80`}
+const sel=document.getElementById('soul-selected');if(sel)sel.innerHTML=`<span style="font-size:1.1em;">Selected: </span><img src="${png}" style="width:32px;height:32px;vertical-align:middle;">`}
+function startupKeyHandler(e){if(nameScreen&&nameScreen.classList.contains('active')){if(e.key==='Enter'){const nameVal=nameInput?nameInput.value.trim():'';if(!nameVal){alert('Please enter a name.');if(nameInput)nameInput.focus();return}
+playerName=nameVal;showScreen(soulScreen);selectedSoulIndex=0;updateSoulSelected();if(soulConfirmBtn)soulConfirmBtn.style.display='inline-block';e.preventDefault()}
+return}
+if(soulScreen&&soulScreen.classList.contains('active')){if(e.key==='ArrowRight'){selectedSoulIndex=(selectedSoulIndex+1)%(soulBtns.length||1);updateSoulSelected();e.preventDefault()}else if(e.key==='ArrowLeft'){selectedSoulIndex=(selectedSoulIndex-1+(soulBtns.length||1))%(soulBtns.length||1);updateSoulSelected();e.preventDefault()}else if(e.key==='Enter'||e.key.toLowerCase()==='z'){const btn=soulBtns[selectedSoulIndex];playerSoulColor=btn&&btn.dataset?btn.dataset.color:'#ff0000';playerSoulPng=btn&&btn.dataset?btn.dataset.png:'png/r.png';showScreen(gameUI);if(eye)eye.style.display='block';const logEl=document.getElementById('log');if(logEl)logEl.innerHTML='Game started! Use arrow keys to navigate menus.';if(typeof window.startGameInit==='function')window.startGameInit(playerName,playerSoulColor,playerSoulPng);e.preventDefault()}else if(e.key.toLowerCase()==='x'||e.key==='Shift'){showScreen(nameScreen);if(nameInput)nameInput.focus();e.preventDefault()}
+return}}
+try{document.removeEventListener('keydown',startupKeyHandler)}catch(e){}
+document.addEventListener('keydown',startupKeyHandler);soulBtns.forEach((btn,index)=>{btn.addEventListener('click',()=>{selectedSoulIndex=index;updateSoulSelected();if(soulConfirmBtn)soulConfirmBtn.style.display='inline-block'})});if(soulConfirmBtn){soulConfirmBtn.addEventListener('click',()=>{const btn=soulBtns[selectedSoulIndex];playerSoulColor=btn&&btn.dataset?btn.dataset.color:'#ff0000';playerSoulPng=btn&&btn.dataset?btn.dataset.png:'png/r.png';showScreen(gameUI);if(eye)eye.style.display='block';const logEl=document.getElementById('log');if(logEl)logEl.innerHTML='Game started! Use arrow keys to navigate menus.';if(typeof window.startGameInit==='function')window.startGameInit(playerName,playerSoulColor,playerSoulPng);})}
+if(nameScreen){showScreen(nameScreen);if(nameInput)nameInput.focus();}
+if(resetBtn){resetBtn.onclick=resetGame}
+window.startGameInit=function(name,color,soulPng){playerName=name||"Your";playerSoulColor=color||"#ff0000";playerSoulPng=soulPng||"r.png";playerHP=100;playerPP=0;playerItems=Math.floor(Math.random()*4)+1;turnActive=!0;menuState="main";selectedIndex=0;if(!globalKeyHandlerBound){document.addEventListener('keydown',globalKeyHandler);globalKeyHandlerBound=!0}
+opponents=generateOpponents();selectedOpponentIndex=0;const nameLabel=$('player-name-label');if(nameLabel)nameLabel.textContent=playerName;updateHP();updatePPUI();enableMenu();log(`Welcome,Use arrow keys to select, Z/Enter to confirm, X/Shift to go back.`);try{audio.currentTime=0;audio.play()}catch(e){}};if(!opponents||opponents.length===0)opponents=generateOpponents();const slurBtn=$('slur');const actBtn=$('act');const itemBtn=$('item');const mercyBtn=$('mercy');if(slurBtn)slurBtn.onclick=()=>{showOpponentMenu("Slur")};if(actBtn)actBtn.onclick=()=>{showOpponentMenu("act")};if(itemBtn)itemBtn.onclick=()=>{useItem()};if(mercyBtn)mercyBtn.onclick=()=>{showOpponentMenu("mercy")};window._game={getState:()=>({playerHP,playerItems,playerName,playerPP,opponents,encounterCount,encounterResults,totalKilled,totalSpared}),addPP:(n=10)=>{playerPP=Math.min(MAX_PP,playerPP+n);updatePPUI();log(`DEBUG: +${n} PP`)},printTestPlan:()=>{console.info('TEST PLAN:\n1) Enter battle, move near (not touch) attacks; confirm log "Grazed an attack!" and PP increases.\n2) Act -> PSI: open the PSI submenu; verify buttons show cost and disabled if insufficient PP.\n3) Use PK actions when you have enough PP: PK CUSS (-100 HP all), PK THERAPY (spare all), PK STUN (stun enemies), PK REDUCE (+PP).\n4) Confirm keyboard and mouse selection both work and disabled items can\'t be chosen.\nUse window._game.addPP(n) to add test PP.')}};function opponentText(op){try{if(op&&op.name)return op.name;if(opponents&&opponents[0]&&opponents[0].name)return opponents[0].name}catch(e){}
+return"The enemy"}
+document.addEventListener('keydown',function debugSkipToBoss(e){if(playerName!==">!<")return;if(e.key==='g'){totalKilled=9;totalSpared=0;encounterCount=10;log("DEBUG: Forcing GENOCIDE final boss...");generateOpponents({finalBoss:!0});enableMenu()}else if(e.key==='p'){totalSpared=9;totalKilled=0;encounterCount=10;log("DEBUG: Forcing PACIFIST final boss...");generateOpponents({finalBoss:!0});enableMenu()}else if(e.key==='P'){triggerPacifistEnding()}else if(e.key==='G'){triggerGenocideEnding()}else if(e.key==='N'){triggerNeutralEnding()}else if(e.key==='n'){totalSpared=4;totalKilled=4;encounterCount=10;log("DEBUG: Forcing NEUTRAL final boss...");generateOpponents({finalBoss:!0});enableMenu()}});if(attackCanvas)attackCanvas.style.display="none"})()
