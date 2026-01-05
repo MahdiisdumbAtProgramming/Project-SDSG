@@ -16,6 +16,7 @@ const skipList = new Set([
   '.gitattributes',
   '.gitignore',
   'README.md',
+  'REL.js',
   zipName // so it doesn't include the zip itself
 ]);
 

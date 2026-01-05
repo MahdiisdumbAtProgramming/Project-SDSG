@@ -64,3 +64,6 @@ document.addEventListener("DOMContentLoaded", function () {
         sdsgBtn.style.display = "none";
     }
 });
+    document.getElementById("april fools").onclick = function () {
+    alert("April Fools! There's no such feature. Are you a gooner stop watching porn enjoy the real SDSG!");
+    }
