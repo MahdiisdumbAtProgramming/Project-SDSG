@@ -1,167 +1,49 @@
-﻿   const output = document.getElementById("output");
-        const input = document.getElementById("command");
-        const inputLine = document.getElementById("input-line");
-
-        const src = "github.com/Mahdiisdumb/Project-SDSG";
-
-        /* ---------- UTIL ---------- */
-        function print(text = "") {
-        output.innerHTML += text + "\n";
-        window.scrollTo(0, document.body.scrollHeight);
-        }
-
-        /* ---------- BOOT TYPEWRITER ---------- */
-const bootText =
-`Welcome to the SDSG command line
+﻿const o=document.getElementById("output"),i=document.getElementById("command"),l=document.getElementById("input-line"),src="github.com/Mahdiisdumb/Project-SDSG",p=t=>{o.innerHTML+=t+"\n";scrollTo(0,document.body.scrollHeight)},boot=`Welcome to the SDSG command line
 Use 'help' for commands.
-Use 'start' for Compiling and loading
-`;
-
-        function typeBoot() {
-        print(bootText);
-        }
-
-        /* ---------- COMMAND HANDLING ---------- */
-        input.addEventListener("keydown", e => {
-        if (e.key === "Enter") {
-        const cmd = input.value.trim();
-        print("SDSG> " + cmd);
-        handleCommand(cmd);
-        input.value = "";
-        }
-        });
-
-function handleCommand(cmd) {
-    switch (cmd.toLowerCase()) {
-
-        /* BASIC */
-        case "help":
-            print("Available commands:");
-            print("help   start   src   tree   chk   clear");
-            print("");
-            print("Hidden / unsafe commands:");
-            print("sudo   rm -rf /   glitch   debug   secrets");
-            print("");
-            print("Use at your own risk.");
-            break;
-
-        case "clear":
-            output.textContent = "";
-            break;
-
-        case "src":
-            print(src);
-            break;
-
-        case "tree":
-            print(".");
-            print("└── src");
-            print("    ├── intro");
-            print("    └── pai");
-            print("        ├── assets");
-            print("        │   └── games");
-            print("        ├── PREMIUM");
-            print("        │   └── premium-games");
-            print("        ├── about");
-            print("        ├── modding");
-            print("        ├── changelogs");
-            print("        ├── status");
-            print("        ├── contact");
-            print("        ├── ifweb");
-            print("        └── sdk");
-            break;
-
-        /* START SEQUENCE */
-        case "start":
-            if (localStorage.getItem("compiled") === "true") {
-                print("SDSG already compiled. Redirecting...");
-                setTimeout(() => {
-                    window.location.href = "./pai/load.html";
-                }, 500);
-                break;
-            }
-
-            const premiumActive = localStorage.getItem("SDSG") === "active";
-
-            const steps = [
-                "Launching SDSG...",
-                "Loading assets...",
-                "Scanning directories...",
-                "Detecting games...",
-                `Found BASIC GAMES: ${games.join(", ")}`,
-                premiumActive
-                    ? `PREMIUM license: YES\nDetecting PREMIUM games...\nFound PREMIUM GAMES: ${premiumGames.join(", ")}` 
-                    : "PREMIUM license: NO",
-                "Compiling WebAssembly...",
-                "Loading user data...",
-                "High score data loaded.",
-                "Changelogs verified to your version.",
-                "Mahdiisdumb says if any problem occurs contact us.",
-                "All set!",
-                "Finalizing launch...",
-                "SDSG Launched! Enjoy.",
-                "Redirecting...",
-                "while Redirecting, remember to check out Mahdiisdumbs github github.com/Mahdiisdumb",
-            ];
-
-            steps.forEach((msg, i) => {
-                setTimeout(() => print(msg), i * 800);
-            });
-
-            setTimeout(() => {
-                localStorage.setItem("compiled", "true"); // mark as compiled
-                window.location.href = "./pai/load.html";
-            }, steps.length * 800 + 500);
-
-            break;
-
-        /* CHECK STATUS */
-        case "chk":
-             const gameschk = ["AoOni","Appel","Arena","BeanPlats3D","BELTAGOON","Bomb-Tag","calc","Cave-Communications","CeaserCipher","ChinesePVZ","ClickCounter","CookieClicker","CPS","CrazyCattle3D","DANK-FLOWEY","Diddy", "echovr2d","Fish","FlappyBird","FlipAMeanGuy","freemoney","Geometry-Dash-(ASS)", "Goofy-Goober","Half-Price", "ITU(WIFI)", "Kabby-Lame-Ahh","legacy(WIFI)","Level-Gen","Lore", "Marcord(Wifi)", "Mario", "MinecraftOffline", "Minesweeper","music","Omega-Flowey","Pac-Man","Parry-Sim","Perlin-Noise","Platformer","Ransomware","Raycaster-Engine","Redirect-Test","Relegioustext","RenderEngine","RisingShepTone","Scampton","SDKTEST","Sitetest","Slope","Snake","SnowRider3D","Soundbuttons","SpaceInvaders","Tag","VoxelTest","WEARE1","WebsiteTest","ZombieRaid","ZombyecareVsMahdiStudios"];
-            const premiumGameschk = ["BaldisBaisics","BaldisPlus","bergentruck","Deltatraveler","Earthbound","karlson","Minesweeperplus","OGFNF","PeoplePlayground","PizzaTower","raft","slender","Sonic.EXE","UCN","UltraKill","UNDERTALE-and-DELTARUNE" ];
-            const license = localStorage.getItem("SDSG") === "active" ? "YES" : "NO";
-            print("Premium License: " + license);
-            print("Basic Games: " + gameschk.join(", "));
-            print("Premium Games: " + premiumGameschk.join(", "));
-            break;
-
-        /* SECRET COMMANDS */
-        case "sudo":
-            print("permission denied");
-            break;
-
-        case "sudo start":
-            print("nice try");
-            break;
-
-        case "rm -rf /":
-            print("kernel panic (just kidding)");
-            break;
-
-        case "secrets":
-            print("you were not supposed to find this");
-            break;
-
-        case "debug":
-            print("debug mode enabled");
-            print("nothing actually changed");
-            break;
-
-        case "glitch":
-            for (let i = 0; i < 6; i++) {
-                setTimeout(() => {
-                    print(Math.random().toString(36).slice(2));
-                }, i * 150);
-            }
-            break;
-
-        case "":
-            break;
-
-        default:
-            print("Unknown command: " + cmd);
-    }
-}
-
-        /* ---------- START ---------- */
-        window.onload = typeBoot;
+Use 'start' for Compiling and loading`
+function b(){p(boot)}
+i.addEventListener("keydown",e=>{if(e.key==="Enter"){const c=i.value.trim();p("SDSG> "+c);h(c);i.value=""}})
+function h(c){
+switch(c.toLowerCase()){
+case"help":p("Available commands:");p("help   start   src   tree   chk   clear");p("");p("Hidden / unsafe commands:");p("sudo   rm -rf /   glitch   debug   secrets");p("");p("Use at your own risk.");break
+case"clear":o.textContent="";break
+case"src":p(src);break
+case"tree":p(".");p("└── src");p("    ├── intro");p("    └── pai");p("        ├── assets");p("        │   └── games");p("        ├── PREMIUM");p("        │   └── premium-games");p("        ├── about");p("        ├── modding");p("        ├── changelogs");p("        ├── status");p("        ├── contact");p("        ├── ifweb");p("        └── sdk");break
+case"start":
+if(localStorage.getItem("compiled")==="true"){p("SDSG already compiled. Redirecting...");setTimeout(()=>location.href="./pai/load.html",500);break}
+const a=localStorage.getItem("SDSG")==="active",s=[
+"Launching SDSG...",
+"Loading assets...",
+"Scanning directories...",
+"Detecting games...",
+`Found BASIC GAMES: ${games.join(", ")}`,
+a?`PREMIUM license: YES\nDetecting PREMIUM games...\nFound PREMIUM GAMES: ${premiumGames.join(", ")}`:"PREMIUM license: NO",
+"Compiling WebAssembly...",
+"Loading user data...",
+"High score data loaded.",
+"Changelogs verified to your version.",
+"Mahdiisdumb says if any problem occurs contact us.",
+"All set!",
+"Finalizing launch...",
+"SDSG Launched! Enjoy.",
+"Redirecting...",
+"while Redirecting, remember to check out Mahdiisdumbs github github.com/Mahdiisdumb"
+]
+s.forEach((m,n)=>setTimeout(()=>p(m),n*800))
+setTimeout(()=>{localStorage.setItem("compiled","true");location.href="./pai/load.html"},s.length*800+500)
+break
+case"chk":
+p("Premium License: "+(localStorage.getItem("SDSG")==="active"?"YES":"NO"))
+p("Basic Games: "+gameschk.join(", "))
+p("Premium Games: "+premiumGameschk.join(", "))
+break
+case"sudo":p("permission denied");break
+case"sudo start":p("nice try");break
+case"rm -rf /":p("kernel panic (just kidding)");break
+case"secrets":p("you were not supposed to find this");break
+case"debug":p("debug mode enabled");p("nothing actually changed");break
+case"glitch":for(let x=0;x<6;x++)setTimeout(()=>p(Math.random().toString(36).slice(2)),x*150);break
+case"":break
+default:p("Unknown command: "+c)
+}}
+onload=b

@@ -1,7 +1,1 @@
-body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 9000;
-    margin: 0;
-    background-image: url('./resrc/skybox.gif');
+body{display:flex;flex-direction:column;align-items:center;height:9000;margin:0;background-image:url(./resrc/skybox.gif)}

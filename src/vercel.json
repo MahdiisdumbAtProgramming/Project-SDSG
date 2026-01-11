@@ -1,9 +1,1 @@
-{
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/load.html",
-      "permanent": true
-    }
-  ]
-}
+{"redirects":[{"source":"/","destination":"/load.html","permanent":0}]}

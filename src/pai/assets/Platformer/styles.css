@@ -1,14 +1,1 @@
-body {
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #423a3a;
-    font-family: Arial, sans-serif;
-}
-
-canvas {
-    border: 10px solid #791010;
-    background-color: #00eaff;
-}
+body{margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background-color:#423a3a;font-family:Arial,sans-serif}canvas{border:10px solid #791010;background-color:#00eaff}

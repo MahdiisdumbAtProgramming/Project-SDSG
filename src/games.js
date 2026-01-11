@@ -1,4 +1,3 @@
-// Auto-generated list of games
 const games = [
     "AoOni",
     "Appel",

@@ -4302,39 +4302,22 @@ var Photon;
             SendSync: 0x04,
             SendState: 0x08,
         };
-        /**
-            @class Photon.Chat.Message
-            @classdesc Encapsulates chat message data.
-        */
-        var Message = /** @class */ (function () {
+
+        var Message = (function () {
             function Message(sender, content) {
                 this.sender = sender;
                 this.content = content;
             }
-            /**
-                @summary Returns message sender.
-                @return {string} Message sender.
-                @method Photon.Chat.Message#getSender
-            */
             Message.prototype.getSender = function () {
                 return this.sender;
             };
-            /**
-                @summary Returns message content.
-                @return {any} Message content.
-                @method Photon.Chat.Message#getContent
-            */
             Message.prototype.getContent = function () {
                 return this.content;
             };
             return Message;
         }());
         Chat.Message = Message;
-        /**
-            @class Photon.Chat.Channel
-            @classdesc Represents chat channel.
-        */
-        var Channel = /** @class */ (function () {
+        var Channel = (function () {
             function Channel(name, isPrivat) {
                 this.name = name;
                 this.isPrivat = isPrivat;
@@ -4345,46 +4328,21 @@ var Photon;
                 this.maxSubscribers = 0;
                 this.subscribers = {};
             }
-            /**
-                @summary Returns channel name (counterpart user id for private channel).
-                @return {string} Channel name.
-                @method Photon.Chat.Channel#getName
-            */
             Channel.prototype.getName = function () {
                 return this.name;
             };
-            /**
-                @summary Returns true if channel is private.
-                @return {boolean} Channel private status.
-                @method Photon.Chat.Channel#isPrivate
-            */
             Channel.prototype.isPrivate = function () {
                 return this.isPrivat;
             };
-            /**
-                @summary Returns messages cache.
-                @return {Photon.Chat.Message[]} Array of messages.
-                @method Photon.Chat.Channel#getMessages
-            */
             Channel.prototype.getMessages = function () {
                 return this.messages;
             };
-            /**
-                @summary Returns ID of the last message received.
-                @return {number} Last message ID.
-                @method Photon.Chat.Channel#getLastId
-            */
             Channel.prototype.getLastId = function () {
                 return this.lastId;
             };
-            /**
-                @summary Clears messages cache.
-                @method Photon.Chat.Channel#clearMessages
-            */
             Channel.prototype.clearMessages = function () {
                 this.messages.splice(0);
             };
-            // internal
             Channel.prototype.addMessages = function (senders, messages) {
                 var newMessages = [];
                 for (var i = 0; i < senders.length; i++) {
@@ -4414,9 +4372,8 @@ var Photon;
                     }
                 }
             };
-            // returns false in case max subscribers exceeded
             Channel.prototype.addSubscriber = function (user) {
-                if (this.subscribers[user]) // ignore if already added
+                if (this.subscribers[user])
                     return false;
                 if (Object.keys(this.subscribers).length > this.maxSubscribers) {
                     return false;
@@ -4426,9 +4383,8 @@ var Photon;
                     return true;
                 }
             };
-            // returns false in case max subscribers exceeded
             Channel.prototype.removeSubscriber = function (user) {
-                if (!this.subscribers[user]) // ignore if not exisst
+                if (!this.subscribers[user])
                     return false;
                 delete this.subscribers[user];
                 return true;
@@ -4440,25 +4396,8 @@ var Photon;
             return Channel;
         }());
         Chat.Channel = Channel;
-        var ChatClient = /** @class */ (function (_super) {
+        var ChatClient = (function (_super) {
             __extends(ChatClient, _super);
-            /**
-                @classdesc Implements the Photon Chat API workflow.<br/>
-                This class should be extended to handle system or custom events and operation responses.<br/>
-    
-                @borrows Photon.LoadBalancing.LoadBalancingClient#setCustomAuthentication
-    //            @borrows Photon.LoadBalancing.LoadBalancingClient#connectToNameServer // overrides with connectToNameServer with different parameters
-                @borrows Photon.LoadBalancing.LoadBalancingClient#getRegions
-                @borrows Photon.LoadBalancing.LoadBalancingClient#onGetRegionsResult
-                @borrows Photon.LoadBalancing.LoadBalancingClient#isConnectedToNameServer
-                @borrows Photon.LoadBalancing.LoadBalancingClient#disconnect
-                @borrows Photon.LoadBalancing.LoadBalancingClient#setLogLevel
-    
-                @constructor Photon.Chat.ChatClient
-                @param {Photon.ConnectionProtocol} protocol Connecton protocol.
-                @param {string} appId Cloud application ID.
-                @param {string} appVersion Cloud application version.
-            */
             function ChatClient(protocol, appId, appVersion) {
                 var _this = _super.call(this, protocol, appId, appVersion) || this;
                 _this.DefaultMaxSubscribers = 100;
@@ -4469,119 +4408,25 @@ var Photon;
                 _this.autoJoinLobby = false;
                 return _this;
             }
-            /**
-                @summary Called on client state change. Override to handle it.
-                @method Photon.Chat.ChatClient#onStateChange
-                @param {Photon.Chat.ChatClient.ChatState} state New client state.
-            */
             ChatClient.prototype.onStateChange = function (state) { };
-            /**
-                @summary Called if client error occures. Override to handle it.
-                @method Chat.ChatClient#onError
-                @param {Chat.ChatClient.ChatPeerErrorCode} errorCode Client error code.
-                @param {string} errorMsg Error message.
-            */
             ChatClient.prototype.onError = function (errorCode, errorMsg) { };
-            /**
-                @summary Called when {@link Photon.Chat.ChatClient#subscribe subscribe} request completed.<br/ >
-                Override to handle request results.
-                @param {object} results Object with channel names as keys and boolean results as values.
-                @method Photon.Chat.ChatClient#onSubscribeResult
-            */
             ChatClient.prototype.onSubscribeResult = function (results) { };
-            /**
-                @summary Called when {@link Photon.Chat.ChatClient#unsubscribe unsubscribe} request completed.<br/ >
-                Override to handle request results.
-                @param {object} results Object with channel names as keys and boolean results as values.
-                @method Photon.Chat.ChatClient#onUnsubscribeResult
-            */
             ChatClient.prototype.onUnsubscribeResult = function (results) { };
-            /**
-                @summary Called when new chat messages received.<br/ >
-                Override to handle messages receive event.
-                @param {string} channelName Chat channel name.
-                @param {Photon.Chat.Message[]} messages Array of received messages.
-                @method Photon.Chat.ChatClient#onChatMessages
-            */
             ChatClient.prototype.onChatMessages = function (channelName, messages) { };
-            /**
-                @summary Called when new private message received.<br/ >
-                Override to handle message receive event.
-                @param {string} channelName Private channel name(counterpart user id).
-                @param {Photon.Chat.Message} message Received message.
-                @method Photon.Chat.ChatClient#onPrivateMessage
-            */
             ChatClient.prototype.onPrivateMessage = function (channelName, message) { };
-            /**
-                @summary Called when user from friend list changes state.<br/ >
-                Override to handle change state event.
-                @param {string} userId User id.
-                @param {number} status New User status. Predefined {@link Photon.chat.Constants.UserStatus Constants.UserStatus} or custom.
-                @param {boolean} gotMessage True if status message updated.
-                @param {string} statusMessage Optional status message (may be null even if gotMessage = true).
-                @method Photon.Chat.ChatClient#onUserStatusUpdate
-            */
             ChatClient.prototype.onUserStatusUpdate = function (userId, status, gotMessage, statusMessage) { };
-            /**
-                @summary A user has subscribed to a public chat channel
-                @param {string} channelName Chat channel name.
-                @param {string} userId User id.
-                @method Photon.Chat.ChatClient#onUserSubscribe
-            */
             ChatClient.prototype.onUserSubscribe = function (channelName, userId) { };
-            /**
-                @summary A user has unsubscribed from a public chat channel
-                @param {string} channelName Chat channel name.
-                @param {string} userId User id.
-                @method Photon.Chat.ChatClient#onUserUnsubscribe
-            */
             ChatClient.prototype.onUserUnsubscribe = function (channelName, userId) { };
-            /**
-                @summary Starts connection to NameServer.
-                @method Photon.Chat.ChatClient#connectToNameServer
-                @param {object} [options] Additional options
-                @property {object} options Additional options
-                @property {string} [options.region] If specified, Connect to region master after succesfull connection to name server
-                @returns {boolean} True if current client state allows connection.
-            */
             ChatClient.prototype.connectToNameServer = function (options) {
                 return _super.prototype.connectToNameServer.call(this, options);
             };
-            /**
-                @summary Connects to a specific region's Master server, using the NameServer to find the IP.
-                Override {@link Photon.Chat.ChatClient#onWebRpcResult onWebRpcResult} to handle request results.<br/>
-                @method Photon.Chat.ChatClient#connectToRegionFrontEnd
-                @param {string} region Region connect to Master server of.
-                @returns {boolean} True if current client state allows connection.
-            **/
             ChatClient.prototype.connectToRegionFrontEnd = function (region) {
                 return this.connectToRegionMaster(region);
             };
-            /**
-                @summary Returns true if client connected to Front End.When connected, client can send messages, subscribe to channels and so on.
-                @return {boolean} True if connected.
-                @method Photon.Chat.ChatClient#isConnectedToFrontEnd
-            */
             ChatClient.prototype.isConnectedToFrontEnd = function () {
                 return this.state() == ChatClient.ChatState.ConnectedToFrontEnd;
             };
-            /**
-                @summary Sends operation to subscribe to a list of channels by name.<br/>
-                Override {@link Photon.Chat.ChatClient#onSubscribeResult onSubscribeResult} to handle request results.
-                @param {string[]} channelNames Array of channel names to subscribe to.
-                @param {object} [options] Additional options
-                @property {object} options Additional options
-                @property {number} [options.historyLength] Controls messages history sent on subscription. Not specified or 0: no history. 1 and higher: number of messages in history. -1: all history.
-                @property {number[]} [options.lastIds] Array of IDs of last messages received per channel. Useful when resubscribing to receive only messages we missed.
-                @param {object} [createOptions] Room options for creation
-                @property {object} createOptions Room options for creation
-                @property {boolean} [createOptions.publishSubscribers=false] Whether or not the channel to be created will allow client to keep a list of users.
-                @property {number} [createOptions.maxSubscribers=0] Limit of the number of users subscribed to the channel to be created.
-                @return {boolean} True if operation sent.
-                @method Photon.Chat.ChatClient#subscribe
-            */
             ChatClient.prototype.subscribe = function (channelNames, options) {
-                // backward compatibility
                 if (typeof (options) == "number") {
                     options = { historyLength: options };
                 }
@@ -4620,13 +4465,6 @@ var Photon;
                     return false;
                 }
             };
-            /**
-                @summary Sends operation to unsubscribe from a list of channels by name.<br/ >
-                Override {@link Photon.Chat.ChatClient#onUnsubscribeResult onUnsubscribeResult} to handle request results.
-                @param {string[]} channelNames Array of channel names to unsubscribe from.
-                @return {boolean} True if operation sent.
-                @method Photon.Chat.ChatClient#unsubscribe
-            */
             ChatClient.prototype.unsubscribe = function (channelNames) {
                 if (this.masterPeer && this.isConnectedToFrontEnd()) {
                     this.logger.debug("Unsubscribe channels:", channelNames);
@@ -4640,18 +4478,6 @@ var Photon;
                     return false;
                 }
             };
-            /**
-                @summary Sends a message to a public channel.<br/>
-                Channel should be subscribed before publishing to it.
-                Everyone in that channel will get the message.
-                @param {string} channelName Channel name to send message to.
-                @param {any} content Text string or arbitrary data to send.
-                @param {object} [options] Additional options
-                @property {object} options Additional options
-                @property {boolean} [options.webForward] Optionally, private messages can be forwarded as webhooks. Configure webhooks for your Chat app to use this.
-                @return {boolean} True if message sent.
-                @method Photon.Chat.ChatClient#publishMessage
-            */
             ChatClient.prototype.publishMessage = function (channelName, content, options) {
                 if (this.masterPeer && this.isConnectedToFrontEnd()) {
                     var params = [];
@@ -4671,16 +4497,6 @@ var Photon;
                     return false;
                 }
             };
-            /**
-                @summary Sends a private message to a single target user.<br/>
-                @param {string} userId User id to send this message to.
-                @param {any} content Text string or arbitrary data to send.
-                @param {object} [options] Additional options
-                @property {object} options Additional options
-                @property {boolean} [options.webForward] Optionally, private messages can be forwarded as webhooks. Configure webhooks for your Chat app to use this.
-                @return {boolean} True if message sent.
-                @method Photon.Chat.ChatClient#sendPrivateMessage
-            */
             ChatClient.prototype.sendPrivateMessage = function (userId, content, options) {
                 if (this.masterPeer && this.isConnectedToFrontEnd()) {
                     var params = [];
@@ -4700,16 +4516,6 @@ var Photon;
                     return false;
                 }
             };
-            /**
-                @summary Sets the user's status (pre-defined or custom) and an optional message.<br/>
-                The predefined status values can be found in {@link Photon.Chat.Constants.UserStatus Constants.UserStatus}.<br/>
-                State UserStatus.Invisible will make you offline for everyone and send no message.
-                @param {number} status User status to set.
-                @param {string} [message=null] State message.
-                @param {boolean} [skipMessage=false] If true { client does not send state message.
-                @return {boolean} True if command sent.
-                @method Photon.Chat.ChatClient#setUserStatus
-            */
             ChatClient.prototype.setUserStatus = function (status, statusMessage, skipMessage) {
                 if (statusMessage === void 0) { statusMessage = null; }
                 if (skipMessage === void 0) { skipMessage = false; }
@@ -4728,11 +4534,6 @@ var Photon;
                     return false;
                 }
             };
-            /**
-                @summary Adds users to the list on the Chat Server which will send you status updates for those.
-                @tparam string[] userIds Array of user ids.
-                @return {boolean} True if command sent.
-            */
             ChatClient.prototype.addFriends = function (userIds) {
                 if (this.masterPeer && this.isConnectedToFrontEnd()) {
                     var params = [];
@@ -4745,11 +4546,6 @@ var Photon;
                     return false;
                 }
             };
-            /**
-                @summary Removes users from the list on the Chat Server which will send you status updates for those.
-                @tparam string[] friends Array of user ids.
-                @return {boolean} True if command sent.
-            */
             ChatClient.prototype.removeFriends = function (userIds) {
                 if (this.masterPeer && this.isConnectedToFrontEnd()) {
                     var params = [];
@@ -4762,44 +4558,21 @@ var Photon;
                     return false;
                 }
             };
-            /**
-                @summary Returns list of public channels client subscribed to.
-                @return Channel[] Array of public channels.
-            */
             ChatClient.prototype.getPublicChannels = function () {
                 return this.publicChannels;
             };
-            /**
-                @summary Returns list of channels representing current private conversation.
-                @return Channel[] Array of private channels.
-            */
             ChatClient.prototype.getPrivateChannels = function () {
                 return this.privateChannels;
             };
-            // private
             ChatClient.prototype.getOrAddChannel = function (channels, name, isPrivate) {
                 if (channels[name] == undefined) {
                     channels[name] = new Channel(name, isPrivate);
                 }
                 return channels[name];
             };
-            // internal
             ChatClient.prototype.initMasterPeer = function (mp) {
                 var _this = this;
                 _super.prototype.initMasterPeer.call(this, mp);
-                // onOperationResponse called if no listener exists
-                //mp.addResponseListener(Constants.OperationCode.Publish, (data: any) => {
-                //    mp._logger.debug("resp Publish", data.errCode, data.errMsg);
-                //});
-                //mp.addResponseListener(Constants.OperationCode.SendPrivate, (data: any) => {
-                //    mp._logger.debug("resp SendPrivate", data.errCode, data.errMsg);
-                //});
-                //mp.addResponseListener(Constants.OperationCode.UpdateStatus, (data: any) => {
-                //    mp._logger.debug("resp UpdateStatus", data.errCode, data.errMsg);
-                //});
-                //mp.addResponseListener(Constants.OperationCode.FriendList, (data: any) => {
-                //    mp._logger.debug("resp FriendList", data.errCode, data.errMsg);
-                //});
                 mp.addEventListener(Chat.Constants.EventCode.ChatMessages, function (data) {
                     var senders = data.vals[Chat.Constants.ParameterCode.Senders];
                     var messages = data.vals[Chat.Constants.ParameterCode.Messages];
@@ -4916,16 +4689,9 @@ var Photon;
                     _this.onUserUnsubscribe(channelName, userId);
                 });
             };
-            /**
-                @summary Converts {@link Photon.Chat.ChatClient.ChatState ChatState} element to string name.
-                @method Photon.Chat.ChatClient.StateToName
-                @param {Photon.Chat.ChatClient.ChatState} state Client state.
-                @returns {string} Specified element name or undefined if not found.
-            */
             ChatClient.StateToName = function (value) {
                 var x = ChatClient.chatStateName[value];
                 if (x === undefined) {
-                    // Super class states support - useless since all states overridden but may help somehow when debugging
                     return _super.StateToName.call(this, value);
                 }
                 else {
@@ -4933,24 +4699,6 @@ var Photon;
                 }
             };
             ChatClient.ChatPeerErrorCode = {
-                /**
-                    @summary Enum for client peers error codes.
-                    @member Photon.Chat.ChatClient.ChatPeerErrorCode
-                    @readonly
-                    @property {number} Ok No Error.
-                    @property {number} FrontEndError General FrontEnd server peer error.
-                    @property {number} FrontEndConnectFailed FrontEnd server connection error.
-                    @property {number} FrontEndConnectClosed Disconnected from FrontEnd server.
-                    @property {number} FrontEndTimeout Disconnected from FrontEnd server for timeout.
-                    @property {number} FrontEndEncryptionEstablishError FrontEnd server encryption establishing failed.
-                    @property {number} FrontEndAuthenticationFailed FrontEnd server authentication failed.
-                    @property {number} NameServerError General NameServer peer error.
-                    @property {number} NameServerConnectFailed NameServer connection error.
-                    @property {number} NameServerConnectClosed Disconnected from NameServer.
-                    @property {number} NameServerTimeout Disconnected from NameServer for timeout.
-                    @property {number} NameServerEncryptionEstablishError NameServer encryption establishing failed.
-                    @property {number} NameServerAuthenticationFailed NameServer authentication failed.
-                 */
                 Ok: 0,
                 FrontEndError: 1001,
                 FrontEndConnectFailed: 1002,
@@ -4966,18 +4714,6 @@ var Photon;
                 NameServerAuthenticationFailed: 3101,
             };
             ChatClient.ChatState = {
-                /**
-                    @summary Enum for client states.
-                    @member Photon.Chat.ChatClient.ChatState
-                    @readonly
-                    @property {number} Error Critical error occurred.
-                    @property {number} Uninitialized Client is created but not used yet.
-                    @property {number} ConnectingToNameServer Connecting to NameServer.
-                    @property {number} ConnectedToNameServer Connected to NameServer.
-                    @property {number} ConnectingToFrontEnd Connecting to FrontEnd server.
-                    @property {number} ConnectedToFrontEnd Connected to FrontEnd server.
-                    @property {number} Disconnected The client is no longer connected (to any server).
-                */
                 Error: -1,
                 Uninitialized: 0,
                 ConnectingToNameServer: 1,
@@ -5002,14 +4738,6 @@ var Photon;
 })(Photon || (Photon = {}));
 var Photon;
 (function (Photon) {
-    /**
-    @summary True if Photon library is built with Emscripten.
-    @member Photon.IsEmscriptenBuild
-    */
     Photon.IsEmscriptenBuild = Photon["IsEmscriptenBuildInternal"];
-    /**
-    @summary Photon library version.
-    @member Photon.Version
-    */
-    Photon.Version = "4.4.0.0"; // @PHOTON-VERSION@
+    Photon.Version = "4.4.0.0";
 })(Photon || (Photon = {}));

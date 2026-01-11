@@ -1,16 +1,1 @@
-{
-  "name": ".shortpie.'s DELTARUNE web port!",
-  "short_name": "DELTARUNEWeb",
-  "start_url": ".",
-  "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "description": "A fan-made web port of DELTARUNE!",
-  "icons": [
-    {
-      "src": "/fav.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    }
-  ]
-}
+{"name":".shortpie.'s DELTARUNE web port!","short_name":"DELTARUNEWeb","start_url":".","display":"standalone","background_color":"#000000","theme_color":"#000000","description":"A fan-made web port of DELTARUNE!","icons":[{"src":"/fav.ico","sizes":"64x64 32x32 24x24 16x16","type":"image/x-icon"}]}
