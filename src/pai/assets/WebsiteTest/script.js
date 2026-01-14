@@ -1,2 +1,1 @@
-document.getElementById(":p").onclick = function () {
-    location.href = "../ui.html";}
+document.getElementById(":p").onclick=function(){location.href="../ui.html"}

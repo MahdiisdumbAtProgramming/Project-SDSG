@@ -1,194 +1,16 @@
-let camera, scene, renderer, controls;
-let blocks = new Map();
-let selectedBlock = 'dirt';
-let showingSaveIndicator = false;
-let selectedBlockIndex = 0;
-
-const blockSize = 1;
-const blockTypes = {
-    dirt: '#8B4513',
-    grass: '#228B22',
-    stone: '#808080',
-    wood: '#DEB887',
-    ruby: '#Ff0000',
-    emarald: '#00ff00',
-    dimond: '#B9F2FF',
-    coal: '#151716',
-    clay: '#B66A50',
-    purp: '#800080',
-    shit: '#5A3D37',
-    iron: 'lightgrey',
-    orange: 'orange',
-    echounito: '#C58615',
-    echounit: '#01aae1',
-    echogoalb: '#2deeff',
-    echodisc: 'white',
-};
-
-const blockTypesList = Object.keys(blockTypes);
-
-function init() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color('#87CEEB');
-
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 5, 10);
-
-    renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    directionalLight.position.set(10, 20, 0);
-    scene.add(directionalLight);
-
-    controls = new THREE.PointerLockControls(camera, document.body);
-
-    document.addEventListener('click', function() {
-        controls.lock();
-    });
-
-    for (let x = -20; x < 20; x++) {
-        for (let z = -20; z < 20; z++) {
-            placeBlock(x, 0, z, 'grass');
-        }
-    }
-
-    setupInventory();
-    setupEventListeners();
-}
-
-function placeBlock(x, y, z, type) {
-    const position = `${x},${y},${z}`;
-    if (blocks.has(position)) return;
-
-    const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
-    const material = new THREE.MeshStandardMaterial({ color: blockTypes[type] });
-    const cube = new THREE.Mesh(geometry, material);
-    cube.position.set(x, y, z);
-    scene.add(cube);
-    blocks.set(position, { mesh: cube, type: type });
-}
-
-function removeBlock(x, y, z) {
-    const position = `${x},${y},${z}`;
-    const block = blocks.get(position);
-    if (block) {
-        scene.remove(block.mesh);
-        blocks.delete(position);
-        autoSave();
-    }
-}
-
-function setupInventory() {
-    const inventory = document.getElementById('inventory');
-    Object.entries(blockTypes).forEach(([type, color]) => {
-        const blockElement = document.createElement('button');
-        blockElement.className = 'block-select';
-        blockElement.style.backgroundColor = color;
-        blockElement.onclick = () => {
-            document.querySelectorAll('.block-select').forEach(el => el.classList.remove('selected'));
-            blockElement.classList.add('selected');
-            selectedBlock = type;
-        };
-        inventory.appendChild(blockElement);
-    });
-}
-
-function setupEventListeners() {
-    document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('mousedown', onMouseClick);
-    window.addEventListener('resize', onWindowResize);
-    
-    window.addEventListener('wheel', (event) => {
-        if (event.deltaY > 0) {
-            selectedBlockIndex = (selectedBlockIndex + 1) % blockTypesList.length;
-        } else {
-            selectedBlockIndex = (selectedBlockIndex - 1 + blockTypesList.length) % blockTypesList.length;
-        }
-        selectedBlock = blockTypesList[selectedBlockIndex];
-        
-        document.querySelectorAll('.block-select').forEach((el, index) => {
-            el.classList.toggle('selected', index === selectedBlockIndex);
-        });
-    });
-}
-
-function onKeyDown(event) {
-    const speed = 0.5;
-    switch(event.code) {
-        case 'KeyW': camera.translateZ(-speed); break;
-        case 'KeyS': camera.translateZ(speed); break;
-        case 'KeyA': camera.translateX(-speed); break;
-        case 'KeyD': camera.translateX(speed); break;
-        case 'Space': camera.translateY(speed); break;
-        case 'ShiftLeft': camera.translateY(-speed); break;
-    }
-}
-
-function onMouseClick(event) {
-    if (!controls.isLocked) return;
-
-    const raycaster = new THREE.Raycaster();
-    const center = new THREE.Vector2(0, 0);
-    raycaster.setFromCamera(center, camera);
-
-    const intersects = raycaster.intersectObjects(scene.children);
-
-    if (intersects.length > 0) {
-        const intersection = intersects[0];
-        if (event.button === 0) {
-            const pos = intersection.point.add(intersection.face.normal);
-            placeBlock(
-                Math.round(pos.x),
-                Math.round(pos.y),
-                Math.round(pos.z),
-                selectedBlock
-            );
-            autoSave();
-        } else if (event.button === 2) {
-            const pos = intersection.object.position;
-            removeBlock(pos.x, pos.y, pos.z);
-        }
-    }
-}
-
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-function saveGame() {
-    const saveData = Array.from(blocks.entries()).map(([pos, block]) => ({
-        position: pos,
-        type: block.type
-    }));
-    localStorage.setItem('gameState3D', JSON.stringify(saveData));
-    showSaveIndicator();
-}
-
-function loadGame() {
-    const savedState = localStorage.getItem('gameState3D');
-    if (savedState) {
-        blocks.forEach(block => scene.remove(block.mesh));
-        blocks.clear();
-
-        JSON.parse(savedState).forEach(blockData => {
-            const [x, y, z] = blockData.position.split(',').map(Number);
-            placeBlock(x, y, z, blockData.type);
-        });
-    }
-}
-
-function showSaveIndicator() {
-    if (!showingSaveIndicator) {
-        showingSaveIndicator = true;
-        const indicator = document.createElement('div');
-        indicator.textContent = 'Auto Saving...';
-        indicator.style.cssText = `
+let camera,scene,renderer,controls;let blocks=new Map();let selectedBlock='dirt';let showingSaveIndicator=!1;let selectedBlockIndex=0;const blockSize=1;const blockTypes={dirt:'#8B4513',grass:'#228B22',stone:'#808080',wood:'#DEB887',ruby:'#Ff0000',emarald:'#00ff00',dimond:'#B9F2FF',coal:'#151716',clay:'#B66A50',purp:'#800080',shit:'#5A3D37',iron:'lightgrey',orange:'orange',echounito:'#C58615',echounit:'#01aae1',echogoalb:'#2deeff',echodisc:'white',};const blockTypesList=Object.keys(blockTypes);function init(){scene=new THREE.Scene();scene.background=new THREE.Color('#87CEEB');camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);camera.position.set(0,5,10);renderer=new THREE.WebGLRenderer();renderer.setSize(window.innerWidth,window.innerHeight);document.body.appendChild(renderer.domElement);const ambientLight=new THREE.AmbientLight(0xffffff,0.6);scene.add(ambientLight);const directionalLight=new THREE.DirectionalLight(0xffffff,0.6);directionalLight.position.set(10,20,0);scene.add(directionalLight);controls=new THREE.PointerLockControls(camera,document.body);document.addEventListener('click',function(){controls.lock()});for(let x=-20;x<20;x++){for(let z=-20;z<20;z++){placeBlock(x,0,z,'grass')}}
+setupInventory();setupEventListeners()}
+function placeBlock(x,y,z,type){const position=`${x},${y},${z}`;if(blocks.has(position))return;const geometry=new THREE.BoxGeometry(blockSize,blockSize,blockSize);const material=new THREE.MeshStandardMaterial({color:blockTypes[type]});const cube=new THREE.Mesh(geometry,material);cube.position.set(x,y,z);scene.add(cube);blocks.set(position,{mesh:cube,type:type})}
+function removeBlock(x,y,z){const position=`${x},${y},${z}`;const block=blocks.get(position);if(block){scene.remove(block.mesh);blocks.delete(position);autoSave()}}
+function setupInventory(){const inventory=document.getElementById('inventory');Object.entries(blockTypes).forEach(([type,color])=>{const blockElement=document.createElement('button');blockElement.className='block-select';blockElement.style.backgroundColor=color;blockElement.onclick=()=>{document.querySelectorAll('.block-select').forEach(el=>el.classList.remove('selected'));blockElement.classList.add('selected');selectedBlock=type};inventory.appendChild(blockElement)})}
+function setupEventListeners(){document.addEventListener('keydown',onKeyDown);document.addEventListener('mousedown',onMouseClick);window.addEventListener('resize',onWindowResize);window.addEventListener('wheel',(event)=>{if(event.deltaY>0){selectedBlockIndex=(selectedBlockIndex+1)%blockTypesList.length}else{selectedBlockIndex=(selectedBlockIndex-1+blockTypesList.length)%blockTypesList.length}
+selectedBlock=blockTypesList[selectedBlockIndex];document.querySelectorAll('.block-select').forEach((el,index)=>{el.classList.toggle('selected',index===selectedBlockIndex)})})}
+function onKeyDown(event){const speed=0.5;switch(event.code){case 'KeyW':camera.translateZ(-speed);break;case 'KeyS':camera.translateZ(speed);break;case 'KeyA':camera.translateX(-speed);break;case 'KeyD':camera.translateX(speed);break;case 'Space':camera.translateY(speed);break;case 'ShiftLeft':camera.translateY(-speed);break}}
+function onMouseClick(event){if(!controls.isLocked)return;const raycaster=new THREE.Raycaster();const center=new THREE.Vector2(0,0);raycaster.setFromCamera(center,camera);const intersects=raycaster.intersectObjects(scene.children);if(intersects.length>0){const intersection=intersects[0];if(event.button===0){const pos=intersection.point.add(intersection.face.normal);placeBlock(Math.round(pos.x),Math.round(pos.y),Math.round(pos.z),selectedBlock);autoSave()}else if(event.button===2){const pos=intersection.object.position;removeBlock(pos.x,pos.y,pos.z)}}}
+function onWindowResize(){camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight)}
+function saveGame(){const saveData=Array.from(blocks.entries()).map(([pos,block])=>({position:pos,type:block.type}));localStorage.setItem('gameState3D',JSON.stringify(saveData));showSaveIndicator()}
+function loadGame(){const savedState=localStorage.getItem('gameState3D');if(savedState){blocks.forEach(block=>scene.remove(block.mesh));blocks.clear();JSON.parse(savedState).forEach(blockData=>{const[x,y,z]=blockData.position.split(',').map(Number);placeBlock(x,y,z,blockData.type)})}}
+function showSaveIndicator(){if(!showingSaveIndicator){showingSaveIndicator=!0;const indicator=document.createElement('div');indicator.textContent='Auto Saving...';indicator.style.cssText=`
             position: fixed;
             top: 20px;
             left: 20px;
@@ -198,36 +20,7 @@ function showSaveIndicator() {
             border-radius: 5px;
             transition: opacity 0.5s;
             z-index: 1000;
-        `;
-        document.body.appendChild(indicator);
-        
-        setTimeout(() => {
-            indicator.style.opacity = '0';
-            setTimeout(() => {
-                document.body.removeChild(indicator);
-                showingSaveIndicator = false;
-            }, 500);
-        }, 1500);
-    }
-}
-
-function autoSave() {
-    saveGame();
-}
-
-function animate() {
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
-}
-
-init();
-animate();
-
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('saveButton').addEventListener('click', saveGame);
-    document.getElementById('loadButton').addEventListener('click', loadGame);
-});
-
-document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-setInterval(autoSave, 30000);
+        `;document.body.appendChild(indicator);setTimeout(()=>{indicator.style.opacity='0';setTimeout(()=>{document.body.removeChild(indicator);showingSaveIndicator=!1},500)},1500)}}
+function autoSave(){saveGame()}
+function animate(){requestAnimationFrame(animate);renderer.render(scene,camera)}
+init();animate();document.addEventListener('DOMContentLoaded',()=>{document.getElementById('saveButton').addEventListener('click',saveGame);document.getElementById('loadButton').addEventListener('click',loadGame)});document.addEventListener('contextmenu',(e)=>e.preventDefault());setInterval(autoSave,30000)
