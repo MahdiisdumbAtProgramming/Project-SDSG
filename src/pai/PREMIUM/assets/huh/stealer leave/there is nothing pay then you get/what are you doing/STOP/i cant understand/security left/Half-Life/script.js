@@ -1,0 +1,1 @@
+document.getElementById("half-life").onclick=function(){location.href="./game/boot.html"};document.getElementById("readme").onclick=function(){location.href="./r.html"}
