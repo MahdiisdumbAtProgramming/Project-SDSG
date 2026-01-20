@@ -1,5 +1,6 @@
 // Auto-generated premium games list
 const premiumGames = [
+    "AceAttorney",
     "BaldisPlus",
     "Baldi’sBasics",
     "BergenTruck",
