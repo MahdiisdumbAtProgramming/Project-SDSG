@@ -4,6 +4,7 @@ const premiumGames = [
     "BaldisPlus",
     "Baldi’sBasics",
     "BergenTruck",
+    "CosmicProxy",
     "Deltatraveler",
     "Earthbound",
     "Half-Life",
