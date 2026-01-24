@@ -7,6 +7,7 @@ const premiumGames = [
     "CosmicProxy",
     "Deltatraveler",
     "Earthbound",
+    "FNAF",
     "Half-Life",
     "KARLSON",
     "MinesweeperPlus",
@@ -16,7 +17,6 @@ const premiumGames = [
     "raft",
     "slender",
     "Sonic.EXE",
-    "UCN",
     "ULTRAKILL",
     "UNDERTALE-and-DELTARUNE"
 ];
