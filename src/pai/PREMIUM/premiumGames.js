@@ -17,6 +17,7 @@ const premiumGames = [
     "PizzaTower",
     "raft",
     "slender",
+    "Sonic",
     "Sonic.EXE",
     "ULTRAKILL",
     "UNDERTALE-and-DELTARUNE"
