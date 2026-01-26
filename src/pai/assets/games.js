@@ -8,6 +8,7 @@ const games = [
     "Bomb-Tag",
     "Caesar Cipher",
     "calc",
+    "Castiel SDK Test",
     "Cave-Communications",
     "ClickCounter",
     "Codename Protect",
