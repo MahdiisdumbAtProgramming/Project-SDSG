@@ -10,6 +10,7 @@ const premiumGames = [
     "FNAF",
     "Half-Life",
     "KARLSON",
+    "Mario",
     "MinesweeperPlus",
     "OGFNF",
     "PeoplePlayground",
