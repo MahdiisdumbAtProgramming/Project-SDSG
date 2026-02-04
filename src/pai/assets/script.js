@@ -1,4 +1,4 @@
-﻿const beta=!0;document.addEventListener("DOMContentLoaded",()=>{const gameBtn=document.getElementById("game");if(gameBtn)gameBtn.onclick=()=>{location.href="Games/ui.html"}
+﻿const beta=true;document.addEventListener("DOMContentLoaded",()=>{const gameBtn=document.getElementById("game");if(gameBtn)gameBtn.onclick=()=>{location.href="Games/ui.html"}
 const gameOGBtn=document.getElementById("gameOG");if(gameOGBtn)gameOGBtn.onclick=()=>{location.href="legacy/run.html"}
 const toolsBtn=document.getElementById("tools");if(toolsBtn)toolsBtn.onclick=()=>{location.href="Tools/ui.html"}
 const premiumBtn=document.getElementById("prem");if(premiumBtn)premiumBtn.onclick=()=>{location.href="PREMIUM/run.html"}
