@@ -14,7 +14,6 @@ Project-SDSG/
 ├─ .gitattributes ⚙️
 ├─ README.md 📄
 └─ src/ 📂
-   ├─ music.mp3 🎵               # mainpage music
    ├─ pai/ 📂                    # project after intro
    │  ├─ about/ 📂               # about SDSG
    │  │  └─ MS/ 📂               # about Mahdi Studios
@@ -52,7 +51,7 @@ Project-SDSG/
    │  └─ secret plugins.txt 📄   # list of secret plugins
    ├─ status/ 📂
    │  └─ status.html 📄           # status mainpage
-   ├─ load.html 📄                # mainpage
+   ├─ index.html 📄                # mainpage
    ├─ style.css 🎨                # mainpage
    ├─ script.js 📜                # mainpage
    ├─ SDSG logo.jpeg 🖼️          # mainpage logo
