@@ -1,38 +1,33 @@
-﻿const initialFilesystem=[{id:'term',type:'app',name:'Terminal',icon:'📟'},{id:'todo',type:'file',name:'TODO.txt',icon:'📝',content:'Jason Hernandez: Investigate goon court crimes\n- Review Castiel, Mahdi, and Christian logs\n- Document fan art downloads\n- Record Master Baiter March activity\n- Prepare judgment reports'},{id:'files',type:'folder',name:'Files',icon:'📂',children:[{id:'Castiel',type:'folder',name:'Castiel-Salese',icon:'☣️',children:[{id:'s_chats',type:'folder',name:'Chat_Logs',icon:'💬',children:[{id:'chat_group',type:'file',name:'nnn_group_chat.txt',icon:'💬',content:`[11/02 02:15] mahdiisdumb:Castiel,stop the 2nd day of NNN. [11/02 02:16] Castiel:Too late. Susie comic update incoming. [11/02 02:17] ChristianG:Logging Castiel activity. [11/02 02:18] Castiel:Master Baiter March begins now. [11/03 14:12] Castiel:More Undertale fan art downloaded. [11/03 15:00] Castiel:Trash talking TF2 players,lol. [11/03 15:10] Mahdi:You can’t do that here! [11/03 16:00] Castiel:Public indecency in public toilet? Yes,accidentally witnessed. [11/04 09:00] Castiel:50 new Deltarune/Susie fetish fan arts acquired. [11/04 09:05] Castiel:Bought a Toriel body pillow. [11/04 10:00] Castiel:Playing Cas & Dih Adventures (scrapped game),Lv1-20 unlocked. [11/05 22:30] Mahdi:Evidence stacking.`}]},{id:'s_downloads',type:'folder',name:'Downloads',icon:'📥',children:[{id:'dl1',type:'file',name:'susie_4k_assets.zip',icon:'🖼️',content:'4K Susie Deltarune renders (fetish fanart).'},{id:'dl2',type:'file',name:'frisk_fetish_art.zip',icon:'🖼️',content:'Fetish fan art of Frisk.'},{id:'dl3',type:'file',name:'kris_fetish_art.zip',icon:'🖼️',content:'Fetish fan art of Kris (Deltarune).'},{id:'dl4',type:'file',name:'ralsei_fanart.zip',icon:'🖼️',content:'Fetish fan art of Ralsei.'},{id:'dl5',type:'file',name:'noelle_fetish_art.zip',icon:'🖼️',content:'Fetish fan art of Noelle.'},{id:'dl6',type:'file',name:'toriel_body_pillow_purchase.txt',icon:'🛒',content:'Bought a Toriel body pillow.'},{id:'dl7',type:'file',name:'mettaton_fanart.zip',icon:'🖼️',content:'Mettaton obsession art and gifs.'},{id:'dl8',type:'file',name:'cas_dih_adventures_scrap.zip',icon:'🎮',content:`Cas & Dih Adventures (scrapped game) Level progression:Lv1:Froggit (Female) Lv2:Tenna (Female) Lv3:Spamton (Female) Lv4:Toriel Lv5:Noelle Lv6:Susie Lv7:Queen Lv8:Ralsei (Female) Lv9:Rock in ruins you push Lv10:Chara (Female) Lv11:Undyne Lv12:Dr Alphys Lv13:REAL WOMEN (Hard Mode) Lv14:Frisk (Female) Lv15:Ceroba Lv16:Female Clover Lv17:Jevil (Female) Lv18:Asgore (Female) Lv19:YOU BUT FEMALE (Anyone he looks at) Lv20 Finale:Female Flowey`},{id:'dl9',type:'file',name:'mbm_strategy.pdf',icon:'📄',content:'Master Baiter March strategy guide.'},{id:'dl10',type:'file',name:'nnn_tracker.xlsx',icon:'📒',content:'NNN failure tracking spreadsheet.'}]},{id:'s_history',type:'file',name:'browser_history.log',icon:'🌐',content:`10:04 - Search:"Susie Deltarune fan art high res" 10:15 - Search:"Frisk fetish art" 10:20 - Search:"Kris fetish renders" 10:25 - Search:"Ralsei fan art" 10:30 - Search:"Noelle fetish fan art" 10:35 - Search:"Toriel body pillow online" 10:40 - Search:"Mettaton gifs and fanart" 11:0 - Search:"Cas & Dih Adventures scrapped game files" 11:10 - Search:"Trash talking TF2 forums"`},{id:'archives',type:'folder',name:'Archives',icon:'🗄️',children:[{id:'arc1',type:'file',name:'nnn_violation_log.txt',icon:'📄',content:'All NNN violations by Castiel.'},{id:'arc2',type:'file',name:'fanart_index.txt',icon:'📄',content:'Index of all Undertale/Deltarune downloads: Susie, Frisk, Kris, Ralsei, Noelle, Toriel fetish fan art + Mettaton obsession.'},{id:'arc3',type:'file',name:'public_indecency.txt',icon:'📄',content:'Documented incident in public toilet.'},{id:'arc4',type:'file',name:'toriel_pillow_purchase.txt',icon:'📄',content:'Proof of Toriel body pillow purchase.'},{id:'arc5',type:'file',name:'tf2_trash_talk_log.txt',icon:'📄',content:'Records of trash talking TF2 players.'},{id:'arc6',type:'file',name:'cas_dih_adventures_levels.txt',icon:'📄',content:'Cas & Dih Adventures level list, Lv1-Lv20.'}]}]},{id:'Mahdi',type:'folder',name:'Mahdi-Hamade',icon:'🕵️',children:[{id:'m_chats',type:'folder',name:'Chat_Logs',icon:'💬',children:[{id:'m_chat',type:'file',name:'nnn_group_chat.txt',icon:'💬',content:`[11/02 02:10] Mahdi:Castiel,no 4K renders. [11/03 14:00] Mahdi:Starting hack attempts on R34 and P-hub to remove content. [11/03 14:05] Mahdi:Accidentally caused disorder at Kaaba instead of Hajj. [11/05 22:30] Mahdi:Stealing source code from random repos. [11/06 12:00] Mahdi:Attempted to make Cas & Dih Adventures into a game without Castiel's permission; forced him to give source code reluctantly.`}
-            ]},
-            {id:'m_downloads', type:'folder', name:'Downloads', icon:'📥', children:[
-                {id:'dl1', type:'file', name:'stolen_source_code.zip', icon:'💻', content:'Source code snatched for fun.'},
-                {id:'dl2', type:'file', name:'r34_hack_attempt.log', icon:'📄', content:'Attempted removal of R34 content.'},
-                {id:'dl3', type:'file', name:'phub_block_attempt.log', icon:'📄', content:'Attempted banning of P-hub content.'},
-                {id:'dl4', type:'file', name:'cas_dih_attempt.log', icon:'📄', content:'Attempted to make Cas & Dih Adventures a game without permission.'}
-            ]},
-            {id:'m_archives', type:'folder', name:'Archives', icon:'🗄️', children:[
-                {id:'arc1', type:'file', name:'kaaba_incident.txt', icon:'📄', content:'Documentation of accidental disorder during pilgrimage.'},
-                {id:'arc2', type:'file', name:'source_code_theft.txt', icon:'📄', content:'Proof of stealing various source code.'},
-                {id:'arc3', type:'file', name:'cas_dih_source_request.txt', icon:'📄', content:'Records showing Mahdi attempted to convert Cas & Dih Adventures into a game without permission,forcing Castiel to give source code.'}
-            ]}
-        ]},
-        {id:'Christian', type:'folder', name:'Christian-Gonzalez', icon:'⚖️', children:[
-            {id:'c_chats', type:'folder', name:'Chat_Logs', icon:'💬', children:[
-                {id:'c_chat', type:'file', name:'nnn_group_chat.txt', icon:'💬', content:
-`[11/02 02:17] ChristianG: Logging Castiel’s downloads.
-[11/03 14:16] ChristianG: Also downloading same fan art as Castiel.
-[11/05 22:31] ChristianG: Copying Mahdi’s source code and hack attempts for fun.
-[12/01 00:01] ChristianG: Master Baiter March underway.`}
-            ]},
-            {id:'c_downloads', type:'folder', name:'Downloads', icon:'📥', children:[
-                {id:'dl1', type:'file', name:'susie_4k_assets.zip', icon:'🖼️', content:'Copying Castiel’s 4K renders.'},
-                {id:'dl2', type:'file', name:'undertale_fanart.zip', icon:'🖼️', content:'Copying Castiel’s Undertale fan art.'},
-                {id:'dl3', type:'file', name:'deltarune_fanart.zip', icon:'🖼️', content:'Copying Castiel’s Deltarune fan art.'},
-                {id:'dl4', type:'file', name:'stolen_source_code.zip', icon:'💻', content:'Copying Mahdi’s source code theft.'},
-                {id:'dl5', type:'file', name:'r34_hack_attempt.log', icon:'📄', content:'Copying Mahdi’s R34 removal attempt.'},
-                {id:'dl6', type:'file', name:'phub_block_attempt.log', icon:'📄', content:'Copying Mahdi’s P-hub ban attempt.'}
-            ]},
-            {id:'c_archives', type:'folder', name:'Archives', icon:'🗄️', children:[
-                {id:'arc1', type:'file', name:'hypocrisy_record.txt', icon:'📄', content:'Christian repeated Castiel and Mahdi’s crimes for maximum chaos.'}
-            ]}
-        ]}
-    ]},
+﻿const initialFilesystem = [
+    {id:'term',type:'app',name:'Terminal',icon:'📟'},
+    {id:'todo',type:'file',name:'TODO.txt',icon:'📝',content:`
+CASE ID: GOON-COURT-2026
+DETECTIVE: Jason Hernandez
 
-    {id:'trash', type:'folder', name:'Trash', icon:'🗑️', children:[
-        {id:'del1', type:'file', name:'resignation_draft.txt', icon:'📄', content:'I can\'t do this anymore. The system is broken.'}]}];
+TASKS:
+1. Look at their crimes by the PDF Files.
+2. The roles are:
+   - Defendant: Castiel Salese (Serial Gooner)
+   - Defense: Mahdi Hamade (Intellectual Dumbass/Devout)
+   - Prosecutor: Christian Gonzalez (Smart/Harsh Blackmailer)
+3. Look at thier Testimonies you cant cross examine because the court is all solo mission
+4. Double Check alot of times!
+5. FINAL ACTION: Use Terminal to type verdict:
+   "VERDICT: [Name] [Judgement] [Penalty]"
+`},
+    {id:'files',type:'folder',name:'Files',icon:'📂',children:[
+        {id:'Mahdi',type:'folder',name:'Mahdi-Hamade',icon:'🛡️',children:[
+            {id:'m_crimes',type:'file',name:'Hamade_Files.pdf',icon:'📄',content:'[PLACEHOLDER]'}
+            {id:'m_testimony',type:'file',name:'Mahdi_Testimony.txt',icon:'🤲',content:'[PLACEHOLDER]'}
+        ]},
+        {id:'Castiel',type:'folder',name:'Castiel-Salese',icon:'🚓☣️',children:[
+            {id:'c_crimes',type:'file',name:'Salese_Files.pdf',icon:'📄',content:'[PLACEHOLDER]'}
+            {id:'c_testimony',type:'file',name:'Castiel_Testimony.txt',icon:'🙏',content:'[PLACEHOLDER]'}
+        ]},
+        {id:'Christian',type:'folder',name:'Christian-Gonzalez',icon:'👊',children:[
+        {id:'g_crimes',type:'file',name:'Gonzalez_Files.pdf',icon:'📄',content:'[PLACEHOLDER]'}
+        {id:'g_testimony',type:'file',name:'Christian_Testimony.txt',icon:'🙏',content:'[PLACEHOLDER]'}
+        ]
+        }
+    ]}
+];
