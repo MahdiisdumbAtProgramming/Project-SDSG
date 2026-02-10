@@ -71,6 +71,7 @@ const images = [
     "scaryidk.jpeg",
     "SDSG Logo.jpeg",
     "SDSG Logo.png",
+    "SDSG Logo1.jpeg",
     "Soulless.png",
     "SPPOKY.png",
     "tenor.gif",
