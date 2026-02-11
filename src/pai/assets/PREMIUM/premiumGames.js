@@ -1,1 +1,27 @@
-const premiumGames=["AceAttorney","BaldisPlus","Baldi’sBasics","BergenTruck","CosmicProxy","Deltatraveler","Earthbound","FNAF","Half-Life","KARLSON","Mario","MinesweeperPlus","OGFNF","PeoplePlayground","PizzaTower","raft","slender","Sonic","Sonic.EXE","ULTRAKILL","UNDERTALE-and-DELTARUNE"]
+// Auto-generated premium games list
+const premiumGames = [
+    "1v1.lol",
+    "AceAttorney",
+    "BaldisPlus",
+    "Baldi’sBasics",
+    "BergenTruck",
+    "CosmicProxy",
+    "Deltatraveler",
+    "DoomDOS",
+    "Earthbound",
+    "FNAF",
+    "Half-Life",
+    "HighwayRacer",
+    "KARLSON",
+    "Mario",
+    "MinesweeperPlus",
+    "OGFNF",
+    "PeoplePlayground",
+    "PizzaTower",
+    "raft",
+    "slender",
+    "Sonic",
+    "Sonic.EXE",
+    "ULTRAKILL",
+    "UNDERTALE-and-DELTARUNE"
+];

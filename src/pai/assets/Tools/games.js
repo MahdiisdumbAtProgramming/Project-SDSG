@@ -3,6 +3,7 @@ const games = [
     "ClickCounter",
     "CPS",
     "freemoney",
+    "Github",
     "Goofy-Goober",
     "ITU(WIFI)",
     "Kabby-Lame-Ahh",
