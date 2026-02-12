@@ -18,6 +18,7 @@ const premiumGames = [
     "OGFNF",
     "PeoplePlayground",
     "PizzaTower",
+    "Quake",
     "raft",
     "slender",
     "Sonic",
