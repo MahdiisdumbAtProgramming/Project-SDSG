@@ -1,0 +1,1 @@
+document.getElementById("h").onclick=function(){location.href="./boot.html"}
