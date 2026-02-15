@@ -52,6 +52,7 @@ const audioFiles = [
     "Hl.mp3",
     "Hs_Megolavania.mp3",
     "Hurry_Up.mp3",
+    "Idiot_Music.mp3",
     "Intro.mp3",
     "Investigations.mp3",
     "King_Dice.mp3",
