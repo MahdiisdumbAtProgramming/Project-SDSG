@@ -7,6 +7,7 @@ echo [--------------------------]
 echo [ BUILDING PROJECT SDSG----]
 echo [-----BY: MAHDIISDUMB------]
 echo [--------------------------]
+echo.
 
 :: Run the Node build
 echo Running Node build...
@@ -18,7 +19,6 @@ if errorlevel 1 (
 )
 
 :: Compress output with 7-Zip
-:: Make sure 7z.exe is in PATH or adjust the path below
 set OUTPUT_DIR=dist
 set ZIP_NAME=Project_SDSG.7z
 
@@ -29,6 +29,7 @@ if not exist "%OUTPUT_DIR%" (
 )
 
 echo Compressing build into %ZIP_NAME%...
+:: Adjust path if 7z.exe is not in PATH
 7z a -t7z "%ZIP_NAME%" "%OUTPUT_DIR%\*"
 if errorlevel 1 (
     echo Compression failed!
