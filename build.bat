@@ -18,21 +18,25 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: Compress output with 7-Zip
-set OUTPUT_DIR=dist
-set ZIP_NAME=Project_SDSG.7z
-
-if not exist "%OUTPUT_DIR%" (
-    echo Output directory "%OUTPUT_DIR%" not found!
+:: First, create a zip of the current folder
+set ZIP_NAME=Project_SDSG.zip
+if exist "%ZIP_NAME%" del "%ZIP_NAME%"
+echo Creating ZIP archive...
+:: Adjust path if 7z.exe is not in PATH
+7z a -tzip "%ZIP_NAME%" ".\*"
+if errorlevel 1 (
+    echo ZIP creation failed!
     pause
     exit /b 1
 )
 
-echo Compressing build into %ZIP_NAME%...
-:: Adjust path if 7z.exe is not in PATH
-7z a -t7z "%ZIP_NAME%" "%OUTPUT_DIR%\*"
+:: Then, convert the zip to 7z
+set SEVENZ_NAME=Project_SDSG.7z
+if exist "%SEVENZ_NAME%" del "%SEVENZ_NAME%"
+echo Converting ZIP to 7Z...
+7z a -t7z "%SEVENZ_NAME%" "%ZIP_NAME%"
 if errorlevel 1 (
-    echo Compression failed!
+    echo 7Z conversion failed!
     pause
     exit /b 1
 )
