@@ -1,8 +1,6 @@
 @echo off
-:: Set console color to light green
 color a
 
-:: Print the title
 echo [--------------------------]
 echo [ BUILDING PROJECT SDSG----]
 echo [-----BY: MAHDIISDUMB------]
@@ -18,28 +16,32 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: First, create a zip of the current folder
+:: Create a zip of the current folder
 set ZIP_NAME=Project_SDSG.zip
 if exist "%ZIP_NAME%" del "%ZIP_NAME%"
-echo Creating ZIP archive...
-:: Adjust path if 7z.exe is not in PATH
-7z a -tzip "%ZIP_NAME%" ".\*"
-if errorlevel 1 (
-    echo ZIP creation failed!
+powershell -command "Add-Type -AssemblyName 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('.', '%ZIP_NAME%')"
+
+:: Split the zip into 50 MB chunks
+set PART_SIZE=52428800
+set /a INDEX=1
+
+echo Splitting zip into 50 MB parts...
+
+:split_loop
+if not exist "%ZIP_NAME%" (
+    echo Zip file not found!
     pause
     exit /b 1
 )
 
-:: Then, convert the zip to 7z
-set SEVENZ_NAME=Project_SDSG.7z
-if exist "%SEVENZ_NAME%" del "%SEVENZ_NAME%"
-echo Converting ZIP to 7Z...
-7z a -t7z "%SEVENZ_NAME%" "%ZIP_NAME%"
-if errorlevel 1 (
-    echo 7Z conversion failed!
-    pause
-    exit /b 1
+fsutil file createnew temp.bin %PART_SIZE% 2>nul
+for /f "skip=0 delims=" %%A in ('certutil -encodehex "%ZIP_NAME%" temp.txt 0x40000000 ^| find /v ":"') do (
+    rem nothing here, certutil will generate temp.txt
 )
 
-echo Build complete!
+:: simpler approach: use powershell for proper splitting
+powershell -command ^
+"$infile='%ZIP_NAME%'; $size=%PART_SIZE%; $i=0; [IO.File]::OpenRead($infile) | % { $buf = New-Object byte[] $size; while ($r = $_.Read($buf,0,$size)) { Set-Content -Encoding Byte ('%ZIP_NAME%.part'+$i) $buf[0..($r-1)]; $i++ } }"
+
+echo Split complete!
 pause
