@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Install Project SDSG</title>
+</head>
+<body>
+    <h2>Install Project SDSG</h2>
+    <button id="install">Install</button>
+    <p id="status"></p>
+
+    <script>
+        const totalParts = 3; // change to however many parts you have
+        const baseName = 'Project SDSG.part'; // file prefix
+        const folder = './archive/'; // path to your parts
+
+        document.getElementById('install').onclick = async () => {
+        const status = document.getElementById('status');
+        status.textContent = 'Downloading parts...';
+
+        const blobs = [];
+
+        try {
+        for (let i = 1; i <= totalParts; i++) {
+        const response = await fetch(`${folder}${baseName}${i}`);
+        if (!response.ok) throw new Error(`Failed to fetch part ${i}`);
+        const arrayBuffer = await response.arrayBuffer();
+        blobs.push(new Uint8Array(arrayBuffer));
+        status.textContent = `Downloaded part ${i} of ${totalParts}`;
+        }
+
+        // Merge parts
+        const totalLength = blobs.reduce((sum, arr) => sum + arr.length, 0);
+        const merged = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const arr of blobs) {
+        merged.set(arr, offset);
+        offset += arr.length;
+        }
+
+        // Trigger download
+        const blob = new Blob([merged], { type: 'application/zip' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Project SDSG.zip';
+        link.click();
+
+        status.textContent = 'Download complete!';
+        } catch (err) {
+        status.textContent = 'Error: ' + err.message;
+        console.error(err);
+        }
+        };
+    </script>
+</body>
+</html>
