@@ -1,33 +1,22 @@
-﻿(()=>{const beta=!0;const SHEET_API="https://script.google.com/macros/s/AKfycbw-AuwYdN3u-MrQ7HnYGeIC7IKq_CA9BRr92OK92zxMAV5jzD6LcDhYeMPZ0N7kq1iAmA/exec";let audio=null;const qs=id=>document.getElementById(id);function stopAllAudio(){document.querySelectorAll("audio").forEach(a=>{try{a.pause();a.src="";a.load()}catch{}});if(audio){try{audio.pause()}catch{}audio=null}}
+﻿(()=>{const beta=!0;const SHEET_API="https://script.google.com/macros/s/AKfycbw-AuwYdN3u-MrQ7HnYGeIC7IKq_CA9BRr92OK92zxMAV5jzD6LcDhYeMPZ0N7kq1iAmA/exec";let audio=null;const qs=id=>document.getElementById(id);function stopAllAudio(){document.querySelectorAll("audio").forEach(a=>{try{a.pause();a.src="";a.load()}catch{}});if(audio){try{audio.pause()}catch{}
+audio=null}}
 function play(src){if(beta)return;if(audio)audio.pause();audio=new Audio(src);audio.loop=!0;audio.play().catch(()=>{})}
 function playBeta(){stopAllAudio();const betaAudio=new Audio("beta.mp3");betaAudio.loop=!0;betaAudio.volume=1.0;const attempt=()=>{betaAudio.play().catch(()=>{});document.removeEventListener("click",attempt);document.removeEventListener("keydown",attempt)};attempt();document.addEventListener("click",attempt);document.addEventListener("keydown",attempt)}
 function getPremiumItems(){try{if(typeof PREMIUM_DATA_B64==="undefined")return[];return JSON.parse(atob(PREMIUM_DATA_B64))}catch{console.error("Premium data corrupted");return[]}}
-function renderPremiumGames(){const container=qs("premiumGamesContainer");if(!container)return;container.innerHTML="";const status=localStorage.getItem("SDSG");const premiumGames=getPremiumItems();premiumGames.forEach(item=>{const btn=document.createElement("button");btn.textContent=item.name;if(status==="active"){btn.className="unlocked";btn.disabled=!1;btn.onclick=()=>{container.innerHTML="";if(item.type==="image"){const img=document.createElement("img");img.src=item.base64;img.style.maxWidth="100%";container.appendChild(img)}
-if(item.type==="game"){const iframe=document.createElement("iframe");iframe.src=item.base64;iframe.style.width="100%";iframe.style.height="600px";iframe.style.border="none";container.appendChild(iframe)}
+function renderPremiumGames(){const container=qs("premiumGamesContainer");if(!container)return;container.innerHTML="";const status=localStorage.getItem("SDSG");const premiumGames=getPremiumItems();premiumGames.forEach(item=>{const btn=document.createElement("button");btn.textContent=item.name;if(status==="active"){btn.className="unlocked";btn.disabled=!1;btn.onclick=()=>{container.innerHTML="";stopAllAudio();if(item.type==="image"){const img=document.createElement("img");img.src=item.base64.startsWith("data:")?item.base64:"data:image/png;base64,"+item.base64;img.style.maxWidth="100%";container.appendChild(img)}
+if(item.type==="game"){const iframe=document.createElement("iframe");iframe.src=item.base64.startsWith("data:")?item.base64:"data:text/html;base64,"+item.base64;iframe.style.width="100%";iframe.style.height="600px";iframe.style.border="none";container.appendChild(iframe)}
 if(item.type==="txt"){const pre=document.createElement("pre");pre.style.background="#111";pre.style.color="#0f0";pre.style.padding="1em";pre.style.whiteSpace="pre-wrap";pre.style.wordBreak="break-word";try{pre.textContent=atob(item.base64)}catch{pre.textContent="Error: Text content corrupted."}
-if(item.type === "video") {
-  const vid = document.createElement("video");
-  vid.controls = true;
-  vid.style.width = "100%";
-  vid.style.maxHeight = "600px";
-  try {
-    vid.src = item.base64;
-  } catch {
-    const errorMsg = document.createElement("p");
-    errorMsg.textContent = "Video corrupted.";
-    container.appendChild(errorMsg);
-    return;
-  }
-  container.appendChild(vid);
-}
-container.appendChild(pre)}}}else if(status==="fake"){btn.className="unlocked";btn.disabled=!1;btn.onclick=()=>window.location.href="./assets/Fake/404.html"}else{btn.className="locked";btn.disabled=!0}
+container.appendChild(pre)}
+if(item.type==="video"){const vid=document.createElement("video");vid.controls=!0;vid.style.width="100%";vid.style.maxHeight="600px";try{const base64Data=item.base64.replace(/^data:video\/mp4;base64,/,"");const binary=atob(base64Data);const bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);const blob=new Blob([bytes],{type:"video/mp4"});vid.src=URL.createObjectURL(blob)}catch{const errorMsg=document.createElement("p");errorMsg.textContent="Video corrupted.";container.appendChild(errorMsg);return}
+vid.addEventListener("play",()=>stopAllAudio());container.appendChild(vid)}
+if(item.type==="audio"){const aud=document.createElement("audio");aud.controls=!0;aud.loop=!1;try{aud.src=item.base64.startsWith("data:")?item.base64:"data:audio/mp3;base64,"+item.base64}catch{const errorMsg=document.createElement("p");errorMsg.textContent="Audio corrupted.";container.appendChild(errorMsg);return}
+aud.addEventListener("play",()=>stopAllAudio());container.appendChild(aud)}}}else if(status==="fake"){btn.className="unlocked";btn.disabled=!1;btn.onclick=()=>window.location.href="./assets/Fake/404.html"}else{btn.className="locked";btn.disabled=!0}
 container.appendChild(btn)})}
 function unlockReal(){localStorage.setItem("SDSG","active");qs("instructions")?.remove();qs("premiumCodeSection")?.remove();renderPremiumGames();if(!beta)play("music.mp3");}
 function unlockFake(){localStorage.setItem("SDSG","fake");renderPremiumGames();if(!beta)play("music_x.mp3");alert("Unlocked premium!")}
 async function signup(){const username=qs("username")?.value.trim();const password=qs("password")?.value.trim();const code=qs("premiumCodeInput")?.value.trim();if(!username||!password||!code){alert("Fill all fields");return}
 if(code==="SDSG.LATEST_XCODE"){unlockFake();return}
-try{const res=await fetch(SHEET_API,{method:"POST",body:JSON.stringify({action:"signup",username,password,code})});const data=await res.json();if(data.success){unlockReal();alert("Signup successful! Premium unlocked.")}else{alert(data.error||"Invalid code")}}catch{alert("Failed to reach server")}}
+try{const res=await fetch(SHEET_API,{method:"POST",body:JSON.stringify({action:"signup",username,password,code})});const data=await res.json();if(data.success){unlockReal();alert("Signup successful! Premium unlocked.")}else alert(data.error||"Invalid code")}catch{alert("Failed to reach server")}}
 async function login(){const username=qs("username")?.value.trim();const password=qs("password")?.value.trim();if(!username||!password){alert("Enter username and password");return}
-try{const res=await fetch(SHEET_API,{method:"POST",body:JSON.stringify({action:"login",username,password})});const data=await res.json();if(data.success){unlockReal();alert("Login successful!")}else{alert(data.error||"Login failed")}}catch{alert("Server unreachable")}}
-qs("signupBtn")?.addEventListener("click",signup);qs("loginBtn")?.addEventListener("click",login);qs("checkPaidBtn")?.addEventListener("click",()=>{alert(localStorage.getItem("SDSG")==="active"?"Already premium":"Not active")});qs("deact")?.addEventListener("click",()=>{localStorage.removeItem("SDSG");location.reload()});qs("copyEmailBtn")?.addEventListener("click",()=>{navigator.clipboard.writeText(qs("email-template").innerText);alert("Copied email template!")});const status=localStorage.getItem("SDSG");if(status==="active"){unlockReal()}else{renderPremiumGames()}
-if(beta){playBeta()}else if(status!=="active"){play("music_alt.mp3")}})()
+try{const res=await fetch(SHEET_API,{method:"POST",body:JSON.stringify({action:"login",username,password})});const data=await res.json();if(data.success){unlockReal();alert("Login successful!")}else alert(data.error||"Login failed")}catch{alert("Server unreachable")}}
+qs("signupBtn")?.addEventListener("click",signup);qs("loginBtn")?.addEventListener("click",login);qs("checkPaidBtn")?.addEventListener("click",()=>{alert(localStorage.getItem("SDSG")==="active"?"Already premium":"Not active")});qs("deact")?.addEventListener("click",()=>{localStorage.removeItem("SDSG");location.reload()});qs("copyEmailBtn")?.addEventListener("click",()=>{navigator.clipboard.writeText(qs("email-template").innerText);alert("Copied email template!")});const status=localStorage.getItem("SDSG");if(status==="active")unlockReal();else renderPremiumGames();if(beta)playBeta();else if(status!=="active")play("music_alt.mp3");})()
