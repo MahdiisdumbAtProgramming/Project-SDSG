@@ -82,6 +82,7 @@ const audioFiles = [
     "Sinner.mp3",
     "Sneaky_Snitch.mp3",
     "Sonic_Cd_Jp.mp3",
+    "Sonic_Cd_Jp_Peak!.mp3",
     "Soul_1.ogg",
     "Soul_2.ogg",
     "Soul_3.ogg",
