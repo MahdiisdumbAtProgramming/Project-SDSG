@@ -24,6 +24,7 @@ const games = [
     "DoomDOS",
     "Earthbound",
     "echovr2d",
+    "Epstein",
     "Fish",
     "FlappyBird",
     "FlipAMeanGuy",
