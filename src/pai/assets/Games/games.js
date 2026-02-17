@@ -29,7 +29,7 @@ const games = [
     "FlappyBird",
     "FlipAMeanGuy",
     "FNAF",
-    "Geometry-Dash-(ASS)",
+    "Geometry-Dash",
     "Half-Life",
     "Half-Price",
     "HighwayRacer",

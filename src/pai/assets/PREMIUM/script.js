@@ -1,4 +1,4 @@
-﻿(()=>{const beta=0;const SHEET_API="https://script.google.com/macros/s/AKfycbw-AuwYdN3u-MrQ7HnYGeIC7IKq_CA9BRr92OK92zxMAV5jzD6LcDhYeMPZ0N7kq1iAmA/exec";let bgm=null;let currentPremiumMedia=null;const qs=id=>document.getElementById(id);function stopBGM(){if(bgm){try{bgm.pause();bgm.src="";bgm.load()}catch{}
+﻿(()=>{const beta=!0;const SHEET_API="https://script.google.com/macros/s/AKfycbw-AuwYdN3u-MrQ7HnYGeIC7IKq_CA9BRr92OK92zxMAV5jzD6LcDhYeMPZ0N7kq1iAmA/exec";let bgm=null;let currentPremiumMedia=null;const qs=id=>document.getElementById(id);function stopBGM(){if(bgm){try{bgm.pause();bgm.src="";bgm.load()}catch{}
 bgm=null}}
 function playBGM(src){stopBGM();bgm=new Audio(src);bgm.loop=!0;bgm.volume=1.0;bgm.play().catch(()=>{})}
 function stopCurrentPremium(){if(currentPremiumMedia){try{currentPremiumMedia.pause?.()}catch{}
