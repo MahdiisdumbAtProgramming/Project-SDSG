@@ -1,0 +1,3 @@
+const fs=require('fs');const path=require('path');const ZIP_NAME='Project SDSG.zip';const PART_SIZE=99*1024*1024;const OUTPUT_DIR='archive';if(!fs.existsSync(ZIP_NAME)){console.error(`Error: ${ZIP_NAME} not found! Make sure REL built it.`);process.exit(1)}
+if(!fs.existsSync(OUTPUT_DIR)){fs.mkdirSync(OUTPUT_DIR)}
+const stats=fs.statSync(ZIP_NAME);const readStream=fs.createReadStream(ZIP_NAME,{highWaterMark:PART_SIZE});let partIndex=1;readStream.on('data',(chunk)=>{const partName=path.join(OUTPUT_DIR,`${ZIP_NAME}.part${String(partIndex).padStart(3, '0')}`);fs.writeFileSync(partName,chunk);console.log(`Created ${partName} (${chunk.length} bytes)`);partIndex++});readStream.on('end',()=>{console.log(`\nAll parts created in folder "${OUTPUT_DIR}"`)})
