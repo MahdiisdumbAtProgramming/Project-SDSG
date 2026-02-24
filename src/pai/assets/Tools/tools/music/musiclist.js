@@ -6,6 +6,7 @@ const audioFiles = [
     "Anticaption.mp3",
     "Asgore_Yellow+main.mp3",
     "Awaken_16bit.mp3",
+    "Blue_Spheres.ogg",
     "British_Music.mp3",
     "Cageny_Carnation.mp3",
     "Capuchin_Theme.mp3",
