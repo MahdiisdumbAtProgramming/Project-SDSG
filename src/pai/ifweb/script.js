@@ -8,4 +8,4 @@ async function performFetch(){const ok=await fetchRepoDescription();if(!ok){cons
 return ok}
 function startPeriodicRefresh(){if(periodicTimer)return;periodicTimer=setInterval(()=>{if(Date.now()-lastSuccessfulFetch<Math.min(REFRESH_INTERVAL_MS,30000))return;performFetch()},REFRESH_INTERVAL_MS)}
 function stopPeriodicRefresh(){if(periodicTimer){clearInterval(periodicTimer);periodicTimer=null}}
-btn.addEventListener('click',()=>{window.open('https://project-sdsg-installer.vercel.app/','_blank','noopener')});ensureRefreshButton();performFetch().then(ok=>{status.textContent=ok?'Repository info loaded.':'Repository info unavailable.';startPeriodicRefresh()})})
+btn.addEventListener('click',()=>{window.open('https://project-sdsg-installer.up.railway.app/','_blank','noopener')});ensureRefreshButton();performFetch().then(ok=>{status.textContent=ok?'Repository info loaded.':'Repository info unavailable.';startPeriodicRefresh()})})
