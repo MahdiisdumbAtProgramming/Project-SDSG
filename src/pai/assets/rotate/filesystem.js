@@ -11,7 +11,7 @@
           id: "m_crimes", type: "file", name: "Hamade_Files.pdf", icon: "📄",
           content: "Mahdi Hussain Hamade/n2012.11.21/nAge: 13/nRole: Defense/nDefending Castiel and justifying his NNN loss/nCrimes done in past:/n- /RADACT Character AI GOONING RADACT\\ For 4 WEEKS, stopped after conscience kicked in/n- Prayed too quickly (multiple offenses)/n- Wished upon someone's downfall (Jahanam, the coldest deepest part)/n- Cussed many people in Arabic (examples: annabook, celba, xara, himar, Sharmoota, Khinzir, Loty; usually used with Ya=you, ibin=father of, bint=mother of)"
         },
-        { id: "m_testimony", type: "file", name: "Mahdi_Testimony.txt", icon: "🤲", content: "[PLACEHOLDER]" }
+        { id: "d_arg", type: "file", name: "Defense_Arg.txt", icon: "📓", content: "Hello Im Castiels Attroney my second defense trial yet./n I've done bad things yes what do i have to hide?/n Acording to Castiel he went on an XXX website(/RADACT R34 RADACT\\) to find renaconce paintings? /n Weird if you ask me./n But thats justified because his intention was to look at art not /RADACT PORN RADACT\\."}
       ]},
       { id: "Castiel", type: "folder", name: "Castiel-Salese", icon: "☣️", children: [
         { 
@@ -25,7 +25,7 @@
           id: "g_crimes", type: "file", name: "Gonzalez_Files.pdf", icon: "📄",
           content: "Christian Gonzalez/n2013.??.??/nAge: 12/nRole: Prosecutor/nCrimes:/n- Prosecuting Castiel Salese for an unjustified loss of NNN/n- While having cases of months of gooning"
         },
-        { id: "g_testimony", type: "file", name: "Christian_Testimony.txt", icon: "🗡️", content: "[PLACEHOLDER]" }
+        { id: "p_arg", type: "file", name: "Prosecution_Arg.txt", icon: "📓", content: "[PLACEHOLDER]" }
       ]}
     ]
   }
