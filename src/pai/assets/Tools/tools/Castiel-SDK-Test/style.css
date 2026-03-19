@@ -1,0 +1,10 @@
+body {
+    margin: 0;
+    background: #1e1e1e;
+    color: white;
+    font-family: Consolas;
+    overflow: hidden;
+}
+canvas {
+    display: block;
+}

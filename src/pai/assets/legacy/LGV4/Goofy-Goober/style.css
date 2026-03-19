@@ -1,0 +1,13 @@
+body{
+    background-color: black;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+h1{
+    color: blue;
+    align-self: auto;
+}
+
+.goober {
+    align-self: auto;
+}
