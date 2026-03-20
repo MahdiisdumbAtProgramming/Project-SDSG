@@ -1,9 +1,9 @@
 ﻿const audioFiles = [
-    'Chase music.mp3',
-    'Flufing A Duck.mp3',
-    'Funky Town.mp3',
+    'Chase-music.mp3',
+    'Flufing-A-Duck.mp3',
+    'Funky-Town.mp3',
     'Ivestigations.mp3',
-    'We Are Number 1.mp3'
+    'We-Are-Number-1.mp3'
 ];
 
 // Sort audio files alphabetically

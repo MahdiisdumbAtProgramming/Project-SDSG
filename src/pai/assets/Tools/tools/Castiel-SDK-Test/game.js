@@ -3,7 +3,7 @@ Castiel.game({
     init() {
         Castiel.log('Game initialized');
 	Castiel.speak("I scratch and sniff my balls");
- Castiel.loadImage("./Assets/SDSG Logo.jpeg", (img) => {
+ Castiel.loadImage("./Assets/SDSG-Logo.jpeg", (img) => {
             logoImage = img;
             Castiel.log("Logo loaded");
         });

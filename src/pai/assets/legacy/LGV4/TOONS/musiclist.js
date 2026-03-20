@@ -1,13 +1,13 @@
 ﻿const audioFiles = [
-    'Chase music.mp3',
-    'Flufing A Duck.mp3',
-    'Funky Town.mp3',
+    'Chase-music.mp3',
+    'Flufing-A-Duck.mp3',
+    'Funky-Town.mp3',
     'Ivestigations.mp3',
-    'We Are Number 1.mp3',
-    'Tiko - Fishy On Me (Music Video) (192 kbps).mp3',
-    'Spring (1).mp3',
+    'We-Are-Number-1.mp3',
+    'Tiko---Fishy-On-Me-(Music-Video)-(192-kbps).mp3',
+    'Spring-(1).mp3',
     'Sneaky-Snitch(chosic.com).mp3',
-    'Capuchin Remake Theme [ ezmp3.cc ].mp3',
+    'Capuchin-Remake-Theme-[-ezmp3.cc-].mp3',
 ];
 
 // Sort audio files alphabetically
