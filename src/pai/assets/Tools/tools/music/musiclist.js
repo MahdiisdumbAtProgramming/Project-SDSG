@@ -96,6 +96,7 @@ const audioFiles = [
     "Spiderdance.mp3",
     "Spider_Dnace_Remix.mp3",
     "Super_Sonic.mp3",
+    "That_Goy_Hedgehog!.mp3",
     "Ucn_High.mp3",
     "Undertale_Battle.ogg",
     "Undyne_Beta.mp3",
