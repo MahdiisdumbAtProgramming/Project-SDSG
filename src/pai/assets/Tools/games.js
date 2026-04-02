@@ -1,5 +1,5 @@
 const games = [
-    "Castiel SDK Test",
+    "Castiel-SDK-Test",
     "ClickCounter",
     "CPS",
     "freemoney",

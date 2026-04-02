@@ -1,2 +1,1 @@
-document.addEventListener('DOMContentLoaded',function(){const buttonsContainer=document.getElementById('buttonsContainer');const games=['Space Invaders', 'Platformer', 'barrel roll']
-games.forEach(folder=>{const button=document.createElement('button');button.textContent=folder;button.onclick=()=>{window.location.href=`${folder}/run.html`};buttonsContainer.appendChild(button)})})
+document.addEventListener('DOMContentLoaded',function(){const buttonsContainer=document.getElementById('buttonsContainer');games.forEach(folder=>{const button=document.createElement('button');button.textContent=folder;button.onclick=()=>{window.location.href=`${folder}/run.html`};buttonsContainer.appendChild(button)})})

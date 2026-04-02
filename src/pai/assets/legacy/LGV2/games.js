@@ -1,0 +1,22 @@
+const games = [
+    "Ao-Oni",
+    "Best-Music",
+    "Catch-Diddy",
+    "Cookie-Clicker",
+    "CRYPTIC-MESSAGE",
+    "Fish",
+    "Flip-A-Mean-guy",
+    "free-money!",
+    "Goofy-Goober",
+    "Gravity-Falls-(thisisnotawebsitedotcom.com)",
+    "Input-to-URL",
+    "MOTW",
+    "Platformer",
+    "Render-Engine",
+    "Run-From-Diddy",
+    "SP-Co-op-ver",
+    "Space-Invaders",
+    "Tag",
+    "Zombie-Raid",
+    "ZR-CO-OP-ver"
+];
