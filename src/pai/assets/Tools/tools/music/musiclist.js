@@ -69,6 +69,7 @@ const audioFiles = [
     "Mc_8b.ogg",
     "Mc_Mcbeth.mp3",
     "Metal_Crusher.ogg",
+    "Mettaton_What_The_Fuck_Are_You_Doing.mp3",
     "Nhgaaaaaa.ogg",
     "Nhgahslow.mp3",
     "Nuetural.ogg",
