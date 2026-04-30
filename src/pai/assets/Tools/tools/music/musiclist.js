@@ -19,6 +19,7 @@ const audioFiles = [
     "Devil.mp3",
     "Diddyblud.mp3",
     "Doom_Music.mp3",
+    "Drums_Of_Doom.wav",
     "Dr_Khal.mp3",
     "Earthbound_A_Bad_Dream_Extended.mp3",
     "Ebhh_Megalovania_Remix.mp3",
