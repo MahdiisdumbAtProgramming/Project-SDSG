@@ -1,0 +1,4 @@
+const media=document.querySelector("#media-container");const GALLERY_SIZE=6;function createMediaItem(item){const mediaItem=document.createElement("div");mediaItem.classList.add("media-item");const path=`./Assets/${item.name}`;if(item.type==="image"){const img=document.createElement("img");img.src=path;img.alt=item.name;mediaItem.appendChild(img)}else if(item.type==="video"){const video=document.createElement("video");video.src=path;video.controls=!0;video.loop=!0;mediaItem.appendChild(video)}
+return mediaItem}
+function buildGallery(){if(!media)return;media.innerHTML="";const shuffled=[...mediaData].sort(()=>Math.random()-0.5).slice(0,GALLERY_SIZE);shuffled.forEach(item=>{media.appendChild(createMediaItem(item))})}
+buildGallery()
