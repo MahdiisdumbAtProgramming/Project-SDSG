@@ -16,7 +16,6 @@ const games = [
     "Cave-Communications",
     "Codename-Protect",
     "CookieClicker",
-    "CosmicProxy",
     "CrazyCattle3D",
     "DANK-FLOWEY",
     "Diddy",

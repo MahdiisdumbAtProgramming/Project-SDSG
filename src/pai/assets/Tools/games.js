@@ -1,6 +1,7 @@
 const games = [
     "Castiel-SDK-Test",
     "ClickCounter",
+    "CosmicProxy",
     "CPS",
     "freemoney",
     "Github",
