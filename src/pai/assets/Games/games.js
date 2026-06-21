@@ -27,6 +27,7 @@ const games = [
     "FlipAMeanGuy",
     "FNAF",
     "Geometry-Dash",
+    "gnat-attack",
     "Half-Life",
     "Half-Price",
     "HighwayRacer",
