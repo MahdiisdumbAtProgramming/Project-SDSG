@@ -25,6 +25,7 @@ const audioFiles = [
     "Eating_Fruit.mp3",
     "Eating_Ghost.mp3",
     "Eb_Death.wav",
+    "Encounter.mp3",
     "Extend.mp3",
     "Fahhhhhhhhhhhhhh.mp3",
     "Fireball.mp3",
