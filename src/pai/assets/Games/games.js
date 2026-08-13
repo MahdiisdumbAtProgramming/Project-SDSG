@@ -10,6 +10,7 @@ const games = [
     "BELTAGOON",
     "BergenTruck",
     "Bit-Life",
+    "Block-Blas",
     "Bomb-Tag",
     "Caesar-Cipher",
     "calc",
